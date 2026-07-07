@@ -589,11 +589,13 @@ router.get('/:usuario_id', async (req, res) => {
 // PUT /transacoes/:id — atualiza campos de uma transação
 router.put('/:id', async (req, res) => {
   const { id } = req.params
-  const { usuario_id, valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria } = req.body
+  const { usuario_id, valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria, tipo } = req.body
 
   if (!usuario_id) {
     return res.status(400).json({ erro: 'Campo obrigatório: usuario_id' })
   }
+
+  const TIPOS_VALIDOS = ['despesa_fixa', 'despesa_variavel', 'credito', 'aplicacao']
 
   const campos = {}
   if (valor         !== undefined) campos.valor         = Number(valor)
@@ -603,6 +605,10 @@ router.put('/:id', async (req, res) => {
   if (categoria     !== undefined) campos.categoria     = categoria.trim().toLowerCase()
   if (dia_pagamento !== undefined) campos.dia_pagamento = Number(dia_pagamento)
   if (subcategoria  !== undefined) campos.subcategoria  = subcategoria ? subcategoria.trim().toLowerCase() : null
+  if (tipo          !== undefined) {
+    if (!TIPOS_VALIDOS.includes(tipo)) return res.status(400).json({ erro: 'Tipo inválido' })
+    campos.tipo = tipo
+  }
 
   if (Object.keys(campos).length === 0) {
     return res.status(400).json({ erro: 'Nenhum campo para atualizar' })
