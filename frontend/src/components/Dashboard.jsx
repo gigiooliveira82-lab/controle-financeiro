@@ -163,7 +163,7 @@ export default function Dashboard({
       <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o campo acima para adicionar o primeiro.</p>
     </div>
   ) : (
-    <div style={s.blocosGrid}>
+    <div style={{ ...s.blocosGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
       {Object.keys(TIPO).map(tipo => (
         <BlocoTipo
           key={tipo}

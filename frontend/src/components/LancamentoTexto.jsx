@@ -1,5 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { lancarTexto, atualizarTransacao } from '../services/api'
+
+const temSuporteVoz = typeof window !== 'undefined' &&
+  ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+if (typeof document !== 'undefined' && !document.getElementById('pulso-style')) {
+  const s = document.createElement('style')
+  s.id = 'pulso-style'
+  s.textContent = '@keyframes pulso { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }'
+  document.head.appendChild(s)
+}
 
 export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao }) {
   const [texto, setTexto] = useState('')
@@ -8,6 +18,44 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   const [transacaoCriada, setTransacaoCriada] = useState(null)
   const [perguntaRecorrente, setPerguntaRecorrente] = useState(false)
   const [erro, setErro] = useState('')
+  const [ouvindo, setOuvindo] = useState(false)
+  const recognitionRef = useRef(null)
+
+  useEffect(() => {
+    return () => { recognitionRef.current?.abort() }
+  }, [])
+
+  function iniciarVoz() {
+    if (!temSuporteVoz) return
+    if (ouvindo) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const rec = new SR()
+    rec.lang = 'pt-BR'
+    rec.interimResults = false
+    rec.maxAlternatives = 1
+
+    rec.onstart  = () => setOuvindo(true)
+    rec.onend    = () => setOuvindo(false)
+    rec.onerror  = (e) => {
+      setOuvindo(false)
+      if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+        setErro('Acesso ao microfone negado. Permita o microfone nas configurações do navegador.')
+      } else if (e.error !== 'no-speech') {
+        setErro('Erro ao capturar áudio: ' + e.error)
+      }
+    }
+    rec.onresult = (e) => {
+      const transcrito = e.results[0][0].transcript
+      setTexto((prev) => prev ? prev + ' ' + transcrito : transcrito)
+    }
+
+    recognitionRef.current = rec
+    rec.start()
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -67,15 +115,36 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
       </p>
 
       <form onSubmit={handleSubmit} style={estilos.form}>
-        <textarea
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="O que aconteceu? Ex: paguei 150 de conta de luz, vence dia 10..."
-          style={estilos.textarea}
-          rows={3}
-          disabled={carregando}
-        />
+        <div style={estilos.textareaWrap}>
+          <textarea
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="O que aconteceu? Ex: paguei 150 de conta de luz, vence dia 10..."
+            style={estilos.textarea}
+            rows={3}
+            disabled={carregando}
+          />
+          {temSuporteVoz && (
+            <button
+              type="button"
+              onClick={iniciarVoz}
+              disabled={carregando}
+              title={ouvindo ? 'Parar gravação' : 'Falar lançamento'}
+              style={{ ...estilos.micBtn, ...(ouvindo ? estilos.micBtnOuvindo : {}) }}
+            >
+              🎙
+            </button>
+          )}
+        </div>
+
+        {ouvindo && (
+          <div style={estilos.ouvindoBadge}>
+            <span style={estilos.pulsoDot} />
+            Ouvindo... fale seu lançamento
+          </div>
+        )}
+
         <button type="submit" style={estilos.botao} disabled={carregando || !texto.trim()}>
           {carregando ? '⏳ Analisando com IA...' : '✦ Lançar'}
         </button>
@@ -164,14 +233,53 @@ const estilos = {
   titulo: { margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: '#1a1a2e' },
   dica: { margin: '0 0 16px', color: '#666', fontSize: 13 },
   form: { display: 'flex', flexDirection: 'column', gap: 10 },
+  textareaWrap: { position: 'relative' },
   textarea: {
-    padding: '12px 14px',
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '12px 44px 12px 14px',
     borderRadius: 8,
     border: '1px solid #ddd',
     fontSize: 15,
     resize: 'vertical',
     fontFamily: 'inherit',
     outline: 'none',
+  },
+  micBtn: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    width: 32,
+    height: 32,
+    border: 'none',
+    borderRadius: 6,
+    background: '#f1f5f9',
+    cursor: 'pointer',
+    fontSize: 16,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'background 0.2s',
+  },
+  micBtnOuvindo: {
+    background: '#fef2f2',
+    outline: '2px solid #ef4444',
+  },
+  ouvindoBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 13,
+    color: '#dc2626',
+    fontWeight: 500,
+  },
+  pulsoDot: {
+    width: 10,
+    height: 10,
+    borderRadius: '50%',
+    background: '#ef4444',
+    display: 'inline-block',
+    animation: 'pulso 1s ease-in-out infinite',
   },
   botao: {
     padding: '12px',
