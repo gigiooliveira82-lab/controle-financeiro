@@ -14,6 +14,13 @@ const TIPO = {
   aplicacao:        { label: 'Aplicações',         cor: '#2563eb' },
 }
 
+const TIPO_SHORT = {
+  despesa_fixa:     'Fixa',
+  despesa_variavel: 'Variável',
+  credito:          'Crédito',
+  aplicacao:        'Aplicação',
+}
+
 const COR_CAT = {
   moradia: '#f59e0b', alimentação: '#10b981', transporte: '#3b82f6',
   saúde: '#ef4444', lazer: '#8b5cf6', educação: '#06b6d4',
@@ -480,9 +487,12 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
   const [novaSub, setNovaSub]             = useState(t.subcategoria || '')
   const [editandoDia, setEditandoDia]     = useState(false)
   const [novoDia, setNovoDia]             = useState(String(t.dia_pagamento))
+  const [editandoTipo, setEditandoTipo]   = useState(false)
+  const [novoTipo, setNovoTipo]           = useState(t.tipo)
   const [salvando, setSalvando]           = useState(false)
 
-  const valorNum = Number(t.valor)
+  const valorNum       = Number(t.valor)
+  const podeEditarTipo = !t.total_parcelas && !t.recorrente
 
   async function toggleStatus() {
     if (salvando) return
@@ -534,6 +544,14 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
     setSalvando(true)
     try { await onAtualizar({ dia_pagamento: v }) }
     finally { setSalvando(false); setEditandoDia(false) }
+  }
+
+  async function salvarTipo() {
+    setEditandoTipo(false)
+    if (novoTipo === t.tipo) return
+    setSalvando(true)
+    try { await onAtualizar({ tipo: novoTipo }) }
+    finally { setSalvando(false) }
   }
 
   function handleCancelarParcelas() {
@@ -657,6 +675,37 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
                   style={s.addSub}
                   title="Adicionar subcategoria"
                 >+</span>
+              )}
+              {podeEditarTipo && (
+                <>
+                  <span style={s.catSep}>·</span>
+                  {editandoTipo ? (
+                    <select
+                      autoFocus
+                      value={novoTipo}
+                      onChange={ev => setNovoTipo(ev.target.value)}
+                      onBlur={salvarTipo}
+                      onKeyDown={ev => {
+                        if (ev.key === 'Enter') salvarTipo()
+                        if (ev.key === 'Escape') { setNovoTipo(t.tipo); setEditandoTipo(false) }
+                      }}
+                      style={s.selectTipo}
+                    >
+                      <option value="despesa_fixa">Fixa</option>
+                      <option value="despesa_variavel">Variável</option>
+                      <option value="credito">Crédito</option>
+                      <option value="aplicacao">Aplicação</option>
+                    </select>
+                  ) : (
+                    <span
+                      onClick={() => { setNovoTipo(t.tipo); setEditandoTipo(true) }}
+                      style={s.tipoTag}
+                      title="Clique para mudar o tipo"
+                    >
+                      {TIPO_SHORT[t.tipo]}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1005,6 +1054,8 @@ const s = {
   catSep:      { fontSize: 10, color: '#d1d5db', flexShrink: 0 },
   linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer' },
   addSub:      { fontSize: 10, color: '#d1d5db', cursor: 'pointer', lineHeight: 1, padding: '0 1px' },
+  tipoTag:     { fontSize: 11, color: '#a78bfa', cursor: 'pointer', fontStyle: 'italic' },
+  selectTipo:  { fontSize: 11, border: '1.5px solid #3b82f6', borderRadius: 4, outline: 'none', background: '#f8fafc', cursor: 'pointer', padding: '1px 2px', fontFamily: 'inherit' },
   linhaDir:    { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
   linhaValor:  { fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' },
 
