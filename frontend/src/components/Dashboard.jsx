@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { fmtBRL, fmtNum } from '../utils/fmt'
 import {
   removerTransacao, atualizarTransacao, buscarAcumuladosAplicacao,
   gerarAnaliseMes, duplicarTransacao, perguntarSobreFinancas, cancelarParcelasGrupo,
@@ -20,8 +21,8 @@ const COR_CAT = {
 }
 
 const soma     = (arr) => arr.reduce((acc, t) => acc + Number(t.valor), 0)
-const fmt        = (v)   => Math.abs(v).toFixed(2).replace('.', ',')
-const fmtSaldo   = (v)   => (v < 0 ? '−' : '') + 'R$ ' + fmt(v)
+const fmt      = fmtNum
+const fmtSaldo = fmtBRL
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 1024)

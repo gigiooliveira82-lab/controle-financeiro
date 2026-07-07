@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { lancarTexto, atualizarTransacao } from '../services/api'
+import { fmtBRL } from '../utils/fmt'
 
 const temSuporteVoz = typeof window !== 'undefined' &&
   ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
@@ -200,7 +201,7 @@ function FeedbackIA({ dados }) {
       </div>
       <div style={estilos.feedbackDetalhes}>
         <span style={estilos.feedbackDesc}>{dados.descricao}</span>
-        <span style={estilos.feedbackValor}>R$ {Number(dados.valor).toFixed(2).replace('.', ',')}</span>
+        <span style={estilos.feedbackValor}>{fmtBRL(dados.valor)}</span>
       </div>
       <p style={estilos.feedbackDia}>Dia {dados.dia_pagamento} · {formatarMes(dados.mes_referencia)}</p>
     </div>

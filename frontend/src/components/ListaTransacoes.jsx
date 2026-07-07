@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { removerTransacao, atualizarTransacao } from '../services/api'
+import { fmtBRL } from '../utils/fmt'
 
 const TIPO_LABEL = {
   despesa_fixa: 'Fixa',
@@ -97,7 +98,7 @@ function ResumoItem({ label, valor, cor, destaque }) {
     <div style={{ ...estilos.resumoItem, ...(destaque ? estilos.resumoDestaque : {}) }}>
       <span style={estilos.resumoLabel}>{label}</span>
       <span style={{ ...estilos.resumoValor, color: cor }}>
-        R$ {Math.abs(valor).toFixed(2).replace('.', ',')}
+        {fmtBRL(Math.abs(valor))}
       </span>
     </div>
   )
@@ -199,7 +200,7 @@ function ItemTransacao({ transacao: t, removendo, onRemover, onAtualizar }) {
             style={{ ...estilos.itemValor, color: t.tipo === 'credito' ? '#16a34a' : '#1a1a2e', cursor: 'pointer' }}
             title="Clique para editar o valor"
           >
-            {t.tipo === 'credito' ? '+' : '-'} R$ {Number(t.valor).toFixed(2).replace('.', ',')}
+            {t.tipo === 'credito' ? '+' : '-'} {fmtBRL(Math.abs(Number(t.valor)))}
           </p>
         )}
         <button
