@@ -406,7 +406,9 @@ function BlocoAplicacoes({ cfg, transacoes, acumulados, removendo, onRemover, on
       <div style={s.aplicSec}>
         <p style={s.aplicSecTitulo}>Lançamentos deste mês</p>
         {transacoes.length === 0 ? (
-          <p style={s.blocoVazio}>Nenhum aporte ou resgate neste mês</p>
+          <p style={{ ...s.blocoVazio, fontStyle: 'normal', color: '#94a3b8', fontSize: 12, lineHeight: 1.5 }}>
+            Nenhum aporte este mês —<br />que tal guardar uma parte do que sobrou?
+          </p>
         ) : (
           transacoes.map(t => (
             <ItemLinha
@@ -683,19 +685,26 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           </span>
         )}
 
-        {mostrarStatus && (
-          <button
-            onClick={toggleStatus}
-            disabled={salvando}
-            style={{
-              ...s.statusBtn,
-              background: t.status === 'pago' ? '#dcfce7' : '#fef9c3',
-              color:      t.status === 'pago' ? '#15803d' : '#92400e',
-            }}
-          >
-            {t.status === 'pago' ? 'Pago' : 'Pendente'}
-          </button>
-        )}
+        {mostrarStatus && (() => {
+          const hoje         = new Date()
+          const mesAtualISO  = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+          const vencida      = t.status === 'pendente'
+                            && t.mes_referencia === mesAtualISO
+                            && t.dia_pagamento < hoje.getDate()
+          return (
+            <button
+              onClick={toggleStatus}
+              disabled={salvando}
+              style={{
+                ...s.statusBtn,
+                background: t.status === 'pago' ? '#dcfce7' : vencida ? '#fee2e2' : '#fef9c3',
+                color:      t.status === 'pago' ? '#15803d' : vencida ? '#b91c1c' : '#92400e',
+              }}
+            >
+              {t.status === 'pago' ? 'Pago' : vencida ? '⚠ Vencida' : 'Pendente'}
+            </button>
+          )
+        })()}
 
         {mostrarRecorrente && !t.total_parcelas && (
           <button
