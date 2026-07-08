@@ -3,6 +3,7 @@ import { supabase } from './services/supabase'
 import { buscarTransacoes, gerarRecorrentes } from './services/api'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
+import RedefinirSenha from './components/RedefinirSenha'
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -23,11 +24,12 @@ function formatarMesHeader(mesISO) {
 }
 
 export default function App() {
-  const [usuario, setUsuario] = useState(null)
-  const [transacoes, setTransacoes] = useState([])
-  const [carregando, setCarregando] = useState(true)
+  const [usuario, setUsuario]             = useState(null)
+  const [transacoes, setTransacoes]       = useState([])
+  const [carregando, setCarregando]       = useState(true)
   const [carregandoDados, setCarregandoDados] = useState(false)
-  const [mesSelecionado, setMesSelecionado] = useState(mesISOHoje)
+  const [mesSelecionado, setMesSelecionado]   = useState(mesISOHoje)
+  const [modoRedefinir, setModoRedefinir] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -35,8 +37,14 @@ export default function App() {
       setCarregando(false)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUsuario(session?.user ?? null)
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setModoRedefinir(true)
+        setUsuario(session?.user ?? null)
+      } else {
+        setModoRedefinir(false)
+        setUsuario(session?.user ?? null)
+      }
     })
 
     return () => listener.subscription.unsubscribe()
@@ -79,6 +87,13 @@ export default function App() {
   }
 
   if (carregando) return <div style={estilos.loading}>Carregando...</div>
+
+  if (modoRedefinir) return (
+    <RedefinirSenha onConcluido={async () => {
+      await supabase.auth.signOut()
+      setModoRedefinir(false)
+    }} />
+  )
 
   if (!usuario) return <Login onLogin={setUsuario} />
 
