@@ -102,6 +102,13 @@ export default function Dashboard({
   async function handleCancelarGrupoParcelas(grupoId) {
     try {
       await cancelarParcelasGrupo(grupoId, usuarioId)
+      const hoje = new Date()
+      const mesAtualISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+      if (mesSelecionado > mesAtualISO) {
+        transacoes
+          .filter(t => t.grupo_parcela_id === grupoId)
+          .forEach(t => onRemoveu(t.id))
+      }
     } catch (err) {
       alert('Erro ao cancelar parcelas: ' + err.message)
     }

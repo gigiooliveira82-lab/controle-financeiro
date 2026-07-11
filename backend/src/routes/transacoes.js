@@ -250,11 +250,15 @@ router.post('/pergunta/:usuario_id', async (req, res) => {
   const patrimonioTotal = arred(patrimonioItens.reduce((s, p) => s + p.saldo, 0))
 
   // ── Parcelamentos ativos (grupos com parcelas pendentes) ─────────────────
-  const { data: todasParcelas } = await supabase
+  const { data: todasParcelas, error: errParcelas } = await supabase
     .from('transacoes')
     .select('grupo_parcela_id, descricao, parcela_atual, total_parcelas, valor, status')
     .eq('usuario_id', usuario_id)
     .not('grupo_parcela_id', 'is', null)
+
+  if (errParcelas) {
+    return res.status(500).json({ erro: 'Falha ao buscar parcelamentos', detalhe: errParcelas.message })
+  }
 
   const gruposParc = {}
   ;(todasParcelas || []).forEach(p => {
@@ -359,11 +363,15 @@ router.post('/gerar-recorrentes', async (req, res) => {
 
   if (!recorrentes.length) return res.json({ geradas: [] })
 
-  const { data: jaExistem } = await supabase
+  const { data: jaExistem, error: erroJaExistem } = await supabase
     .from('transacoes')
     .select('descricao')
     .eq('usuario_id', usuario_id)
     .eq('mes_referencia', mes_referencia)
+
+  if (erroJaExistem) {
+    return res.status(500).json({ erro: 'Falha ao verificar lançamentos existentes', detalhe: erroJaExistem.message })
+  }
 
   const descricoesExistentes = new Set((jaExistem || []).map((t) => t.descricao))
 
@@ -475,7 +483,7 @@ router.post('/lancar', async (req, res) => {
 
     const mesAtualISO    = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
     const parcelaVisivel = inseridas.find(p => p.mes_referencia === mesAtualISO)
-      || inseridas[dadosIA.parcela_inicial - 1]
+      || inseridas.find(p => p.parcela_atual === dadosIA.parcela_inicial)
       || inseridas[0]
 
     return res.status(201).json({
