@@ -579,6 +579,47 @@ router.delete('/parcelas/grupo/:grupo_parcela_id/:usuario_id', async (req, res) 
   return res.json({ mensagem: 'Parcelas futuras canceladas com sucesso' })
 })
 
+// GET /transacoes/comparativo-mensal?mes=YYYY-MM-01 — variação de despesas vs mês anterior
+router.get('/comparativo-mensal', async (req, res) => {
+  const { mes } = req.query
+  if (!mes) return res.status(400).json({ erro: 'Parâmetro mes obrigatório' })
+
+  const [ano, mesNum] = mes.split('-').map(Number)
+  const d = new Date(ano, mesNum - 2, 1)
+  const mesAnterior = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+
+  const { data: atual, error: errAtual } = await supabase
+    .from('transacoes')
+    .select('valor')
+    .eq('usuario_id', req.usuarioId)
+    .in('tipo', ['despesa_fixa', 'despesa_variavel'])
+    .eq('mes_referencia', mes)
+
+  if (errAtual) return res.status(500).json({ erro: 'Erro ao buscar mês atual' })
+
+  const { data: anterior, error: errAnterior } = await supabase
+    .from('transacoes')
+    .select('valor')
+    .eq('usuario_id', req.usuarioId)
+    .in('tipo', ['despesa_fixa', 'despesa_variavel'])
+    .eq('mes_referencia', mesAnterior)
+
+  if (errAnterior) return res.status(500).json({ erro: 'Erro ao buscar mês anterior' })
+
+  const despesaMesAtual = atual.reduce((s, t) => s + Number(t.valor), 0)
+
+  if (anterior.length === 0) {
+    return res.json({ despesaMesAtual, despesaMesAnterior: null, percentualVariacao: null })
+  }
+
+  const despesaMesAnterior = anterior.reduce((s, t) => s + Number(t.valor), 0)
+  const percentualVariacao = despesaMesAnterior > 0
+    ? ((despesaMesAtual - despesaMesAnterior) / despesaMesAnterior) * 100
+    : null
+
+  return res.json({ despesaMesAtual, despesaMesAnterior, percentualVariacao })
+})
+
 // GET /transacoes/:usuario_id — lista transações do mês atual
 router.get('/:usuario_id', async (req, res) => {
   const usuario_id = req.usuarioId

@@ -4,14 +4,15 @@ import { fmtBRL, fmtNum } from '../utils/fmt'
 import {
   removerTransacao, atualizarTransacao, buscarAcumuladosAplicacao,
   gerarAnaliseMes, duplicarTransacao, perguntarSobreFinancas, cancelarParcelasGrupo,
+  buscarComparativoMensal,
 } from '../services/api'
 import LancamentoTexto from './LancamentoTexto'
 
 const TIPO = {
-  despesa_fixa:     { label: 'Despesas Fixas',    cor: '#7c3aed' },
+  despesa_fixa:     { label: 'Despesas Fixas',    cor: '#6B3DB8' },
   despesa_variavel: { label: 'Despesas Variáveis', cor: '#dc2626' },
-  credito:          { label: 'Créditos',           cor: '#16a34a' },
-  aplicacao:        { label: 'Aplicações',         cor: '#2563eb' },
+  credito:          { label: 'Créditos',           cor: 'var(--verde-profundo)' },
+  aplicacao:        { label: 'Aplicações',         cor: '#1E5FAD' },
 }
 
 const TIPO_SHORT = {
@@ -30,6 +31,15 @@ const COR_CAT = {
 const soma     = (arr) => arr.reduce((acc, t) => acc + Number(t.valor), 0)
 const fmt      = fmtNum
 const fmtSaldo = fmtBRL
+
+const MESES_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+const labelMes = (mesISO) => MESES_SHORT[parseInt(mesISO.split('-')[1]) - 1]
+
+function mesAnteriorISO(mesISO) {
+  const [ano, mes] = mesISO.split('-').map(Number)
+  const d = new Date(ano, mes - 2, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 1024)
@@ -51,6 +61,7 @@ export default function Dashboard({
   const [removendo, setRemovendo]     = useState(null)
   const [acumulados, setAcumulados]   = useState({})
   const [expandido, setExpandido]     = useState(false)
+  const [comparativo, setComparativo] = useState(null)
 
   function handleNovaComColapso(nova) {
     onNovaTransacao(nova)
@@ -67,6 +78,13 @@ export default function Dashboard({
     if (!usuarioId) return
     buscarAcumuladosAplicacao(usuarioId).then(setAcumulados).catch(console.error)
   }, [usuarioId, aplicacaoKey])
+
+  useEffect(() => {
+    if (!usuarioId) return
+    buscarComparativoMensal(usuarioId, mesSelecionado)
+      .then(setComparativo)
+      .catch(() => setComparativo(null))
+  }, [usuarioId, mesSelecionado])
 
   async function handleRemover(id) {
     if (!confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) return
@@ -195,12 +213,14 @@ export default function Dashboard({
     </div>
   )
 
-  const lateral = (
-    <>
+  const mesAnterior = mesAnteriorISO(mesSelecionado)
+
+  const cardsSaldo = (
+    <div style={s.cardRow}>
       {saldosIdenticos ? (
         <CardDestaque valor={saldoReal} />
       ) : (
-        <div style={s.cardRow}>
+        <>
           <CardSaldo label="Saldo Real"      valor={saldoReal}      sub="créditos recebidos − despesas pagas" />
           <CardSaldo label="Saldo Projetado" valor={saldoProjetado} sub="incluindo valores pendentes" />
           <CardNeutro
@@ -208,13 +228,20 @@ export default function Dashboard({
             valor={totalAPagar}
             sub={`${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`}
           />
-        </div>
+        </>
       )}
+      <CardComparativo
+        percentualVariacao={comparativo?.percentualVariacao ?? null}
+        despesaMesAtual={comparativo?.despesaMesAtual ?? 0}
+        despesaMesAnterior={comparativo?.despesaMesAnterior ?? null}
+        mesAtualISO={mesSelecionado}
+        mesAnteriorISO={mesAnterior}
+      />
+    </div>
+  )
 
-      <BlocoAnalise usuarioId={usuarioId} mesSelecionado={mesSelecionado} />
-
-      <BlocoPerguntas usuarioId={usuarioId} />
-
+  const lateralInfo = (
+    <>
       {catOrdenadas.length > 0 && (
         <div style={s.secao}>
           <p style={s.secaoTitulo}>Concentração de gastos</p>
@@ -231,29 +258,35 @@ export default function Dashboard({
           </div>
         </div>
       )}
+
+      <BlocoAnalise usuarioId={usuarioId} mesSelecionado={mesSelecionado} />
+
+      <BlocoPerguntas usuarioId={usuarioId} />
     </>
   )
 
-  // ── Layout mobile: coluna única ───────────────────────────────────────────
+  // ── Layout mobile: coluna única, saldo no topo ────────────────────────────
   if (isMobile) {
     return (
       <div style={s.root}>
+        {!semDados && cardsSaldo}
         {lancamento}
-        {!semDados && lateral}
         {blocos}
+        {!semDados && lateralInfo}
       </div>
     )
   }
 
-  // ── Layout desktop: 2 colunas ─────────────────────────────────────────────
+  // ── Layout desktop: saldo em destaque no topo, blocos + sidebar abaixo ────
   return (
-    <div style={s.rootGrid}>
-      <div style={s.colPrincipal}>
-        {lancamento}
-        {blocos}
+    <div style={s.root}>
+      <div style={s.topRow}>
+        <div style={s.topSaldo}>{cardsSaldo}</div>
+        {mostrarLancamento && <div style={s.topLancamento}>{lancamento}</div>}
       </div>
-      <div style={s.colLateral}>
-        {lateral}
+      <div style={s.rootGrid}>
+        <div style={s.colPrincipal}>{blocos}</div>
+        <div style={s.colLateral}>{lateralInfo}</div>
       </div>
     </div>
   )
@@ -263,9 +296,9 @@ export default function Dashboard({
 
 function CardDestaque({ valor }) {
   const positivo = valor >= 0
-  const cor = positivo ? '#16a34a' : '#dc2626'
+  const cor = positivo ? 'var(--verde-profundo)' : '#dc2626'
   return (
-    <div style={{ ...s.cardDestaque, borderTop: `4px solid ${cor}` }}>
+    <div style={{ ...s.cardDestaque, borderTop: `5px solid ${cor}`, background: positivo ? '#E8F2EC' : '#fff5f5' }}>
       <div style={s.cardDestaqueEsq}>
         <span style={s.cardLabel}>Saldo do Mês</span>
         <span style={{ ...s.cardDestaqueValor, color: cor }}>{fmtSaldo(valor)}</span>
@@ -281,7 +314,7 @@ function CardDestaque({ valor }) {
 
 function CardSaldo({ label, valor, sub }) {
   const positivo = valor >= 0
-  const cor = positivo ? '#16a34a' : '#dc2626'
+  const cor = positivo ? 'var(--verde-profundo)' : '#dc2626'
   return (
     <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
       <span style={s.cardLabel}>{label}</span>
@@ -297,6 +330,32 @@ function CardNeutro({ label, valor, sub }) {
       <span style={s.cardLabel}>{label}</span>
       <span style={{ ...s.cardValor, color: '#b45309' }}>R$ {fmt(valor)}</span>
       <span style={s.cardSub}><span style={{ color: '#f59e0b' }}>● </span>{sub}</span>
+    </div>
+  )
+}
+
+// ── Card comparativo (vs mês anterior) ───────────────────────────────────────
+
+function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnterior, mesAtualISO, mesAnteriorISO: mesAntISO }) {
+  if (percentualVariacao === null) {
+    return (
+      <div style={{ ...s.card, borderTop: '3px solid #e2e8f0' }}>
+        <span style={s.cardLabel}>VS MÊS ANTERIOR</span>
+        <span style={{ fontSize: 16, fontWeight: 600, color: '#94a3b8', lineHeight: 1.3 }}>Sem histórico</span>
+        <span style={s.cardSub}>Volte no próximo mês para comparar</span>
+      </div>
+    )
+  }
+  const subindo = percentualVariacao > 0
+  const cor = subindo ? '#dc2626' : 'var(--verde-profundo)'
+  const seta = subindo ? '▲' : '▼'
+  return (
+    <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
+      <span style={s.cardLabel}>VS MÊS ANTERIOR</span>
+      <span style={{ ...s.cardValor, color: cor }}>{seta} {Math.abs(percentualVariacao).toFixed(1)}%</span>
+      <span style={s.cardSub}>
+        R$ {fmt(despesaMesAtual)} em {labelMes(mesAtualISO)} vs R$ {fmt(despesaMesAnterior)} em {labelMes(mesAntISO)}
+      </span>
     </div>
   )
 }
@@ -498,6 +557,12 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
   const [novoTipo, setNovoTipo]           = useState(t.tipo)
   const [salvando, setSalvando]           = useState(false)
 
+  const isMobile       = useIsMobile()
+  const hoje           = new Date()
+  const mesAtualISO    = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+  const vencida        = t.status === 'pendente' && t.mes_referencia === mesAtualISO && t.dia_pagamento < hoje.getDate()
+  const iconBtnMobile  = isMobile ? { minWidth: 44, minHeight: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}
+
   const valorNum       = Number(t.valor)
   const podeEditarTipo = !t.total_parcelas && !t.recorrente
 
@@ -572,7 +637,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
   }
 
   return (
-    <div style={{ ...s.linha, opacity: salvando ? 0.45 : 1 }}>
+    <div style={{ ...s.linha, opacity: salvando ? 0.45 : 1, ...(vencida ? { background: '#fff1f1' } : {}) }}>
       <div style={s.linhaEsq}>
         {editandoDia ? (
           <input
@@ -591,7 +656,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           />
         ) : (
           <span
-            style={{ ...s.diaTag, borderColor: cor, color: cor, cursor: 'pointer' }}
+            style={{ ...s.diaTag, borderColor: cor, color: cor, cursor: 'pointer', ...(isMobile ? { minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
             onClick={() => { setNovoDia(String(t.dia_pagamento)); setEditandoDia(true) }}
             title="Clique para editar o dia"
           >
@@ -719,7 +784,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
         </div>
       </div>
 
-      <div style={s.linhaDir}>
+      <div style={{ ...s.linhaDir, ...(isMobile ? { gap: 2 } : {}) }}>
         {editandoValor ? (
           <input
             autoFocus
@@ -742,32 +807,27 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           </span>
         )}
 
-        {mostrarStatus && (() => {
-          const hoje         = new Date()
-          const mesAtualISO  = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
-          const vencida      = t.status === 'pendente'
-                            && t.mes_referencia === mesAtualISO
-                            && t.dia_pagamento < hoje.getDate()
-          return (
-            <button
-              onClick={toggleStatus}
-              disabled={salvando}
-              style={{
-                ...s.statusBtn,
-                background: t.status === 'pago' ? '#dcfce7' : vencida ? '#fee2e2' : '#fef9c3',
-                color:      t.status === 'pago' ? '#15803d' : vencida ? '#b91c1c' : '#92400e',
-              }}
-            >
-              {t.status === 'pago' ? 'Pago' : vencida ? '⚠ Vencida' : 'Pendente'}
-            </button>
-          )
-        })()}
+        {mostrarStatus && (
+          <button
+            onClick={toggleStatus}
+            disabled={salvando}
+            style={{
+              ...s.statusBtn,
+              background: t.status === 'pago' ? '#dcfce7' : vencida ? '#fee2e2' : '#fef9c3',
+              color:      t.status === 'pago' ? '#15803d' : vencida ? '#b91c1c' : '#92400e',
+              ...(vencida ? { border: '1px solid #fca5a5', fontWeight: 700 } : {}),
+              ...(isMobile ? { minHeight: 40, padding: '0 12px', display: 'flex', alignItems: 'center' } : {}),
+            }}
+          >
+            {t.status === 'pago' ? 'Pago' : vencida ? '⚠ Vencida' : 'Pendente'}
+          </button>
+        )}
 
         {mostrarRecorrente && !t.total_parcelas && (
           <button
             onClick={toggleRecorrente}
             disabled={salvando}
-            style={{ ...s.iconBtn, color: t.recorrente ? cor : '#d1d5db' }}
+            style={{ ...s.iconBtn, color: t.recorrente ? cor : '#d1d5db', ...iconBtnMobile }}
             title={t.recorrente ? 'Remover recorrência' : 'Tornar recorrente'}
           >↺</button>
         )}
@@ -775,7 +835,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
         <button
           onClick={onDuplicar}
           disabled={salvando}
-          style={{ ...s.iconBtn, color: '#d1d5db', fontSize: 14 }}
+          style={{ ...s.iconBtn, color: '#d1d5db', fontSize: 14, ...iconBtnMobile }}
           title="Duplicar lançamento"
         >⧉</button>
 
@@ -783,7 +843,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           <button
             onClick={handleCancelarParcelas}
             disabled={salvando}
-            style={{ ...s.iconBtn, color: '#f97316', fontSize: 14 }}
+            style={{ ...s.iconBtn, color: '#f97316', fontSize: 14, ...iconBtnMobile }}
             title="Cancelar parcelas futuras"
           >⊗</button>
         )}
@@ -791,7 +851,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
         <button
           onClick={onRemover}
           disabled={removendo}
-          style={{ ...s.iconBtn, color: '#d1d5db' }}
+          style={{ ...s.iconBtn, color: '#d1d5db', ...iconBtnMobile }}
           title="Remover"
         >×</button>
       </div>
@@ -987,11 +1047,16 @@ const s = {
   rootGrid: { display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' },
 
   // Colunas desktop
-  colPrincipal: { display: 'flex', flexDirection: 'column', gap: 20 },
+  colPrincipal:  { display: 'flex', flexDirection: 'column', gap: 20 },
   colLateral: {
     display: 'flex', flexDirection: 'column', gap: 20,
     position: 'sticky', top: 24, alignSelf: 'start',
   },
+
+  // Topo desktop: saldo (destaque) + botão de lançamento (compacto)
+  topRow:       { display: 'flex', gap: 24, alignItems: 'flex-start' },
+  topSaldo:     { flex: 1, minWidth: 0 },
+  topLancamento: { width: 360, flexShrink: 0 },
 
   placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
   placeholderTexto: { margin: 0, color: '#64748b' },
@@ -1003,7 +1068,7 @@ const s = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
   },
   cardDestaqueEsq:   { display: 'flex', flexDirection: 'column', gap: 2 },
-  cardDestaqueValor: { fontSize: 32, fontWeight: 800, lineHeight: 1.1 },
+  cardDestaqueValor: { fontSize: 38, fontWeight: 800, lineHeight: 1.1 },
   cardDestaqueSub:   { fontSize: 13, fontWeight: 500 },
   cardRow:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 },
   card: {
@@ -1012,7 +1077,7 @@ const s = {
     display: 'flex', flexDirection: 'column', gap: 4,
   },
   cardLabel: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
-  cardValor: { fontSize: 22, fontWeight: 800, lineHeight: 1.15 },
+  cardValor: { fontSize: 26, fontWeight: 800, lineHeight: 1.15 },
   cardSub:   { fontSize: 12, color: '#64748b', marginTop: 2 },
 
   // Seção de categorias
@@ -1024,7 +1089,7 @@ const s = {
   barraNome:   { fontSize: 13, fontWeight: 500, color: '#334155', textTransform: 'capitalize' },
   barraInfo:   { fontSize: 13, color: '#475569' },
   barraPct:    { color: '#94a3b8', fontSize: 12, marginLeft: 4 },
-  barraTrilho: { height: 7, background: '#f1f5f9', borderRadius: 99, overflow: 'hidden' },
+  barraTrilho: { height: 7, background: '#EEE5D8', borderRadius: 99, overflow: 'hidden' },
   barraFill:   { height: '100%', borderRadius: 99, transition: 'width 0.5s ease' },
 
   // Blocos de transações
@@ -1036,15 +1101,15 @@ const s = {
   patrimonioLabel: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'right', marginBottom: 2 },
   blocoResumo:     { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   pill:            { padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 600 },
-  separador:       { height: 1, background: '#f1f5f9', margin: '10px -20px' },
+  separador:       { height: 1, background: 'var(--surface-line)', margin: '10px -20px' },
   blocoVazio:      { margin: '2px 0 0', fontSize: 13, color: '#cbd5e1', fontStyle: 'italic' },
   avisoNegativo:   { display: 'block', fontSize: 10, color: '#dc2626', marginTop: 1, fontStyle: 'italic' },
   aplicSec:        { display: 'flex', flexDirection: 'column', gap: 0 },
   aplicSecTitulo:  { margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' },
 
   // Linhas
-  linha:           { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid #f8fafc', gap: 8 },
-  linhaPatrimonio: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #f8fafc' },
+  linha:           { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--surface-line)', gap: 8 },
+  linhaPatrimonio: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid var(--surface-line)' },
   linhaPatrimonioEsq: { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
   linhaEsq:        { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0, flex: 1 },
   diaTag: {
@@ -1118,13 +1183,13 @@ const s = {
   },
   analiseBotao: {
     padding: '6px 14px', borderRadius: 6, border: 'none',
-    background: '#1a1a2e', color: '#fff',
+    background: 'var(--verde-profundo)', color: 'var(--creme-header)',
     fontSize: 12, fontWeight: 600, cursor: 'pointer',
   },
   analiseDica:       { margin: 0, fontSize: 13, color: '#94a3b8' },
   analiseConteudo:   { display: 'flex', flexDirection: 'column', gap: 12 },
   analiseResumo:     { margin: 0, fontSize: 15, fontWeight: 500, color: '#1e293b', lineHeight: 1.55 },
-  analiseSeparador:  { height: 1, background: '#f1f5f9' },
+  analiseSeparador:  { height: 1, background: 'var(--surface-line)' },
   analisePonto:      { display: 'flex', flexDirection: 'column', gap: 3 },
   analisePontoHeader: { display: 'flex', alignItems: 'center', gap: 6 },
   analisePontoTitulo: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' },
@@ -1144,8 +1209,8 @@ const s = {
   // Campo colapsável de lançamento
   lancamentoBotaoExpandir: {
     display: 'block', width: '100%', padding: '16px',
-    borderRadius: 12, border: '2px dashed #e2e8f0',
-    background: '#fff', color: '#6366f1',
+    borderRadius: 12, border: '2px dashed #BDD5CC',
+    background: '#fff', color: 'var(--verde-profundo)',
     fontSize: 15, fontWeight: 600, cursor: 'pointer',
     textAlign: 'center', boxSizing: 'border-box',
     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
@@ -1162,7 +1227,7 @@ const s = {
   perguntaBotao: {
     alignSelf: 'flex-end',
     padding: '7px 16px', borderRadius: 6, border: 'none',
-    background: '#1a1a2e', color: '#fff',
+    background: 'var(--verde-profundo)', color: 'var(--creme-header)',
     fontSize: 12, fontWeight: 600, cursor: 'pointer',
   },
   perguntaDica:     { margin: '10px 0 0', fontSize: 13, color: '#94a3b8' },

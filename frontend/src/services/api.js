@@ -102,6 +102,15 @@ export async function cancelarParcelasGrupo(grupoParcela_id, usuarioId) {
   return json
 }
 
+export async function buscarComparativoMensal(usuarioId, mesReferencia) {
+  const res = await fetch(`${BASE_URL}/transacoes/comparativo-mensal?mes=${mesReferencia}`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar comparativo mensal')
+  return json
+}
+
 export async function removerTransacao(id, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/${id}`, {
     method: 'DELETE',

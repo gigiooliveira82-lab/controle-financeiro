@@ -5,6 +5,16 @@ import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import RedefinirSenha from './components/RedefinirSenha'
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 500)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 500)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 function mesISOHoje() {
   const hoje = new Date()
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
@@ -30,6 +40,7 @@ export default function App() {
   const [carregandoDados, setCarregandoDados] = useState(false)
   const [mesSelecionado, setMesSelecionado]   = useState(mesISOHoje)
   const [modoRedefinir, setModoRedefinir] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -99,14 +110,16 @@ export default function App() {
 
   return (
     <div style={estilos.pagina}>
-      <header style={estilos.header}>
+      <header style={{ ...estilos.header, padding: isMobile ? '10px 14px' : '16px 28px' }}>
         <div>
-          <h1 style={estilos.headerTitulo}>
+          <h1 style={{ ...estilos.headerTitulo, fontSize: isMobile ? 15 : 20 }}>
             <span style={estilos.headerIcone}>✦</span>Controle Financeiro
           </h1>
           <div style={estilos.navMes}>
             <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav}>‹</button>
-            <span style={estilos.headerMes}>{formatarMesHeader(mesSelecionado)}</span>
+            <span style={{ ...estilos.headerMes, minWidth: isMobile ? 110 : 140, fontSize: isMobile ? 13 : 16 }}>
+              {formatarMesHeader(mesSelecionado)}
+            </span>
             <button
               onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
               style={estilos.botaoNav}
@@ -133,7 +146,7 @@ export default function App() {
 }
 
 const estilos = {
-  pagina: { minHeight: '100vh', background: '#f0f4f8' },
+  pagina: { minHeight: '100vh', background: 'var(--creme-fundo)' },
   loading: {
     minHeight: '100vh',
     display: 'flex',
@@ -142,27 +155,27 @@ const estilos = {
     color: '#666',
   },
   header: {
-    background: 'linear-gradient(to right, #1a1a2e, #0d1b2a)',
-    color: '#fff',
+    background: 'var(--verde-profundo)',
+    color: 'var(--creme-header)',
     padding: '16px 28px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    boxShadow: '0 2px 0 0 #6366f1, 0 4px 24px rgba(0,0,0,0.35)',
+    boxShadow: '0 2px 12px rgba(31,93,69,0.30)',
   },
   headerIcone: {
-    color: '#a78bfa',
+    color: '#9DC9B5',
     marginRight: 9,
     fontSize: 14,
     verticalAlign: 'middle',
   },
   headerTitulo: { margin: '0 0 5px', fontSize: 20, fontWeight: 800, letterSpacing: '-0.01em' },
   navMes: { display: 'flex', alignItems: 'center', gap: 8 },
-  headerMes: { fontSize: 16, fontWeight: 700, color: '#fff', textTransform: 'capitalize', minWidth: 140, textAlign: 'center', letterSpacing: '0.01em' },
+  headerMes: { fontSize: 16, fontWeight: 700, color: 'var(--creme-header)', textTransform: 'capitalize', minWidth: 140, textAlign: 'center', letterSpacing: '0.01em' },
   botaoNav: {
     background: 'transparent',
     border: 'none',
-    color: '#c4b5fd',
+    color: '#9DC9B5',
     fontSize: 24,
     cursor: 'pointer',
     padding: '0 6px',
