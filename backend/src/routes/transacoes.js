@@ -4,12 +4,15 @@ import { interpretarLancamento } from '../services/ia.js'
 import { gerarAnalise } from '../services/analise.js'
 import { responderPergunta } from '../services/pergunta.js'
 import supabase from '../services/supabase.js'
+import autenticar from '../middleware/autenticar.js'
 
 const router = Router()
 
+router.use(autenticar)
+
 // POST /transacoes/analise-mes/:usuario_id — análise inteligente do mês via IA
 router.post('/analise-mes/:usuario_id', async (req, res) => {
-  const { usuario_id } = req.params
+  const usuario_id = req.usuarioId
   const { mes_referencia } = req.body
 
   if (!mes_referencia) {
@@ -149,7 +152,7 @@ router.post('/analise-mes/:usuario_id', async (req, res) => {
 
 // POST /transacoes/pergunta/:usuario_id — responde perguntas em linguagem natural sobre os dados do usuário
 router.post('/pergunta/:usuario_id', async (req, res) => {
-  const { usuario_id } = req.params
+  const usuario_id = req.usuarioId
   const { pergunta } = req.body
 
   if (!pergunta || !pergunta.trim()) {
@@ -306,7 +309,7 @@ router.post('/pergunta/:usuario_id', async (req, res) => {
 
 // GET /transacoes/acumulados-aplicacao/:usuario_id — patrimônio acumulado até hoje por aplicação
 router.get('/acumulados-aplicacao/:usuario_id', async (req, res) => {
-  const { usuario_id } = req.params
+  const usuario_id = req.usuarioId
 
   const hoje = new Date()
   const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
@@ -340,10 +343,11 @@ router.get('/acumulados-aplicacao/:usuario_id', async (req, res) => {
 
 // POST /transacoes/gerar-recorrentes — copia recorrentes do mês anterior para o mês atual
 router.post('/gerar-recorrentes', async (req, res) => {
-  const { usuario_id, mes_referencia } = req.body
+  const { mes_referencia } = req.body
+  const usuario_id = req.usuarioId
 
-  if (!usuario_id || !mes_referencia) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: usuario_id, mes_referencia' })
+  if (!mes_referencia) {
+    return res.status(400).json({ erro: 'Campo obrigatório: mes_referencia' })
   }
 
   const [ano, mes] = mes_referencia.split('-').map(Number)
@@ -399,10 +403,11 @@ router.post('/gerar-recorrentes', async (req, res) => {
 
 // POST /transacoes/lancar — recebe texto livre, IA categoriza e salva
 router.post('/lancar', async (req, res) => {
-  const { texto, usuario_id } = req.body
+  const { texto } = req.body
+  const usuario_id = req.usuarioId
 
-  if (!texto || !usuario_id) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: texto, usuario_id' })
+  if (!texto) {
+    return res.status(400).json({ erro: 'Campo obrigatório: texto' })
   }
 
   let dadosIA
@@ -514,10 +519,11 @@ router.post('/lancar', async (req, res) => {
 
 // POST /transacoes/duplicar — cria cópia de uma transação com status pendente
 router.post('/duplicar', async (req, res) => {
-  const { transacao_id, usuario_id } = req.body
+  const { transacao_id } = req.body
+  const usuario_id = req.usuarioId
 
-  if (!transacao_id || !usuario_id) {
-    return res.status(400).json({ erro: 'Campos obrigatórios: transacao_id, usuario_id' })
+  if (!transacao_id) {
+    return res.status(400).json({ erro: 'Campo obrigatório: transacao_id' })
   }
 
   const { data: original, error: erroBusca } = await supabase
@@ -548,10 +554,11 @@ router.post('/duplicar', async (req, res) => {
 
 // DELETE /transacoes/parcelas/grupo/:grupo_parcela_id/:usuario_id — cancela parcelas futuras de um grupo
 router.delete('/parcelas/grupo/:grupo_parcela_id/:usuario_id', async (req, res) => {
-  const { grupo_parcela_id, usuario_id } = req.params
+  const { grupo_parcela_id } = req.params
+  const usuario_id = req.usuarioId
 
-  if (!grupo_parcela_id || !usuario_id) {
-    return res.status(400).json({ erro: 'Parâmetros obrigatórios: grupo_parcela_id, usuario_id' })
+  if (!grupo_parcela_id) {
+    return res.status(400).json({ erro: 'Parâmetro obrigatório: grupo_parcela_id' })
   }
 
   const hoje        = new Date()
@@ -574,7 +581,7 @@ router.delete('/parcelas/grupo/:grupo_parcela_id/:usuario_id', async (req, res) 
 
 // GET /transacoes/:usuario_id — lista transações do mês atual
 router.get('/:usuario_id', async (req, res) => {
-  const { usuario_id } = req.params
+  const usuario_id = req.usuarioId
   const { mes } = req.query
 
   const hoje = new Date()
@@ -597,11 +604,8 @@ router.get('/:usuario_id', async (req, res) => {
 // PUT /transacoes/:id — atualiza campos de uma transação
 router.put('/:id', async (req, res) => {
   const { id } = req.params
-  const { usuario_id, valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria, tipo } = req.body
-
-  if (!usuario_id) {
-    return res.status(400).json({ erro: 'Campo obrigatório: usuario_id' })
-  }
+  const usuario_id = req.usuarioId
+  const { valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria, tipo } = req.body
 
   const TIPOS_VALIDOS = ['despesa_fixa', 'despesa_variavel', 'credito', 'aplicacao']
 
@@ -640,11 +644,7 @@ router.put('/:id', async (req, res) => {
 // DELETE /transacoes/:id — remove uma transação
 router.delete('/:id', async (req, res) => {
   const { id } = req.params
-  const { usuario_id } = req.body
-
-  if (!usuario_id) {
-    return res.status(400).json({ erro: 'Campo obrigatório: usuario_id' })
-  }
+  const usuario_id = req.usuarioId
 
   const { error } = await supabase
     .from('transacoes')

@@ -1,10 +1,17 @@
+import { supabase } from './supabase.js'
+
 const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
+
+async function headersAuth() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return { Authorization: `Bearer ${session?.access_token ?? ''}` }
+}
 
 export async function lancarTexto(texto, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/lancar`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ texto, usuario_id: usuarioId }),
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify({ texto }),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao lançar transação')
@@ -13,7 +20,9 @@ export async function lancarTexto(texto, usuarioId) {
 
 export async function buscarTransacoes(usuarioId, mes) {
   const params = mes ? `?mes=${mes}` : ''
-  const res = await fetch(`${BASE_URL}/transacoes/${usuarioId}${params}`)
+  const res = await fetch(`${BASE_URL}/transacoes/${usuarioId}${params}`, {
+    headers: await headersAuth(),
+  })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao buscar transações')
   return json.transacoes
@@ -22,7 +31,7 @@ export async function buscarTransacoes(usuarioId, mes) {
 export async function gerarAnaliseMes(usuarioId, mesReferencia) {
   const res = await fetch(`${BASE_URL}/transacoes/analise-mes/${usuarioId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
     body: JSON.stringify({ mes_referencia: mesReferencia }),
   })
   const json = await res.json()
@@ -31,7 +40,9 @@ export async function gerarAnaliseMes(usuarioId, mesReferencia) {
 }
 
 export async function buscarAcumuladosAplicacao(usuarioId) {
-  const res = await fetch(`${BASE_URL}/transacoes/acumulados-aplicacao/${usuarioId}`)
+  const res = await fetch(`${BASE_URL}/transacoes/acumulados-aplicacao/${usuarioId}`, {
+    headers: await headersAuth(),
+  })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao buscar acumulados')
   return json.acumulados
@@ -40,8 +51,8 @@ export async function buscarAcumuladosAplicacao(usuarioId) {
 export async function gerarRecorrentes(usuarioId, mesReferencia) {
   const res = await fetch(`${BASE_URL}/transacoes/gerar-recorrentes`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ usuario_id: usuarioId, mes_referencia: mesReferencia }),
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify({ mes_referencia: mesReferencia }),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao gerar recorrentes')
@@ -51,8 +62,8 @@ export async function gerarRecorrentes(usuarioId, mesReferencia) {
 export async function atualizarTransacao(id, usuarioId, campos) {
   const res = await fetch(`${BASE_URL}/transacoes/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ usuario_id: usuarioId, ...campos }),
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(campos),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao atualizar transação')
@@ -62,8 +73,8 @@ export async function atualizarTransacao(id, usuarioId, campos) {
 export async function duplicarTransacao(transacaoId, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/duplicar`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ transacao_id: transacaoId, usuario_id: usuarioId }),
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify({ transacao_id: transacaoId }),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao duplicar')
@@ -73,7 +84,7 @@ export async function duplicarTransacao(transacaoId, usuarioId) {
 export async function perguntarSobreFinancas(usuarioId, pergunta) {
   const res = await fetch(`${BASE_URL}/transacoes/pergunta/${usuarioId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
     body: JSON.stringify({ pergunta }),
   })
   const json = await res.json()
@@ -84,6 +95,7 @@ export async function perguntarSobreFinancas(usuarioId, pergunta) {
 export async function cancelarParcelasGrupo(grupoParcela_id, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/parcelas/grupo/${grupoParcela_id}/${usuarioId}`, {
     method: 'DELETE',
+    headers: await headersAuth(),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao cancelar parcelas')
@@ -93,8 +105,7 @@ export async function cancelarParcelasGrupo(grupoParcela_id, usuarioId) {
 export async function removerTransacao(id, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/${id}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ usuario_id: usuarioId }),
+    headers: await headersAuth(),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao remover transação')
