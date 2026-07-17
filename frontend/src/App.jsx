@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useIsNavMobile } from './hooks/useIsNavMobile'
 import { supabase } from './services/supabase'
 import { buscarTransacoes, gerarRecorrentes } from './services/api'
 import Login from './components/Login'
@@ -15,16 +16,6 @@ function useIsMobileHeader() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 500)
   useEffect(() => {
     const fn = () => setMobile(window.innerWidth < 500)
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
-  return mobile
-}
-
-function useIsNavMobile() {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
-  useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 768)
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
   }, [])

@@ -1,33 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { supabase } from '../services/supabase'
-
-function useIsLoginMobile() {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 1024)
-  useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 1024)
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
-  return mobile
-}
-
-function LogoMarca({ size = 26, rayColor = 'rgba(255,255,255,0.82)' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-      <circle cx="16" cy="16" r="5" fill="#F2C84B" />
-      <g stroke={rayColor} strokeWidth="2.2" strokeLinecap="round">
-        <line x1="16"   y1="3.5"  x2="16"   y2="8.5"  />
-        <line x1="16"   y1="23.5" x2="16"   y2="28.5" />
-        <line x1="3.5"  y1="16"   x2="8.5"  y2="16"   />
-        <line x1="23.5" y1="16"   x2="28.5" y2="16"   />
-        <line x1="10.7" y1="10.7" x2="7.2"  y2="7.2"  />
-        <line x1="21.3" y1="10.7" x2="24.8" y2="7.2"  />
-        <line x1="10.7" y1="21.3" x2="7.2"  y2="24.8" />
-        <line x1="21.3" y1="21.3" x2="24.8" y2="24.8" />
-      </g>
-    </svg>
-  )
-}
+import { useIsMobile } from './Dashboard'
+import LogoMarca from './LogoMarca'
 
 function SolDecorativo({ size = 360, style = {} }) {
   const cx = size / 2, cy = size / 2
@@ -64,16 +38,16 @@ export default function Login({ onLogin }) {
   const [enviando, setEnviando]   = useState(false)
   const [enviado, setEnviado]     = useState(false)
   const [erroRec, setErroRec]     = useState('')
-  const isMobile = useIsLoginMobile()
+  const isMobile = useIsMobile()
 
   async function handleLogin(e) {
     e.preventDefault()
     setErro('')
     setCarregando(true)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
+    setCarregando(false)
     if (error) setErro('Email ou senha incorretos.')
     else onLogin(data.user)
-    setCarregando(false)
   }
 
   async function handleRecuperar(e) {
@@ -201,17 +175,8 @@ export default function Login({ onLogin }) {
     </div>
   )
 
-  if (isMobile) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        {painelEsq}
-        {formulario}
-      </div>
-    )
-  }
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh' }}>
       {painelEsq}
       {formulario}
     </div>
