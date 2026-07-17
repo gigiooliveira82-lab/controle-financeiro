@@ -51,7 +51,7 @@ export default function Login({ onLogin }) {
   return (
     <div style={estilos.container}>
       <div style={estilos.card}>
-        <h1 style={estilos.titulo}>Controle Financeiro</h1>
+        <h1 style={estilos.titulo}>Contas Claras</h1>
 
         {!modoRecuperar ? (
           <>

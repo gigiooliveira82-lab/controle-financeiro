@@ -1,4 +1,4 @@
-# PRD — Controle Financeiro
+# PRD — Contas Claras
 
 ## 1. Visão geral
 

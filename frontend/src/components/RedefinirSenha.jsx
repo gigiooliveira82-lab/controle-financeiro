@@ -35,7 +35,7 @@ export default function RedefinirSenha({ onConcluido }) {
   return (
     <div style={e.container}>
       <div style={e.card}>
-        <h1 style={e.titulo}>Controle Financeiro</h1>
+        <h1 style={e.titulo}>Contas Claras</h1>
         <p style={e.subtitulo}>Defina sua nova senha</p>
 
         {sucesso ? (

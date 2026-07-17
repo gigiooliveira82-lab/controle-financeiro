@@ -11,6 +11,29 @@ function useIsNavMobile() {
   return mobile
 }
 
+function LogoMarca({ size = 30 }) {
+  return (
+    <svg
+      width={size} height={size}
+      viewBox="0 0 32 32"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ flexShrink: 0 }}
+    >
+      <circle cx="16" cy="16" r="5" fill="#F2C84B" />
+      <g stroke="rgba(255,255,255,0.82)" strokeWidth="2.2" strokeLinecap="round">
+        <line x1="16"   y1="3.5"  x2="16"   y2="8.5"  />
+        <line x1="16"   y1="23.5" x2="16"   y2="28.5" />
+        <line x1="3.5"  y1="16"   x2="8.5"  y2="16"   />
+        <line x1="23.5" y1="16"   x2="28.5" y2="16"   />
+        <line x1="10.7" y1="10.7" x2="7.2"  y2="7.2"  />
+        <line x1="21.3" y1="10.7" x2="24.8" y2="7.2"  />
+        <line x1="10.7" y1="21.3" x2="7.2"  y2="24.8" />
+        <line x1="21.3" y1="21.3" x2="24.8" y2="24.8" />
+      </g>
+    </svg>
+  )
+}
+
 const NAV_ITENS = [
   { path: '/dashboard',     icone: '⊡', label: 'Dashboard',     curto: 'Dashboard'  },
   { path: '/despesas',      icone: '≡',  label: 'Despesas',      curto: 'Despesas'   },
@@ -47,9 +70,10 @@ export default function NavLateral({ qtdVencidas }) {
   return (
     <nav style={st.sidebar}>
       <div style={st.sidebarLogo}>
-        <span style={{ color: '#9DC9B5', fontSize: 18 }}>✦</span>
-        <span style={st.sidebarLogoText}>Controle<br />Financeiro</span>
+        <LogoMarca size={30} />
+        <span style={st.sidebarLogoText}>Contas<br />Claras</span>
       </div>
+
       {NAV_ITENS.map(item => (
         <NavLink
           key={item.path}
@@ -81,13 +105,13 @@ const st = {
     boxShadow: '2px 0 8px rgba(31,93,69,0.15)',
   },
   sidebarLogo: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '0 6px 24px', marginBottom: 12,
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '0 4px 28px', marginBottom: 16,
     borderBottom: '1px solid rgba(255,255,255,0.12)',
   },
   sidebarLogoText: {
-    color: 'var(--creme-header)', fontWeight: 800, fontSize: 14,
-    letterSpacing: '-0.01em', lineHeight: 1.3,
+    color: 'var(--creme-header)', fontWeight: 800, fontSize: 17,
+    letterSpacing: '-0.02em', lineHeight: 1.2,
   },
   sidebarItem: {
     display: 'flex', alignItems: 'center', gap: 11,
