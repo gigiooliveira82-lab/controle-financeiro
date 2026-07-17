@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { fmtBRL, fmtNum } from '../utils/fmt'
 import { gerarAnaliseMes, perguntarSobreFinancas } from '../services/api'
@@ -311,6 +311,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
   const [editandoTipo, setEditandoTipo]   = useState(false)
   const [novoTipo, setNovoTipo]           = useState(t.tipo)
   const [salvando, setSalvando]           = useState(false)
+  const tipoEsperadoRef                   = useRef(null)
 
   const isMobile       = useIsMobile()
   const hoje           = new Date()
@@ -320,6 +321,15 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
 
   const valorNum       = Number(t.valor)
   const podeEditarTipo = !t.total_parcelas && !t.recorrente
+
+  // Reset salvando only after the parent re-delivers the updated t.tipo prop,
+  // preventing a second click in the gap between API resolve and re-render.
+  useEffect(() => {
+    if (tipoEsperadoRef.current !== null && t.tipo === tipoEsperadoRef.current) {
+      tipoEsperadoRef.current = null
+      setSalvando(false)
+    }
+  }, [t.tipo])
 
   async function toggleStatus() {
     if (salvando) return
@@ -395,11 +405,19 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
     if (salvando) return
     const destino   = t.tipo === 'despesa_fixa' ? 'despesa_variavel' : 'despesa_fixa'
     const labelDest = destino === 'despesa_fixa' ? 'Despesas Fixas' : 'Despesas Variáveis'
+    tipoEsperadoRef.current = destino
     setSalvando(true)
     try {
-      await onAtualizar({ tipo: destino })
-      onMoverTipo?.(`Movido para ${labelDest}`)
-    } finally {
+      const ok = await onAtualizar({ tipo: destino })
+      if (ok) {
+        onMoverTipo?.(`Movido para ${labelDest}`)
+        // salvando stays true until useEffect detects t.tipo === destino
+      } else {
+        tipoEsperadoRef.current = null
+        setSalvando(false)
+      }
+    } catch {
+      tipoEsperadoRef.current = null
       setSalvando(false)
     }
   }
@@ -607,7 +625,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           title="Duplicar lançamento"
         >⧉</button>
 
-        {(t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && (
+        {(t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && podeEditarTipo && (
           <button
             onClick={moverTipo}
             disabled={salvando}

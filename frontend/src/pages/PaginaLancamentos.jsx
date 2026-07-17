@@ -70,7 +70,8 @@ export default function PaginaLancamentos({
     setExpandido(false)
   }
 
-  const semDados = transacoes.filter(t => TIPOS.includes(t.tipo)).length === 0
+  const semDados      = transacoes.filter(t => TIPOS.includes(t.tipo)).length === 0
+  const semResultados = !semDados && !!termoBusca && TIPOS.every(tipo => byTipo(tipo).length === 0)
 
   const lancamento = mostrarLancamento && (
     expandido ? (
@@ -111,6 +112,14 @@ export default function PaginaLancamentos({
         <div style={l.placeholder}>
           <p style={{ ...l.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhuma despesa neste mês.</p>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o campo acima para adicionar o primeiro lançamento.</p>
+        </div>
+      ) : semResultados ? (
+        <div style={l.placeholder}>
+          <p style={{ ...l.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhum resultado para "{termoBusca}"</p>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>
+            Tente outro termo ou{' '}
+            <button onClick={() => setBusca('')} style={l.linkBtn}>limpar a busca</button>.
+          </p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
@@ -166,5 +175,10 @@ const l = {
     background: 'none', border: 'none',
     color: '#94a3b8', fontSize: 13,
     cursor: 'pointer', padding: '4px 6px',
+  },
+  linkBtn: {
+    background: 'none', border: 'none',
+    color: 'var(--verde-profundo)', fontSize: 13, fontWeight: 600,
+    cursor: 'pointer', padding: 0,
   },
 }

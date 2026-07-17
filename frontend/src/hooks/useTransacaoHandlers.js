@@ -21,8 +21,10 @@ export function useTransacaoHandlers({ usuarioId, mesSelecionado, transacoes, on
     try {
       const atualizada = await atualizarTransacao(id, usuarioId, campos)
       onAtualizou(id, atualizada)
+      return true
     } catch (err) {
       alert('Erro ao atualizar: ' + err.message)
+      return false
     }
   }
 
