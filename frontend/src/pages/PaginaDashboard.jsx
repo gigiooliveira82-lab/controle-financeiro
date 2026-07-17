@@ -125,34 +125,53 @@ export default function PaginaDashboard({
     </div>
   )
 
+  const colDir = (
+    <div style={p.colDir}>
+      {catOrdenadas.length > 0 && (
+        <div style={p.secao}>
+          <p style={p.secaoTitulo}>Concentração de gastos</p>
+          <div style={p.barrasWrap}>
+            {catOrdenadas.map(([cat, val]) => (
+              <BarraCategoria
+                key={cat}
+                categoria={cat}
+                valor={val}
+                total={totalDespesa}
+                cor={COR_CAT[cat] || '#94a3b8'}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      <BlocoAnalise usuarioId={usuarioId} mesSelecionado={mesSelecionado} />
+      <BlocoPerguntas usuarioId={usuarioId} />
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <div style={p.root}>
+        {lancamento}
+        {!semDados && cardsSaldo}
+        {mesSelecionado === mesHojeISO && proximosVencimentos.length > 0 && (
+          <ProximosVencimentos items={proximosVencimentos} diaHoje={diaHoje} />
+        )}
+        {colDir}
+      </div>
+    )
+  }
+
   return (
     <div style={p.root}>
       {lancamento}
-      {!semDados && cardsSaldo}
-
-      {mesSelecionado === mesHojeISO && proximosVencimentos.length > 0 && (
-        <ProximosVencimentos items={proximosVencimentos} diaHoje={diaHoje} />
-      )}
-
-      <div style={isMobile ? p.lateralMobile : p.lateralDesktop}>
-        {catOrdenadas.length > 0 && (
-          <div style={p.secao}>
-            <p style={p.secaoTitulo}>Concentração de gastos</p>
-            <div style={p.barrasWrap}>
-              {catOrdenadas.map(([cat, val]) => (
-                <BarraCategoria
-                  key={cat}
-                  categoria={cat}
-                  valor={val}
-                  total={totalDespesa}
-                  cor={COR_CAT[cat] || '#94a3b8'}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        <BlocoAnalise usuarioId={usuarioId} mesSelecionado={mesSelecionado} />
-        <BlocoPerguntas usuarioId={usuarioId} />
+      <div style={p.grid}>
+        <div style={p.colEsq}>
+          {!semDados && cardsSaldo}
+          {mesSelecionado === mesHojeISO && proximosVencimentos.length > 0 && (
+            <ProximosVencimentos items={proximosVencimentos} diaHoje={diaHoje} />
+          )}
+        </div>
+        {colDir}
       </div>
     </div>
   )
@@ -220,9 +239,10 @@ const p = {
   },
   proximoValor: { fontSize: 13, fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', flexShrink: 0 },
 
-  // Lateral (concentração + análise + perguntas)
-  lateralDesktop: { display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 680 },
-  lateralMobile:  { display: 'flex', flexDirection: 'column', gap: 20 },
+  // Grid 2 colunas (desktop)
+  grid:   { display: 'grid', gridTemplateColumns: '65fr 35fr', gap: 24, alignItems: 'start' },
+  colEsq: { display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 },
+  colDir: { display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 },
   secao:       { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
   secaoTitulo: { margin: '0 0 14px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
   barrasWrap:  { display: 'flex', flexDirection: 'column', gap: 10 },
