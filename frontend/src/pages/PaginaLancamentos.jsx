@@ -10,6 +10,7 @@ export default function PaginaLancamentos({
   mostrarLancamento, onNovaTransacao, onRemoveu, onAtualizou, carregando,
 }) {
   const [expandido, setExpandido] = useState(false)
+  const [busca, setBusca]         = useState('')
   const isMobile = useIsMobile()
 
   const { removendo, handleRemover, handleAtualizar, handleDuplicar, handleCancelarGrupoParcelas } =
@@ -23,8 +24,16 @@ export default function PaginaLancamentos({
     )
   }
 
+  const termoBusca = busca.trim().toLowerCase()
+
   const byTipo = (tipo) => transacoes
-    .filter(t => t.tipo === tipo)
+    .filter(t => {
+      if (t.tipo !== tipo) return false
+      if (!termoBusca) return true
+      const descOk = (t.descricao || '').toLowerCase().includes(termoBusca)
+      const catOk  = (t.categoria || '').toLowerCase().includes(termoBusca)
+      return descOk || catOk
+    })
     .sort((a, b) => {
       const d = (a.dia_pagamento || 0) - (b.dia_pagamento || 0)
       return d !== 0 ? d : (a.criado_em || '') < (b.criado_em || '') ? -1 : 1
@@ -51,9 +60,26 @@ export default function PaginaLancamentos({
     )
   )
 
+  const campoBusca = (
+    <div style={l.buscaWrap}>
+      <span style={l.buscaIcone}>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por nome ou categoria"
+        value={busca}
+        onChange={e => setBusca(e.target.value)}
+        style={l.buscaInput}
+      />
+      {busca && (
+        <button onClick={() => setBusca('')} style={l.buscaClear}>✕</button>
+      )}
+    </div>
+  )
+
   return (
     <div style={l.root}>
       {lancamento}
+      {!semDados && campoBusca}
       {semDados ? (
         <div style={l.placeholder}>
           <p style={{ ...l.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhuma despesa neste mês.</p>
@@ -91,5 +117,26 @@ const l = {
     fontSize: 15, fontWeight: 600, cursor: 'pointer',
     textAlign: 'center', boxSizing: 'border-box',
     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+  },
+  buscaWrap: {
+    position: 'relative',
+    display: 'flex', alignItems: 'center',
+  },
+  buscaIcone: {
+    position: 'absolute', left: 12, fontSize: 18,
+    color: '#94a3b8', pointerEvents: 'none', lineHeight: 1,
+  },
+  buscaInput: {
+    width: '100%', boxSizing: 'border-box',
+    padding: '11px 36px 11px 36px',
+    borderRadius: 10, border: '1.5px solid #D1C9B8',
+    background: '#fff', fontSize: 14, color: '#1e293b',
+    outline: 'none',
+  },
+  buscaClear: {
+    position: 'absolute', right: 10,
+    background: 'none', border: 'none',
+    color: '#94a3b8', fontSize: 13,
+    cursor: 'pointer', padding: '4px 6px',
   },
 }

@@ -167,7 +167,7 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
       <div style={s.blocoResumo}>
         <Pill text={`Pago  R$ ${fmt(totalPago)}`} cor="#475569" bg="#f1f5f9" />
         {ehDespesa && totalPendente > 0 && (
-          <Pill text={`Pendente  R$ ${fmt(totalPendente)}`} cor="#92400e" bg="#fef9c3" />
+          <Pill text={`Pendente  R$ ${fmt(totalPendente)}`} cor="#5c2400" bg="#fef9c3" />
         )}
         {ehCredito && totalPendente > 0 && (
           <Pill text={`A receber  R$ ${fmt(totalPendente)}`} cor="#1d4ed8" bg="#dbeafe" />
@@ -568,7 +568,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
             style={{
               ...s.statusBtn,
               background: t.status === 'pago' ? '#dcfce7' : vencida ? '#fee2e2' : '#fef9c3',
-              color:      t.status === 'pago' ? '#15803d' : vencida ? '#b91c1c' : '#92400e',
+              color:      t.status === 'pago' ? '#15803d' : vencida ? '#b91c1c' : '#5c2400',
               ...(vencida ? { border: '1px solid #fca5a5', fontWeight: 700 } : {}),
               ...(isMobile ? { minHeight: 40, padding: '0 12px', display: 'flex', alignItems: 'center' } : {}),
             }}
