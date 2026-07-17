@@ -12,10 +12,11 @@ function useIsNavMobile() {
 }
 
 const NAV_ITENS = [
-  { path: '/dashboard',     icone: '⊡', label: 'Dashboard'  },
-  { path: '/lancamentos',   icone: '≡',  label: 'Lançamentos' },
-  { path: '/aplicacoes',    icone: '◎',  label: 'Aplicações'  },
-  { path: '/configuracoes', icone: '⚙',  label: 'Config.'     },
+  { path: '/dashboard',     icone: '⊡', label: 'Dashboard',     curto: 'Dashboard'  },
+  { path: '/despesas',      icone: '≡',  label: 'Despesas',      curto: 'Despesas'   },
+  { path: '/receitas',      icone: '⊕',  label: 'Receitas',      curto: 'Receitas'   },
+  { path: '/aplicacoes',    icone: '◎',  label: 'Aplicações',    curto: 'Aplicações' },
+  { path: '/configuracoes', icone: '⚙',  label: 'Configurações', curto: 'Config.'    },
 ]
 
 export default function NavLateral({ qtdVencidas }) {
@@ -31,12 +32,12 @@ export default function NavLateral({ qtdVencidas }) {
             style={({ isActive }) => ({ ...st.bottomItem, ...(isActive ? st.bottomItemActive : {}) })}
           >
             <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 20, lineHeight: 1 }}>{item.icone}</span>
-              {item.path === '/lancamentos' && qtdVencidas > 0 && (
+              <span style={{ fontSize: 19, lineHeight: 1 }}>{item.icone}</span>
+              {item.path === '/despesas' && qtdVencidas > 0 && (
                 <span style={st.badge} />
               )}
             </span>
-            <span style={st.bottomLabel}>{item.label}</span>
+            <span style={st.bottomLabel}>{item.curto}</span>
           </NavLink>
         ))}
       </nav>
@@ -46,7 +47,7 @@ export default function NavLateral({ qtdVencidas }) {
   return (
     <nav style={st.sidebar}>
       <div style={st.sidebarLogo}>
-        <span style={{ color: '#9DC9B5', fontSize: 16 }}>✦</span>
+        <span style={{ color: '#9DC9B5', fontSize: 18 }}>✦</span>
         <span style={st.sidebarLogoText}>Controle<br />Financeiro</span>
       </div>
       {NAV_ITENS.map(item => (
@@ -57,7 +58,7 @@ export default function NavLateral({ qtdVencidas }) {
         >
           <span style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <span style={st.sidebarIcone}>{item.icone}</span>
-            {item.path === '/lancamentos' && qtdVencidas > 0 && (
+            {item.path === '/despesas' && qtdVencidas > 0 && (
               <span style={st.badge} />
             )}
           </span>
@@ -70,10 +71,10 @@ export default function NavLateral({ qtdVencidas }) {
 
 const st = {
   sidebar: {
-    width: 200, minWidth: 200,
+    width: 210, minWidth: 210,
     background: 'var(--verde-profundo)',
-    display: 'flex', flexDirection: 'column', gap: 2,
-    padding: '24px 12px',
+    display: 'flex', flexDirection: 'column', gap: 4,
+    padding: '28px 14px',
     minHeight: '100vh',
     position: 'sticky', top: 0, alignSelf: 'flex-start',
     flexShrink: 0,
@@ -81,24 +82,26 @@ const st = {
   },
   sidebarLogo: {
     display: 'flex', alignItems: 'center', gap: 10,
-    padding: '0 8px 20px', marginBottom: 8,
+    padding: '0 6px 24px', marginBottom: 12,
     borderBottom: '1px solid rgba(255,255,255,0.12)',
   },
   sidebarLogoText: {
-    color: 'var(--creme-header)', fontWeight: 800, fontSize: 13,
+    color: 'var(--creme-header)', fontWeight: 800, fontSize: 14,
     letterSpacing: '-0.01em', lineHeight: 1.3,
   },
   sidebarItem: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '10px 12px', borderRadius: 8,
-    color: 'rgba(245,239,224,0.7)',
-    textDecoration: 'none', fontWeight: 500, fontSize: 14,
+    display: 'flex', alignItems: 'center', gap: 11,
+    padding: '11px 14px', borderRadius: 8,
+    color: 'rgba(245,239,224,0.72)',
+    textDecoration: 'none', fontWeight: 500, fontSize: 15,
+    letterSpacing: '0.005em',
   },
   sidebarItemActive: {
     background: 'rgba(255,255,255,0.15)',
     color: 'var(--creme-header)',
+    fontWeight: 600,
   },
-  sidebarIcone: { fontSize: 16, lineHeight: 1 },
+  sidebarIcone: { fontSize: 17, lineHeight: 1 },
 
   bottomBar: {
     position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
@@ -109,13 +112,13 @@ const st = {
   bottomItem: {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
     color: 'rgba(245,239,224,0.65)', textDecoration: 'none',
-    padding: '10px 8px', flex: 1, justifyContent: 'center',
+    padding: '9px 4px', flex: 1, justifyContent: 'center',
   },
   bottomItemActive: {
     color: 'var(--creme-header)',
     background: 'rgba(255,255,255,0.1)',
   },
-  bottomLabel: { fontSize: 10, fontWeight: 600, letterSpacing: '0.02em' },
+  bottomLabel: { fontSize: 9, fontWeight: 600, letterSpacing: '0.02em' },
 
   badge: {
     position: 'absolute', top: -1, right: -5,

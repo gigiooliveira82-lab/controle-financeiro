@@ -3,9 +3,7 @@ import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { BlocoTipo, useIsMobile } from '../components/Dashboard'
 import LancamentoTexto from '../components/LancamentoTexto'
 
-const TIPOS = ['despesa_fixa', 'despesa_variavel']
-
-export default function PaginaLancamentos({
+export default function PaginaReceitas({
   transacoes, usuarioId, mesSelecionado,
   mostrarLancamento, onNovaTransacao, onRemoveu, onAtualizou, carregando,
 }) {
@@ -17,8 +15,8 @@ export default function PaginaLancamentos({
 
   if (carregando) {
     return (
-      <div style={l.placeholder}>
-        <p style={l.placeholderTexto}>Carregando lançamentos...</p>
+      <div style={r.placeholder}>
+        <p style={r.placeholderTexto}>Carregando receitas...</p>
       </div>
     )
   }
@@ -35,7 +33,7 @@ export default function PaginaLancamentos({
     setExpandido(false)
   }
 
-  const semDados = transacoes.filter(t => TIPOS.includes(t.tipo)).length === 0
+  const semDados = transacoes.filter(t => t.tipo === 'credito').length === 0
 
   const lancamento = mostrarLancamento && (
     expandido ? (
@@ -45,42 +43,39 @@ export default function PaginaLancamentos({
         onAtualizouTransacao={onAtualizou}
       />
     ) : (
-      <button onClick={() => setExpandido(true)} style={l.botaoNovo}>
+      <button onClick={() => setExpandido(true)} style={r.botaoNovo}>
         + Novo lançamento
       </button>
     )
   )
 
   return (
-    <div style={l.root}>
+    <div style={r.root}>
       {lancamento}
       {semDados ? (
-        <div style={l.placeholder}>
-          <p style={{ ...l.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhuma despesa neste mês.</p>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o campo acima para adicionar o primeiro lançamento.</p>
+        <div style={r.placeholder}>
+          <p style={{ ...r.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhuma receita neste mês.</p>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o campo acima para registrar salários, rendimentos, etc.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
-          {TIPOS.map(tipo => (
-            <BlocoTipo
-              key={tipo}
-              tipo={tipo}
-              transacoes={byTipo(tipo)}
-              acumulados={null}
-              removendo={removendo}
-              onRemover={handleRemover}
-              onAtualizar={handleAtualizar}
-              onDuplicar={handleDuplicar}
-              onCancelarParcelas={handleCancelarGrupoParcelas}
-            />
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, alignItems: 'start' }}>
+          <BlocoTipo
+            tipo="credito"
+            transacoes={byTipo('credito')}
+            acumulados={null}
+            removendo={removendo}
+            onRemover={handleRemover}
+            onAtualizar={handleAtualizar}
+            onDuplicar={handleDuplicar}
+            onCancelarParcelas={handleCancelarGrupoParcelas}
+          />
         </div>
       )}
     </div>
   )
 }
 
-const l = {
+const r = {
   root: { display: 'flex', flexDirection: 'column', gap: 20 },
   placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
   placeholderTexto: { margin: 0, color: '#64748b' },

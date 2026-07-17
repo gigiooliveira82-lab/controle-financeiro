@@ -581,7 +581,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           <button
             onClick={toggleRecorrente}
             disabled={salvando}
-            style={{ ...s.iconBtn, color: t.recorrente ? cor : '#d1d5db', ...iconBtnMobile }}
+            style={{ ...s.iconBtn, color: t.recorrente ? cor : '#9ca3af', ...iconBtnMobile }}
             title={t.recorrente ? 'Remover recorrência' : 'Tornar recorrente'}
           >↺</button>
         )}
@@ -589,7 +589,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
         <button
           onClick={onDuplicar}
           disabled={salvando}
-          style={{ ...s.iconBtn, color: '#d1d5db', fontSize: 14, ...iconBtnMobile }}
+          style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 14, ...iconBtnMobile }}
           title="Duplicar lançamento"
         >⧉</button>
 
@@ -605,7 +605,7 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
         <button
           onClick={onRemover}
           disabled={removendo}
-          style={{ ...s.iconBtn, color: '#d1d5db', ...iconBtnMobile }}
+          style={{ ...s.iconBtn, color: '#9ca3af', ...iconBtnMobile }}
           title="Remover"
         >×</button>
       </div>
@@ -853,9 +853,9 @@ const s = {
   linhaDesc:   { flex: 1, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 14, fontWeight: 600, color: '#1e293b', lineHeight: 1.35, cursor: 'pointer' },
   linhaCatRow: { display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 },
   linhaCat:    { fontSize: 11, color: '#94a3b8', textTransform: 'capitalize', cursor: 'pointer' },
-  catSep:      { fontSize: 10, color: '#d1d5db', flexShrink: 0 },
+  catSep:      { fontSize: 10, color: '#9ca3af', flexShrink: 0 },
   linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer' },
-  addSub:      { fontSize: 10, color: '#d1d5db', cursor: 'pointer', lineHeight: 1, padding: '0 1px' },
+  addSub:      { fontSize: 10, color: '#9ca3af', cursor: 'pointer', lineHeight: 1, padding: '0 1px' },
   tipoTag:     { fontSize: 11, color: '#a78bfa', cursor: 'pointer', fontStyle: 'italic' },
   selectTipo:  { fontSize: 11, border: '1.5px solid #3b82f6', borderRadius: 4, outline: 'none', background: '#f8fafc', cursor: 'pointer', padding: '1px 2px', fontFamily: 'inherit' },
   linhaDir:    { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },

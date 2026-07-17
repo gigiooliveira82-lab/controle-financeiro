@@ -7,6 +7,7 @@ import RedefinirSenha from './components/RedefinirSenha'
 import NavLateral from './components/NavLateral'
 import PaginaDashboard from './pages/PaginaDashboard'
 import PaginaLancamentos from './pages/PaginaLancamentos'
+import PaginaReceitas from './pages/PaginaReceitas'
 import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 
@@ -152,27 +153,23 @@ export default function App() {
         <NavLateral qtdVencidas={qtdVencidas} />
 
         <div style={estilos.conteudo}>
-          <header style={{ ...estilos.header, padding: isMobileHeader ? '10px 14px' : '14px 28px' }}>
-            <div>
-              <h1 style={{ ...estilos.headerTitulo, fontSize: isMobileHeader ? 15 : 20 }}>
-                <span style={estilos.headerIcone}>✦</span>Controle Financeiro
-              </h1>
-              <div style={estilos.navMes}>
-                <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav}>‹</button>
-                <span style={{ ...estilos.headerMes, minWidth: isMobileHeader ? 110 : 140, fontSize: isMobileHeader ? 13 : 16 }}>
-                  {formatarMesHeader(mesSelecionado)}
-                </span>
-                <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav}>›</button>
-              </div>
+          <header style={{ ...estilos.header, padding: isMobileHeader ? '10px 14px' : '12px 28px' }}>
+            <div style={estilos.navMes}>
+              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav}>‹</button>
+              <span style={{ ...estilos.headerMes, minWidth: isMobileHeader ? 110 : 150, fontSize: isMobileHeader ? 14 : 17 }}>
+                {formatarMesHeader(mesSelecionado)}
+              </span>
+              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav}>›</button>
             </div>
             <button onClick={handleLogout} style={estilos.botaoLogout}>Sair</button>
           </header>
 
           <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 90 : 32 }}>
             <Routes>
-              <Route path="/dashboard"     element={<PaginaDashboard     {...propsPaginas} />} />
-              <Route path="/lancamentos"   element={<PaginaLancamentos   {...propsPaginas} />} />
-              <Route path="/aplicacoes"    element={<PaginaAplicacoes    {...propsPaginas} />} />
+              <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
+              <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
+              <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
+              <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
               <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
               <Route path="*"              element={<Navigate to="/dashboard" replace />} />
             </Routes>
@@ -214,13 +211,6 @@ const estilos = {
     top: 0,
     zIndex: 10,
   },
-  headerIcone: {
-    color: '#9DC9B5',
-    marginRight: 9,
-    fontSize: 14,
-    verticalAlign: 'middle',
-  },
-  headerTitulo: { margin: '0 0 5px', fontSize: 20, fontWeight: 800, letterSpacing: '-0.01em' },
   navMes: { display: 'flex', alignItems: 'center', gap: 8 },
   headerMes: { fontSize: 16, fontWeight: 700, color: 'var(--creme-header)', textTransform: 'capitalize', minWidth: 140, textAlign: 'center', letterSpacing: '0.01em' },
   botaoNav: {
