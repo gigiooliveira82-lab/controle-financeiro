@@ -1,9 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { BlocoTipo, useIsMobile } from '../components/Dashboard'
 import LancamentoTexto from '../components/LancamentoTexto'
 
 const TIPOS = ['despesa_fixa', 'despesa_variavel']
+
+function Toast({ msg }) {
+  if (!msg) return null
+  return (
+    <div style={{
+      position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+      background: '#1F5D45', color: '#F5F0E4',
+      padding: '10px 22px', borderRadius: 10,
+      fontSize: 14, fontWeight: 600,
+      boxShadow: '0 4px 18px rgba(0,0,0,0.22)',
+      zIndex: 9999, pointerEvents: 'none', whiteSpace: 'nowrap',
+    }}>
+      ✓ {msg}
+    </div>
+  )
+}
 
 export default function PaginaLancamentos({
   transacoes, usuarioId, mesSelecionado,
@@ -11,10 +27,20 @@ export default function PaginaLancamentos({
 }) {
   const [expandido, setExpandido] = useState(false)
   const [busca, setBusca]         = useState('')
+  const [toast, setToast]         = useState(null)
+  const toastTimer                = useRef(null)
   const isMobile = useIsMobile()
 
   const { removendo, handleRemover, handleAtualizar, handleDuplicar, handleCancelarGrupoParcelas } =
     useTransacaoHandlers({ usuarioId, mesSelecionado, transacoes, onRemoveu, onAtualizou, onNova: onNovaTransacao })
+
+  useEffect(() => () => clearTimeout(toastTimer.current), [])
+
+  function showToast(msg) {
+    clearTimeout(toastTimer.current)
+    setToast(msg)
+    toastTimer.current = setTimeout(() => setToast(null), 2200)
+  }
 
   if (carregando) {
     return (
@@ -78,6 +104,7 @@ export default function PaginaLancamentos({
 
   return (
     <div style={l.root}>
+      <Toast msg={toast} />
       {lancamento}
       {!semDados && campoBusca}
       {semDados ? (
@@ -98,6 +125,7 @@ export default function PaginaLancamentos({
               onAtualizar={handleAtualizar}
               onDuplicar={handleDuplicar}
               onCancelarParcelas={handleCancelarGrupoParcelas}
+              onMoverTipo={showToast}
             />
           ))}
         </div>

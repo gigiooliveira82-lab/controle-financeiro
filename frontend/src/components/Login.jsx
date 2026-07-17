@@ -103,7 +103,7 @@ export default function Login({ onLogin }) {
           position: 'absolute',
           top: isMobile ? -60 : -80,
           right: isMobile ? -60 : -90,
-          opacity: 0.22,
+          opacity: 0.8,
           pointerEvents: 'none',
         }}
       />

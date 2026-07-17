@@ -133,7 +133,7 @@ export function BarraCategoria({ categoria, valor, total, cor }) {
 
 // ── Bloco de tipo ─────────────────────────────────────────────────────────────
 
-export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas }) {
+export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo }) {
   const cfg       = TIPO[tipo]
   const ehDespesa = tipo === 'despesa_fixa' || tipo === 'despesa_variavel'
   const ehCredito = tipo === 'credito'
@@ -192,6 +192,7 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
               onAtualizar={campos => onAtualizar(t.id, campos)}
               onDuplicar={() => onDuplicar(t.id)}
               onCancelarParcelas={onCancelarParcelas}
+              onMoverTipo={onMoverTipo}
             />
           ))}
         </div>
@@ -296,7 +297,7 @@ function Pill({ text, cor, bg }) {
 
 // ── Linha de transação ────────────────────────────────────────────────────────
 
-function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas }) {
+function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo }) {
   const [editandoValor, setEditandoValor] = useState(false)
   const [novoValor, setNovoValor]         = useState(String(t.valor))
   const [editandoDesc, setEditandoDesc]   = useState(false)
@@ -388,6 +389,19 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
     if (primeira > t.total_parcelas) { alert('Não há parcelas futuras para cancelar.'); return }
     if (!confirm(`Isso vai cancelar as parcelas ${primeira}/${t.total_parcelas} até ${t.total_parcelas}/${t.total_parcelas} (as futuras). As já pagas e do mês atual serão mantidas. Confirma?`)) return
     onCancelarParcelas(t.grupo_parcela_id)
+  }
+
+  async function moverTipo() {
+    if (salvando) return
+    const destino   = t.tipo === 'despesa_fixa' ? 'despesa_variavel' : 'despesa_fixa'
+    const labelDest = destino === 'despesa_fixa' ? 'Despesas Fixas' : 'Despesas Variáveis'
+    setSalvando(true)
+    try {
+      await onAtualizar({ tipo: destino })
+      onMoverTipo?.(`Movido para ${labelDest}`)
+    } finally {
+      setSalvando(false)
+    }
   }
 
   return (
@@ -592,6 +606,15 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
           style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 14, ...iconBtnMobile }}
           title="Duplicar lançamento"
         >⧉</button>
+
+        {(t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && (
+          <button
+            onClick={moverTipo}
+            disabled={salvando}
+            style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 15, ...iconBtnMobile }}
+            title={t.tipo === 'despesa_fixa' ? 'Mover para Despesas Variáveis' : 'Mover para Despesas Fixas'}
+          >⇄</button>
+        )}
 
         {t.grupo_parcela_id && (
           <button
