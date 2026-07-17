@@ -1,14 +1,29 @@
 import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './services/supabase'
 import { buscarTransacoes, gerarRecorrentes } from './services/api'
 import Login from './components/Login'
-import Dashboard from './components/Dashboard'
 import RedefinirSenha from './components/RedefinirSenha'
+import NavLateral from './components/NavLateral'
+import PaginaDashboard from './pages/PaginaDashboard'
+import PaginaLancamentos from './pages/PaginaLancamentos'
+import PaginaAplicacoes from './pages/PaginaAplicacoes'
+import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 
-function useIsMobile() {
+function useIsMobileHeader() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 500)
   useEffect(() => {
     const fn = () => setMobile(window.innerWidth < 500)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
+function useIsNavMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
   }, [])
@@ -34,13 +49,14 @@ function formatarMesHeader(mesISO) {
 }
 
 export default function App() {
-  const [usuario, setUsuario]             = useState(null)
-  const [transacoes, setTransacoes]       = useState([])
-  const [carregando, setCarregando]       = useState(true)
+  const [usuario, setUsuario]               = useState(null)
+  const [transacoes, setTransacoes]         = useState([])
+  const [carregando, setCarregando]         = useState(true)
   const [carregandoDados, setCarregandoDados] = useState(false)
-  const [mesSelecionado, setMesSelecionado]   = useState(mesISOHoje)
-  const [modoRedefinir, setModoRedefinir] = useState(false)
-  const isMobile = useIsMobile()
+  const [mesSelecionado, setMesSelecionado] = useState(mesISOHoje)
+  const [modoRedefinir, setModoRedefinir]   = useState(false)
+  const isMobileHeader = useIsMobileHeader()
+  const isMobileNav    = useIsNavMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -108,45 +124,77 @@ export default function App() {
 
   if (!usuario) return <Login onLogin={setUsuario} />
 
-  return (
-    <div style={estilos.pagina}>
-      <header style={{ ...estilos.header, padding: isMobile ? '10px 14px' : '16px 28px' }}>
-        <div>
-          <h1 style={{ ...estilos.headerTitulo, fontSize: isMobile ? 15 : 20 }}>
-            <span style={estilos.headerIcone}>✦</span>Controle Financeiro
-          </h1>
-          <div style={estilos.navMes}>
-            <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav}>‹</button>
-            <span style={{ ...estilos.headerMes, minWidth: isMobile ? 110 : 140, fontSize: isMobile ? 13 : 16 }}>
-              {formatarMesHeader(mesSelecionado)}
-            </span>
-            <button
-              onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
-              style={estilos.botaoNav}
-            >›</button>
-          </div>
-        </div>
-        <button onClick={handleLogout} style={estilos.botaoLogout}>Sair</button>
-      </header>
+  // Badge de vencidas para NavLateral
+  const hoje       = new Date()
+  const diaHoje    = hoje.getDate()
+  const mesHojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+  const qtdVencidas = transacoes.filter(t =>
+    t.status === 'pendente' &&
+    t.mes_referencia === mesHojeISO &&
+    t.dia_pagamento < diaHoje &&
+    (t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel')
+  ).length
 
-      <main style={estilos.main}>
-        <Dashboard
-          transacoes={transacoes}
-          usuarioId={usuario.id}
-          mesSelecionado={mesSelecionado}
-          mostrarLancamento={mesSelecionado >= mesISOHoje()}
-          onNovaTransacao={handleNovaTransacao}
-          onRemoveu={handleRemoveu}
-          onAtualizou={handleAtualizou}
-          carregando={carregandoDados}
-        />
-      </main>
-    </div>
+  const propsPaginas = {
+    transacoes,
+    usuarioId:        usuario.id,
+    mesSelecionado,
+    mostrarLancamento: mesSelecionado >= mesISOHoje(),
+    onNovaTransacao:  handleNovaTransacao,
+    onRemoveu:        handleRemoveu,
+    onAtualizou:      handleAtualizou,
+    carregando:       carregandoDados,
+  }
+
+  return (
+    <BrowserRouter>
+      <div style={estilos.layout}>
+        <NavLateral qtdVencidas={qtdVencidas} />
+
+        <div style={estilos.conteudo}>
+          <header style={{ ...estilos.header, padding: isMobileHeader ? '10px 14px' : '14px 28px' }}>
+            <div>
+              <h1 style={{ ...estilos.headerTitulo, fontSize: isMobileHeader ? 15 : 20 }}>
+                <span style={estilos.headerIcone}>✦</span>Controle Financeiro
+              </h1>
+              <div style={estilos.navMes}>
+                <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav}>‹</button>
+                <span style={{ ...estilos.headerMes, minWidth: isMobileHeader ? 110 : 140, fontSize: isMobileHeader ? 13 : 16 }}>
+                  {formatarMesHeader(mesSelecionado)}
+                </span>
+                <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav}>›</button>
+              </div>
+            </div>
+            <button onClick={handleLogout} style={estilos.botaoLogout}>Sair</button>
+          </header>
+
+          <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 90 : 32 }}>
+            <Routes>
+              <Route path="/dashboard"     element={<PaginaDashboard     {...propsPaginas} />} />
+              <Route path="/lancamentos"   element={<PaginaLancamentos   {...propsPaginas} />} />
+              <Route path="/aplicacoes"    element={<PaginaAplicacoes    {...propsPaginas} />} />
+              <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
+              <Route path="*"              element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </BrowserRouter>
   )
 }
 
 const estilos = {
-  pagina: { minHeight: '100vh', background: 'var(--creme-fundo)' },
+  layout: {
+    display: 'flex',
+    minHeight: '100vh',
+    background: 'var(--creme-fundo)',
+  },
+  conteudo: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    minWidth: 0,
+  },
   loading: {
     minHeight: '100vh',
     display: 'flex',
@@ -157,11 +205,14 @@ const estilos = {
   header: {
     background: 'var(--verde-profundo)',
     color: 'var(--creme-header)',
-    padding: '16px 28px',
+    padding: '14px 28px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     boxShadow: '0 2px 12px rgba(31,93,69,0.30)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
   },
   headerIcone: {
     color: '#9DC9B5',
@@ -181,7 +232,7 @@ const estilos = {
     padding: '0 6px',
     lineHeight: 1,
   },
-  main: { maxWidth: 1400, margin: '0 auto', padding: '24px 16px' },
+  main: { maxWidth: 1400, margin: '0 auto', padding: '24px 16px', width: '100%', boxSizing: 'border-box' },
   botaoLogout: {
     background: 'transparent',
     border: '1px solid #ffffff44',

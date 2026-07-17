@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { fmtBRL, fmtNum } from '../utils/fmt'
-import {
-  removerTransacao, atualizarTransacao, buscarAcumuladosAplicacao,
-  gerarAnaliseMes, duplicarTransacao, perguntarSobreFinancas, cancelarParcelasGrupo,
-  buscarComparativoMensal,
-} from '../services/api'
-import LancamentoTexto from './LancamentoTexto'
+import { gerarAnaliseMes, perguntarSobreFinancas } from '../services/api'
 
-const TIPO = {
+export const TIPO = {
   despesa_fixa:     { label: 'Despesas Fixas',    cor: '#6B3DB8' },
   despesa_variavel: { label: 'Despesas Variáveis', cor: '#dc2626' },
   credito:          { label: 'Créditos',           cor: 'var(--verde-profundo)' },
@@ -22,26 +17,26 @@ const TIPO_SHORT = {
   aplicacao:        'Aplicação',
 }
 
-const COR_CAT = {
+export const COR_CAT = {
   moradia: '#f59e0b', alimentação: '#10b981', transporte: '#3b82f6',
   saúde: '#ef4444', lazer: '#8b5cf6', educação: '#06b6d4',
   assinaturas: '#f97316', investimentos: '#14b8a6', renda: '#22c55e',
 }
 
-const soma     = (arr) => arr.reduce((acc, t) => acc + Number(t.valor), 0)
-const fmt      = fmtNum
-const fmtSaldo = fmtBRL
+export const soma     = (arr) => arr.reduce((acc, t) => acc + Number(t.valor), 0)
+export const fmt      = fmtNum
+export const fmtSaldo = fmtBRL
 
 const MESES_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
-const labelMes = (mesISO) => MESES_SHORT[parseInt(mesISO.split('-')[1]) - 1]
+export const labelMes = (mesISO) => MESES_SHORT[parseInt(mesISO.split('-')[1]) - 1]
 
-function mesAnteriorISO(mesISO) {
+export function mesAnteriorISO(mesISO) {
   const [ano, mes] = mesISO.split('-').map(Number)
   const d = new Date(ano, mes - 2, 1)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
 }
 
-function useIsMobile() {
+export function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 1024)
   useEffect(() => {
     const fn = () => setMobile(window.innerWidth < 1024)
@@ -51,250 +46,9 @@ function useIsMobile() {
   return mobile
 }
 
-export default function Dashboard({
-  transacoes, usuarioId, mesSelecionado,
-  mostrarLancamento, onNovaTransacao,
-  onRemoveu, onAtualizou,
-  carregando,
-}) {
-  const isMobile = useIsMobile()
-  const [removendo, setRemovendo]     = useState(null)
-  const [acumulados, setAcumulados]   = useState({})
-  const [expandido, setExpandido]     = useState(false)
-  const [comparativo, setComparativo] = useState(null)
-
-  function handleNovaComColapso(nova) {
-    onNovaTransacao(nova)
-    setExpandido(false)
-  }
-
-  const aplicacaoKey = transacoes
-    .filter(t => t.tipo === 'aplicacao')
-    .map(t => `${t.id}:${t.valor}`)
-    .sort()
-    .join(',')
-
-  useEffect(() => {
-    if (!usuarioId) return
-    buscarAcumuladosAplicacao(usuarioId).then(setAcumulados).catch(console.error)
-  }, [usuarioId, aplicacaoKey])
-
-  useEffect(() => {
-    if (!usuarioId) return
-    buscarComparativoMensal(usuarioId, mesSelecionado)
-      .then(setComparativo)
-      .catch(() => setComparativo(null))
-  }, [usuarioId, mesSelecionado])
-
-  async function handleRemover(id) {
-    if (!confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) return
-    setRemovendo(id)
-    try {
-      await removerTransacao(id, usuarioId)
-      onRemoveu(id)
-    } catch (err) {
-      alert('Erro ao remover: ' + err.message)
-    } finally {
-      setRemovendo(null)
-    }
-  }
-
-  async function handleAtualizar(id, campos) {
-    try {
-      const atualizada = await atualizarTransacao(id, usuarioId, campos)
-      onAtualizou(id, atualizada)
-    } catch (err) {
-      alert('Erro ao atualizar: ' + err.message)
-    }
-  }
-
-  async function handleDuplicar(id) {
-    try {
-      const nova = await duplicarTransacao(id, usuarioId)
-      onNovaTransacao(nova)
-    } catch (err) {
-      alert('Erro ao duplicar: ' + err.message)
-    }
-  }
-
-  async function handleCancelarGrupoParcelas(grupoId) {
-    try {
-      await cancelarParcelasGrupo(grupoId, usuarioId)
-      const hoje = new Date()
-      const mesAtualISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
-      if (mesSelecionado > mesAtualISO) {
-        transacoes
-          .filter(t => t.grupo_parcela_id === grupoId)
-          .forEach(t => onRemoveu(t.id))
-      }
-    } catch (err) {
-      alert('Erro ao cancelar parcelas: ' + err.message)
-    }
-  }
-
-  if (carregando) {
-    return <div style={s.placeholder}><p style={s.placeholderTexto}>Carregando lançamentos...</p></div>
-  }
-
-  // ── Cálculos ──────────────────────────────────────────────────────────────
-  const byTipo  = (tipo) => transacoes
-    .filter(t => t.tipo === tipo)
-    .sort((a, b) => {
-      const diaDiff = (a.dia_pagamento || 0) - (b.dia_pagamento || 0)
-      if (diaDiff !== 0) return diaDiff
-      return (a.criado_em || '') < (b.criado_em || '') ? -1 : 1
-    })
-  const pagos   = (arr)  => arr.filter(t => t.status === 'pago')
-  const pendens = (arr)  => arr.filter(t => t.status === 'pendente')
-
-  const cPago = soma(pagos(byTipo('credito')))
-  const cPend = soma(pendens(byTipo('credito')))
-  const fPago = soma(pagos(byTipo('despesa_fixa')))
-  const fPend = soma(pendens(byTipo('despesa_fixa')))
-  const vPago = soma(pagos(byTipo('despesa_variavel')))
-  const vPend = soma(pendens(byTipo('despesa_variavel')))
-
-  const saldoReal      = cPago - fPago - vPago
-  const saldoProjetado = (cPago + cPend) - (fPago + fPend + vPago + vPend)
-  const totalAPagar    = fPend + vPend
-  const qtdPendente    = transacoes.filter(
-    t => (t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && t.status === 'pendente'
-  ).length
-
-  const saldosIdenticos = Math.abs(saldoReal - saldoProjetado) < 0.005
-
-  const despesas     = transacoes.filter(t => t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel')
-  const totalDespesa = soma(despesas)
-  const gastosCat    = {}
-  despesas.forEach(t => {
-    const c = t.categoria || 'outros'
-    gastosCat[c] = (gastosCat[c] || 0) + Number(t.valor)
-  })
-  const catOrdenadas = Object.entries(gastosCat).sort((a, b) => b[1] - a[1])
-
-  const semDados = transacoes.length === 0 && Object.keys(acumulados).length === 0
-
-  // ── Peças reutilizadas nos dois layouts ───────────────────────────────────
-
-  const lancamento = mostrarLancamento && (
-    expandido ? (
-      <LancamentoTexto
-        usuarioId={usuarioId}
-        onNovaTransacao={handleNovaComColapso}
-        onAtualizouTransacao={onAtualizou}
-      />
-    ) : (
-      <button onClick={() => setExpandido(true)} style={s.lancamentoBotaoExpandir}>
-        + Novo lançamento
-      </button>
-    )
-  )
-
-  const blocos = semDados ? (
-    <div style={s.placeholder}>
-      <p style={{ ...s.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhum lançamento neste mês.</p>
-      <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o campo acima para adicionar o primeiro.</p>
-    </div>
-  ) : (
-    <div style={{ ...s.blocosGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)' }}>
-      {Object.keys(TIPO).map(tipo => (
-        <BlocoTipo
-          key={tipo}
-          tipo={tipo}
-          transacoes={byTipo(tipo)}
-          acumulados={tipo === 'aplicacao' ? acumulados : null}
-          removendo={removendo}
-          onRemover={handleRemover}
-          onAtualizar={handleAtualizar}
-          onDuplicar={handleDuplicar}
-          onCancelarParcelas={handleCancelarGrupoParcelas}
-        />
-      ))}
-    </div>
-  )
-
-  const mesAnterior = mesAnteriorISO(mesSelecionado)
-
-  const cardsSaldo = (
-    <div style={s.cardRow}>
-      {saldosIdenticos ? (
-        <CardDestaque valor={saldoReal} />
-      ) : (
-        <>
-          <CardSaldo label="Saldo Real"      valor={saldoReal}      sub="créditos recebidos − despesas pagas" />
-          <CardSaldo label="Saldo Projetado" valor={saldoProjetado} sub="incluindo valores pendentes" />
-          <CardNeutro
-            label="A Pagar"
-            valor={totalAPagar}
-            sub={`${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`}
-          />
-        </>
-      )}
-      <CardComparativo
-        percentualVariacao={comparativo?.percentualVariacao ?? null}
-        despesaMesAtual={comparativo?.despesaMesAtual ?? 0}
-        despesaMesAnterior={comparativo?.despesaMesAnterior ?? null}
-        mesAtualISO={mesSelecionado}
-        mesAnteriorISO={mesAnterior}
-      />
-    </div>
-  )
-
-  const lateralInfo = (
-    <>
-      {catOrdenadas.length > 0 && (
-        <div style={s.secao}>
-          <p style={s.secaoTitulo}>Concentração de gastos</p>
-          <div style={s.barrasWrap}>
-            {catOrdenadas.map(([cat, val]) => (
-              <BarraCategoria
-                key={cat}
-                categoria={cat}
-                valor={val}
-                total={totalDespesa}
-                cor={COR_CAT[cat] || '#94a3b8'}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      <BlocoAnalise usuarioId={usuarioId} mesSelecionado={mesSelecionado} />
-
-      <BlocoPerguntas usuarioId={usuarioId} />
-    </>
-  )
-
-  // ── Layout mobile: coluna única, saldo no topo ────────────────────────────
-  if (isMobile) {
-    return (
-      <div style={s.root}>
-        {!semDados && cardsSaldo}
-        {lancamento}
-        {blocos}
-        {!semDados && lateralInfo}
-      </div>
-    )
-  }
-
-  // ── Layout desktop: saldo em destaque no topo, blocos + sidebar abaixo ────
-  return (
-    <div style={s.root}>
-      <div style={s.topRow}>
-        <div style={s.topSaldo}>{cardsSaldo}</div>
-        {mostrarLancamento && <div style={s.topLancamento}>{lancamento}</div>}
-      </div>
-      <div style={s.rootGrid}>
-        <div style={s.colPrincipal}>{blocos}</div>
-        <div style={s.colLateral}>{lateralInfo}</div>
-      </div>
-    </div>
-  )
-}
-
 // ── Card de destaque (saldos idênticos) ───────────────────────────────────────
 
-function CardDestaque({ valor }) {
+export function CardDestaque({ valor }) {
   const positivo = valor >= 0
   const cor = positivo ? 'var(--verde-profundo)' : '#dc2626'
   return (
@@ -312,7 +66,7 @@ function CardDestaque({ valor }) {
 
 // ── Cards normais ─────────────────────────────────────────────────────────────
 
-function CardSaldo({ label, valor, sub }) {
+export function CardSaldo({ label, valor, sub }) {
   const positivo = valor >= 0
   const cor = positivo ? 'var(--verde-profundo)' : '#dc2626'
   return (
@@ -324,7 +78,7 @@ function CardSaldo({ label, valor, sub }) {
   )
 }
 
-function CardNeutro({ label, valor, sub }) {
+export function CardNeutro({ label, valor, sub }) {
   return (
     <div style={{ ...s.card, borderTop: '3px solid #f59e0b' }}>
       <span style={s.cardLabel}>{label}</span>
@@ -336,7 +90,7 @@ function CardNeutro({ label, valor, sub }) {
 
 // ── Card comparativo (vs mês anterior) ───────────────────────────────────────
 
-function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnterior, mesAtualISO, mesAnteriorISO: mesAntISO }) {
+export function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnterior, mesAtualISO, mesAnteriorISO: mesAntISO }) {
   if (percentualVariacao === null) {
     return (
       <div style={{ ...s.card, borderTop: '3px solid #e2e8f0' }}>
@@ -362,7 +116,7 @@ function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnteri
 
 // ── Barra de categoria ────────────────────────────────────────────────────────
 
-function BarraCategoria({ categoria, valor, total, cor }) {
+export function BarraCategoria({ categoria, valor, total, cor }) {
   const pct = total > 0 ? (valor / total) * 100 : 0
   return (
     <div style={s.barraItem}>
@@ -379,7 +133,7 @@ function BarraCategoria({ categoria, valor, total, cor }) {
 
 // ── Bloco de tipo ─────────────────────────────────────────────────────────────
 
-function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas }) {
+export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas }) {
   const cfg       = TIPO[tipo]
   const ehDespesa = tipo === 'despesa_fixa' || tipo === 'despesa_variavel'
   const ehCredito = tipo === 'credito'
@@ -871,7 +625,7 @@ const PONTOS_ANALISE = [
   { chave: 'top_gastos',           icone: '★',  titulo: 'Maiores gastos',          cor: '#475569' },
 ]
 
-function BlocoAnalise({ usuarioId, mesSelecionado }) {
+export function BlocoAnalise({ usuarioId, mesSelecionado }) {
   const [analise, setAnalise]       = useState(null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro]             = useState(null)
@@ -954,7 +708,7 @@ function BlocoAnalise({ usuarioId, mesSelecionado }) {
 
 // ── Perguntas sobre finanças ──────────────────────────────────────────────────
 
-function BlocoPerguntas({ usuarioId }) {
+export function BlocoPerguntas({ usuarioId }) {
   const [pergunta, setPergunta]     = useState('')
   const [carregando, setCarregando] = useState(false)
   const [historico, setHistorico]   = useState([])
@@ -1042,25 +796,6 @@ function BlocoPerguntas({ usuarioId }) {
 // ── Estilos ───────────────────────────────────────────────────────────────────
 
 const s = {
-  // Layout raiz
-  root:     { display: 'flex', flexDirection: 'column', gap: 20 },
-  rootGrid: { display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' },
-
-  // Colunas desktop
-  colPrincipal:  { display: 'flex', flexDirection: 'column', gap: 20 },
-  colLateral: {
-    display: 'flex', flexDirection: 'column', gap: 20,
-    position: 'sticky', top: 24, alignSelf: 'start',
-  },
-
-  // Topo desktop: saldo (destaque) + botão de lançamento (compacto)
-  topRow:       { display: 'flex', gap: 24, alignItems: 'flex-start' },
-  topSaldo:     { flex: 1, minWidth: 0 },
-  topLancamento: { width: 360, flexShrink: 0 },
-
-  placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  placeholderTexto: { margin: 0, color: '#64748b' },
-
   // Cards de saldo
   cardDestaque: {
     background: '#fff', borderRadius: 10, padding: '20px 24px',
@@ -1070,7 +805,6 @@ const s = {
   cardDestaqueEsq:   { display: 'flex', flexDirection: 'column', gap: 2 },
   cardDestaqueValor: { fontSize: 38, fontWeight: 800, lineHeight: 1.1 },
   cardDestaqueSub:   { fontSize: 13, fontWeight: 500 },
-  cardRow:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 },
   card: {
     background: '#fff', borderRadius: 10, padding: '16px 20px',
     boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
@@ -1081,9 +815,6 @@ const s = {
   cardSub:   { fontSize: 12, color: '#64748b', marginTop: 2 },
 
   // Seção de categorias
-  secao:       { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
-  secaoTitulo: { margin: '0 0 14px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
-  barrasWrap:  { display: 'flex', flexDirection: 'column', gap: 10 },
   barraItem:   { display: 'flex', flexDirection: 'column', gap: 5 },
   barraHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' },
   barraNome:   { fontSize: 13, fontWeight: 500, color: '#334155', textTransform: 'capitalize' },
@@ -1093,7 +824,6 @@ const s = {
   barraFill:   { height: '100%', borderRadius: 99, transition: 'width 0.5s ease' },
 
   // Blocos de transações
-  blocosGrid:      { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 },
   bloco:           { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
   blocoTopo:       { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
   blocoTitulo:     { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', paddingTop: 2 },
@@ -1204,16 +934,6 @@ const s = {
   perguntaLimparBtn: {
     background: 'none', border: 'none', fontSize: 11, color: '#94a3b8',
     cursor: 'pointer', padding: 0, textDecoration: 'underline',
-  },
-
-  // Campo colapsável de lançamento
-  lancamentoBotaoExpandir: {
-    display: 'block', width: '100%', padding: '16px',
-    borderRadius: 12, border: '2px dashed #BDD5CC',
-    background: '#fff', color: 'var(--verde-profundo)',
-    fontSize: 15, fontWeight: 600, cursor: 'pointer',
-    textAlign: 'center', boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
   },
   perguntaTituloLabel: {
     fontSize: 10, fontWeight: 700, color: '#94a3b8',
