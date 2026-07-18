@@ -5,6 +5,11 @@ import { fmtBRL } from '../utils/fmt'
 const temSuporteVoz = typeof window !== 'undefined' &&
   ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 
+function hojeISO() {
+  const hoje = new Date()
+  return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+}
+
 if (typeof document !== 'undefined' && !document.getElementById('pulso-style')) {
   const s = document.createElement('style')
   s.id = 'pulso-style'
@@ -12,7 +17,7 @@ if (typeof document !== 'undefined' && !document.getElementById('pulso-style')) 
   document.head.appendChild(s)
 }
 
-export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao }) {
+export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [] }) {
   const [texto, setTexto] = useState('')
   const [carregando, setCarregando] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -20,6 +25,8 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   const [perguntaRecorrente, setPerguntaRecorrente] = useState(false)
   const [erro, setErro] = useState('')
   const [ouvindo, setOuvindo] = useState(false)
+  const [cartaoId, setCartaoId] = useState('')
+  const [dataCompra, setDataCompra] = useState(hojeISO)
   const recognitionRef = useRef(null)
 
   useEffect(() => {
@@ -69,7 +76,8 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
     setTransacaoCriada(null)
 
     try {
-      const resultado = await lancarTexto(texto.trim(), usuarioId)
+      const cartaoInfo = cartaoId ? { cartao_id: cartaoId, data_compra: dataCompra } : undefined
+      const resultado = await lancarTexto(texto.trim(), usuarioId, cartaoInfo)
       setFeedback({
         ...resultado.interpretado,
         parcelado:    resultado.parcelado    || false,
@@ -77,6 +85,8 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
       })
       setTransacaoCriada(resultado.transacao)
       setTexto('')
+      setCartaoId('')
+      setDataCompra(hojeISO())
       onNovaTransacao(resultado.transacao)
 
       if (resultado.interpretado.tipo === 'despesa_fixa' && !resultado.interpretado.recorrente && !resultado.parcelado) {
@@ -146,7 +156,33 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
           </div>
         )}
 
-        <button type="submit" style={estilos.botao} disabled={carregando || !texto.trim()}>
+        {cartoes.length > 0 && (
+          <div style={estilos.cartaoRow}>
+            <select
+              value={cartaoId}
+              onChange={(e) => setCartaoId(e.target.value)}
+              disabled={carregando}
+              style={estilos.cartaoSelect}
+            >
+              <option value="">Sem cartão</option>
+              {cartoes.map((c) => (
+                <option key={c.id} value={c.id}>{c.nome}</option>
+              ))}
+            </select>
+            {cartaoId && (
+              <input
+                type="date"
+                value={dataCompra}
+                onChange={(e) => setDataCompra(e.target.value)}
+                disabled={carregando}
+                style={estilos.cartaoData}
+                title="Data da compra"
+              />
+            )}
+          </div>
+        )}
+
+        <button type="submit" style={estilos.botao} disabled={carregando || !texto.trim() || (cartaoId && !dataCompra)}>
           {carregando ? '⏳ Analisando com IA...' : '✦ Lançar'}
         </button>
       </form>
@@ -281,6 +317,25 @@ const estilos = {
     background: '#ef4444',
     display: 'inline-block',
     animation: 'pulso 1s ease-in-out infinite',
+  },
+  cartaoRow: { display: 'flex', gap: 8 },
+  cartaoSelect: {
+    flex: 1,
+    padding: '9px 10px',
+    borderRadius: 8,
+    border: '1px solid #ddd',
+    fontSize: 13,
+    fontFamily: 'inherit',
+    outline: 'none',
+    background: '#fff',
+  },
+  cartaoData: {
+    padding: '9px 10px',
+    borderRadius: 8,
+    border: '1px solid #ddd',
+    fontSize: 13,
+    fontFamily: 'inherit',
+    outline: 'none',
   },
   botao: {
     padding: '12px',

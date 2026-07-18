@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { interpretarLancamento } from '../services/ia.js'
 import { gerarAnalise } from '../services/analise.js'
 import { responderPergunta } from '../services/pergunta.js'
+import { calcularVencimentoCartao } from '../utils/cartao.js'
 import supabase from '../services/supabase.js'
 import autenticar from '../middleware/autenticar.js'
 
@@ -403,7 +404,7 @@ router.post('/gerar-recorrentes', async (req, res) => {
 
 // POST /transacoes/lancar — recebe texto livre, IA categoriza e salva
 router.post('/lancar', async (req, res) => {
-  const { texto } = req.body
+  const { texto, cartao_id, data_compra } = req.body
   const usuario_id = req.usuarioId
 
   if (!texto) {
@@ -438,15 +439,49 @@ router.post('/lancar', async (req, res) => {
     })
   }
 
+  // ── Compra no cartão: substitui dia_pagamento/mes_referencia pelo vencimento
+  //    calculado a partir do fechamento do cartão, e mantém status pendente
+  //    até a fatura vencer (reaproveita a lógica já existente de pendências) ──
+  if (cartao_id) {
+    if (!data_compra) {
+      return res.status(400).json({ erro: 'Campo obrigatório quando um cartão é selecionado: data_compra' })
+    }
+
+    const { data: cartao, error: erroCartao } = await supabase
+      .from('cartoes')
+      .select('*')
+      .eq('id', cartao_id)
+      .eq('usuario_id', usuario_id)
+      .single()
+
+    if (erroCartao || !cartao) {
+      return res.status(404).json({ erro: 'Cartão não encontrado' })
+    }
+
+    const vencimento = calcularVencimentoCartao(data_compra, cartao.dia_fechamento, cartao.dia_vencimento)
+    dadosIA.dia_pagamento  = vencimento.dia_pagamento
+    dadosIA.mes_referencia = vencimento.mes_referencia
+    dadosIA.status         = 'pendente'
+    dadosIA.cartao_id      = cartao_id
+    dadosIA.data_compra    = data_compra
+  }
+
   // ── Parcelamento: gera todas as parcelas em lote ──────────────────────────
   if (dadosIA.total_parcelas && dadosIA.total_parcelas > 1) {
     const grupoId  = randomUUID()
     const hoje     = new Date()
     const parcelas = []
 
+    // Para compras no cartão, o offset de meses de cada parcela parte do
+    // vencimento já calculado da parcela inicial (não do mês corrente)
+    const [anoBase, mesBase] = cartao_id
+      ? dadosIA.mes_referencia.split('-').map(Number)
+      : [hoje.getFullYear(), hoje.getMonth() + 1]
+    const baseData = new Date(anoBase, mesBase - 1, 1)
+
     for (let i = 1; i <= dadosIA.total_parcelas; i++) {
       const diffMeses = i - dadosIA.parcela_inicial
-      const mesData   = new Date(hoje.getFullYear(), hoje.getMonth() + diffMeses, 1)
+      const mesData   = new Date(baseData.getFullYear(), baseData.getMonth() + diffMeses, 1)
       const mesRef    = `${mesData.getFullYear()}-${String(mesData.getMonth() + 1).padStart(2, '0')}-01`
 
       // Parcelas anteriores à inicial: já ocorreram → pago
@@ -473,6 +508,8 @@ router.post('/lancar', async (req, res) => {
         total_parcelas:   dadosIA.total_parcelas,
         grupo_parcela_id: grupoId,
         texto_original:   i === dadosIA.parcela_inicial ? dadosIA.texto_original : null,
+        cartao_id:        dadosIA.cartao_id || null,
+        data_compra:      dadosIA.data_compra || null,
       })
     }
 

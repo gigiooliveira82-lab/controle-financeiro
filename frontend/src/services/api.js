@@ -7,15 +7,35 @@ async function headersAuth() {
   return { Authorization: `Bearer ${session?.access_token ?? ''}` }
 }
 
-export async function lancarTexto(texto, usuarioId) {
+export async function lancarTexto(texto, usuarioId, cartaoInfo) {
   const res = await fetch(`${BASE_URL}/transacoes/lancar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
-    body: JSON.stringify({ texto }),
+    body: JSON.stringify({ texto, ...cartaoInfo }),
   })
   const json = await res.json()
   if (!res.ok) throw new Error(json.erro || 'Erro ao lançar transação')
   return json
+}
+
+export async function buscarCartoes(usuarioId) {
+  const res = await fetch(`${BASE_URL}/cartoes/${usuarioId}`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar cartões')
+  return json.cartoes
+}
+
+export async function criarCartao(dados) {
+  const res = await fetch(`${BASE_URL}/cartoes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao criar cartão')
+  return json.cartao
 }
 
 export async function buscarTransacoes(usuarioId, mes) {

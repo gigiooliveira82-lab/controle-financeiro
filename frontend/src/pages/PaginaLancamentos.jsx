@@ -22,7 +22,7 @@ function Toast({ msg }) {
 }
 
 export default function PaginaLancamentos({
-  transacoes, usuarioId, mesSelecionado,
+  transacoes, usuarioId, mesSelecionado, cartoes = [],
   mostrarLancamento, onNovaTransacao, onRemoveu, onAtualizou, carregando,
 }) {
   const [expandido, setExpandido] = useState(false)
@@ -73,12 +73,16 @@ export default function PaginaLancamentos({
   const semDados      = transacoes.filter(t => TIPOS.includes(t.tipo)).length === 0
   const semResultados = !semDados && !!termoBusca && TIPOS.every(tipo => byTipo(tipo).length === 0)
 
+  const cartoesById = {}
+  cartoes.forEach(cartao => { cartoesById[cartao.id] = cartao })
+
   const lancamento = mostrarLancamento && (
     expandido ? (
       <LancamentoTexto
         usuarioId={usuarioId}
         onNovaTransacao={handleNovaComColapso}
         onAtualizouTransacao={onAtualizou}
+        cartoes={cartoes}
       />
     ) : (
       <button onClick={() => setExpandido(true)} style={l.botaoNovo}>
@@ -135,6 +139,7 @@ export default function PaginaLancamentos({
               onDuplicar={handleDuplicar}
               onCancelarParcelas={handleCancelarGrupoParcelas}
               onMoverTipo={showToast}
+              cartoesById={cartoesById}
             />
           ))}
         </div>

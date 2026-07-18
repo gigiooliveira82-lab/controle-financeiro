@@ -133,7 +133,7 @@ export function BarraCategoria({ categoria, valor, total, cor }) {
 
 // ── Bloco de tipo ─────────────────────────────────────────────────────────────
 
-export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo }) {
+export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
   const cfg       = TIPO[tipo]
   const ehDespesa = tipo === 'despesa_fixa' || tipo === 'despesa_variavel'
   const ehCredito = tipo === 'credito'
@@ -193,6 +193,7 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
               onDuplicar={() => onDuplicar(t.id)}
               onCancelarParcelas={onCancelarParcelas}
               onMoverTipo={onMoverTipo}
+              cartoesById={cartoesById}
             />
           ))}
         </div>
@@ -297,7 +298,7 @@ function Pill({ text, cor, bg }) {
 
 // ── Linha de transação ────────────────────────────────────────────────────────
 
-function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo }) {
+export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
   const [editandoValor, setEditandoValor] = useState(false)
   const [novoValor, setNovoValor]         = useState(String(t.valor))
   const [editandoDesc, setEditandoDesc]   = useState(false)
@@ -563,6 +564,14 @@ function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, remove
                       {TIPO_SHORT[t.tipo]}
                     </span>
                   )}
+                </>
+              )}
+              {t.cartao_id && cartoesById?.[t.cartao_id] && (
+                <>
+                  <span style={s.catSep}>·</span>
+                  <span style={{ ...s.cartaoBadge, color: cartoesById[t.cartao_id].cor || '#64748b' }} title="Compra no cartão">
+                    ▤ {cartoesById[t.cartao_id].nome}
+                  </span>
                 </>
               )}
             </div>
@@ -898,6 +907,7 @@ const s = {
   linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer' },
   addSub:      { fontSize: 10, color: '#9ca3af', cursor: 'pointer', lineHeight: 1, padding: '0 1px' },
   tipoTag:     { fontSize: 11, color: '#a78bfa', cursor: 'pointer', fontStyle: 'italic' },
+  cartaoBadge: { fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' },
   selectTipo:  { fontSize: 11, border: '1.5px solid #3b82f6', borderRadius: 4, outline: 'none', background: '#f8fafc', cursor: 'pointer', padding: '1px 2px', fontFamily: 'inherit' },
   linhaDir:    { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
   linhaValor:  { fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' },

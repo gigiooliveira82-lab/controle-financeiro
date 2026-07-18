@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useIsNavMobile } from './hooks/useIsNavMobile'
 import { supabase } from './services/supabase'
-import { buscarTransacoes, gerarRecorrentes } from './services/api'
+import { buscarTransacoes, gerarRecorrentes, buscarCartoes } from './services/api'
 import Login from './components/Login'
 import RedefinirSenha from './components/RedefinirSenha'
 import NavLateral from './components/NavLateral'
 import PaginaDashboard from './pages/PaginaDashboard'
 import PaginaLancamentos from './pages/PaginaLancamentos'
 import PaginaReceitas from './pages/PaginaReceitas'
+import PaginaCartoes from './pages/PaginaCartoes'
 import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 
@@ -43,6 +44,7 @@ function formatarMesHeader(mesISO) {
 export default function App() {
   const [usuario, setUsuario]               = useState(null)
   const [transacoes, setTransacoes]         = useState([])
+  const [cartoes, setCartoes]               = useState([])
   const [carregando, setCarregando]         = useState(true)
   const [carregandoDados, setCarregandoDados] = useState(false)
   const [mesSelecionado, setMesSelecionado] = useState(mesISOHoje)
@@ -73,6 +75,11 @@ export default function App() {
     if (usuario) inicializarMes()
   }, [usuario, mesSelecionado])
 
+  useEffect(() => {
+    if (!usuario) { setCartoes([]); return }
+    buscarCartoes(usuario.id).then(setCartoes).catch(err => console.error('Erro ao buscar cartões:', err.message))
+  }, [usuario])
+
   async function inicializarMes() {
     setCarregandoDados(true)
     try {
@@ -98,6 +105,10 @@ export default function App() {
 
   function handleRemoveu(id) {
     setTransacoes((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  function handleNovoCartao(novo) {
+    setCartoes((prev) => [...prev, novo])
   }
 
   async function handleLogout() {
@@ -129,10 +140,12 @@ export default function App() {
 
   const propsPaginas = {
     transacoes,
+    cartoes,
     usuarioId:        usuario.id,
     mesSelecionado,
     mostrarLancamento: mesSelecionado >= mesISOHoje(),
     onNovaTransacao:  handleNovaTransacao,
+    onNovoCartao:     handleNovoCartao,
     onRemoveu:        handleRemoveu,
     onAtualizou:      handleAtualizou,
     carregando:       carregandoDados,
@@ -160,6 +173,7 @@ export default function App() {
               <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
               <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
               <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
+              <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
               <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
               <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
               <Route path="*"              element={<Navigate to="/dashboard" replace />} />
