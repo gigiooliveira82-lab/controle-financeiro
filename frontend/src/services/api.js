@@ -38,6 +38,36 @@ export async function criarCartao(dados) {
   return json.cartao
 }
 
+export async function atualizarCartao(id, dados) {
+  const res = await fetch(`${BASE_URL}/cartoes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao atualizar cartão')
+  return json.cartao
+}
+
+export async function contarComprasCartao(id) {
+  const res = await fetch(`${BASE_URL}/cartoes/${id}/compras/contagem`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao contar compras do cartão')
+  return json.total
+}
+
+export async function removerCartao(id) {
+  const res = await fetch(`${BASE_URL}/cartoes/${id}`, {
+    method: 'DELETE',
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao excluir cartão')
+  return json
+}
+
 export async function buscarTransacoes(usuarioId, mes) {
   const params = mes ? `?mes=${mes}` : ''
   const res = await fetch(`${BASE_URL}/transacoes/${usuarioId}${params}`, {

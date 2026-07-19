@@ -111,6 +111,15 @@ export default function App() {
     setCartoes((prev) => [...prev, novo])
   }
 
+  function handleAtualizouCartao(id, dadosAtualizados) {
+    setCartoes((prev) => prev.map((c) => c.id === id ? { ...c, ...dadosAtualizados } : c))
+  }
+
+  function handleRemoveuCartao(id) {
+    setCartoes((prev) => prev.filter((c) => c.id !== id))
+    setTransacoes((prev) => prev.map((t) => t.cartao_id === id ? { ...t, cartao_id: null } : t))
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     setTransacoes([])
@@ -146,6 +155,8 @@ export default function App() {
     mostrarLancamento: mesSelecionado >= mesISOHoje(),
     onNovaTransacao:  handleNovaTransacao,
     onNovoCartao:     handleNovoCartao,
+    onAtualizouCartao: handleAtualizouCartao,
+    onRemoveuCartao:  handleRemoveuCartao,
     onRemoveu:        handleRemoveu,
     onAtualizou:      handleAtualizou,
     carregando:       carregandoDados,

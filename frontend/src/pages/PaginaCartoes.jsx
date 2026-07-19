@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { criarCartao } from '../services/api'
+import { criarCartao, atualizarCartao, contarComprasCartao, removerCartao } from '../services/api'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { ItemLinha, soma, fmtSaldo } from '../components/Dashboard'
 
 export default function PaginaCartoes({
   cartoes, transacoes, usuarioId, mesSelecionado,
-  onNovoCartao, onNovaTransacao, onRemoveu, onAtualizou, carregando,
+  onNovoCartao, onAtualizouCartao, onRemoveuCartao,
+  onNovaTransacao, onRemoveu, onAtualizou, carregando,
 }) {
   const [expandido, setExpandido] = useState(false)
 
@@ -26,8 +27,14 @@ export default function PaginaCartoes({
   return (
     <div style={c.root}>
       {expandido ? (
-        <FormNovoCartao
-          onCriado={(novo) => { onNovoCartao(novo); setExpandido(false) }}
+        <FormCartao
+          titulo="Novo cartão"
+          textoSalvar="Salvar cartão"
+          onSalvar={async (dados) => {
+            const novo = await criarCartao(dados)
+            onNovoCartao(novo)
+            setExpandido(false)
+          }}
           onCancelar={() => setExpandido(false)}
         />
       ) : (
@@ -53,6 +60,8 @@ export default function PaginaCartoes({
             onAtualizar={handleAtualizar}
             onDuplicar={handleDuplicar}
             onCancelarParcelas={handleCancelarGrupoParcelas}
+            onAtualizarCartao={onAtualizouCartao}
+            onRemoverCartao={onRemoveuCartao}
           />
         ))
       )}
@@ -60,7 +69,12 @@ export default function PaginaCartoes({
   )
 }
 
-function BlocoCartao({ cartao, compras, cartoesById, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas }) {
+function BlocoCartao({
+  cartao, compras, cartoesById, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas,
+  onAtualizarCartao, onRemoverCartao,
+}) {
+  const [editando, setEditando]   = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
   const total = soma(compras)
   const corCartao = cartao.cor || 'var(--verde-profundo)'
   const comprasOrdenadas = [...compras].sort((a, b) => {
@@ -68,11 +82,48 @@ function BlocoCartao({ cartao, compras, cartoesById, removendo, onRemover, onAtu
     return d !== 0 ? d : (a.criado_em || '') < (b.criado_em || '') ? -1 : 1
   })
 
+  async function handleExcluir() {
+    setExcluindo(true)
+    try {
+      const totalCompras = await contarComprasCartao(cartao.id)
+      const msg = totalCompras > 0
+        ? `Este cartão tem ${totalCompras} compra${totalCompras === 1 ? '' : 's'} registrada${totalCompras === 1 ? '' : 's'}. Excluir o cartão vai desvincular essas compras (elas continuam em Despesas, mas sem cartão associado). Deseja continuar?`
+        : 'Tem certeza que deseja excluir este cartão?'
+      if (!confirm(msg)) return
+      await removerCartao(cartao.id)
+      onRemoverCartao(cartao.id)
+    } catch (err) {
+      alert('Erro ao excluir cartão: ' + err.message)
+    } finally {
+      setExcluindo(false)
+    }
+  }
+
+  if (editando) {
+    return (
+      <FormCartao
+        inicial={cartao}
+        titulo={`Editar ${cartao.nome}`}
+        textoSalvar="Salvar alterações"
+        onSalvar={async (dados) => {
+          const atualizado = await atualizarCartao(cartao.id, dados)
+          onAtualizarCartao(cartao.id, atualizado)
+          setEditando(false)
+        }}
+        onCancelar={() => setEditando(false)}
+      />
+    )
+  }
+
   return (
     <div style={{ ...c.bloco, borderLeft: `4px solid ${corCartao}` }}>
       <div style={c.blocoTopo}>
         <div>
-          <span style={{ ...c.blocoTitulo, color: corCartao }}>{cartao.nome}</span>
+          <div style={c.blocoNomeRow}>
+            <span style={{ ...c.blocoTitulo, color: corCartao }}>{cartao.nome}</span>
+            <button onClick={() => setEditando(true)} style={c.iconBtn} title="Editar cartão">✎</button>
+            <button onClick={handleExcluir} disabled={excluindo} style={c.iconBtn} title="Excluir cartão">×</button>
+          </div>
           <p style={c.blocoSub}>Fecha dia {cartao.dia_fechamento} · Vence dia {cartao.dia_vencimento}</p>
         </div>
         <span style={c.blocoTotalValor}>{fmtSaldo(total)}</span>
@@ -105,13 +156,13 @@ function BlocoCartao({ cartao, compras, cartoesById, removendo, onRemover, onAtu
   )
 }
 
-function FormNovoCartao({ onCriado, onCancelar }) {
-  const [nome, setNome] = useState('')
-  const [diaFechamento, setDiaFechamento] = useState('')
-  const [diaVencimento, setDiaVencimento] = useState('')
-  const [cor, setCor] = useState('#1F5D45')
-  const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState('')
+function FormCartao({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
+  const [nome, setNome]                 = useState(inicial?.nome || '')
+  const [diaFechamento, setDiaFechamento] = useState(inicial ? String(inicial.dia_fechamento) : '')
+  const [diaVencimento, setDiaVencimento] = useState(inicial ? String(inicial.dia_vencimento) : '')
+  const [cor, setCor]                   = useState(inicial?.cor || '#1F5D45')
+  const [salvando, setSalvando]         = useState(false)
+  const [erro, setErro]                 = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -125,8 +176,7 @@ function FormNovoCartao({ onCriado, onCancelar }) {
 
     setSalvando(true)
     try {
-      const novo = await criarCartao({ nome: nome.trim(), dia_fechamento: fech, dia_vencimento: venc, cor })
-      onCriado(novo)
+      await onSalvar({ nome: nome.trim(), dia_fechamento: fech, dia_vencimento: venc, cor })
     } catch (err) {
       setErro(err.message)
     } finally {
@@ -136,7 +186,7 @@ function FormNovoCartao({ onCriado, onCancelar }) {
 
   return (
     <form onSubmit={handleSubmit} style={c.form}>
-      <h2 style={c.formTitulo}>Novo cartão</h2>
+      <h2 style={c.formTitulo}>{titulo}</h2>
 
       <input
         placeholder="Nome do cartão (ex: Cartão Master)"
@@ -183,7 +233,7 @@ function FormNovoCartao({ onCriado, onCancelar }) {
 
       <div style={c.formBotoes}>
         <button type="submit" style={c.botaoSalvar} disabled={salvando}>
-          {salvando ? 'Salvando...' : 'Salvar cartão'}
+          {salvando ? 'Salvando...' : textoSalvar}
         </button>
         <button type="button" style={c.botaoCancelar} onClick={onCancelar} disabled={salvando}>
           Cancelar
@@ -242,9 +292,14 @@ const c = {
 
   bloco:           { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
   blocoTopo:       { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+  blocoNomeRow:    { display: 'flex', alignItems: 'center', gap: 2 },
   blocoTitulo:     { fontSize: 16, fontWeight: 700 },
   blocoSub:        { margin: '2px 0 0', fontSize: 12, color: '#94a3b8' },
   blocoTotalValor: { fontSize: 20, fontWeight: 800, color: '#1e293b' },
   separador:       { height: 1, background: 'var(--surface-line)', margin: '14px -20px' },
   blocoVazio:      { margin: '2px 0 0', fontSize: 13, color: '#cbd5e1', fontStyle: 'italic' },
+  iconBtn: {
+    background: 'none', border: 'none', fontSize: 14,
+    color: '#9ca3af', cursor: 'pointer', padding: '4px 6px', lineHeight: 1,
+  },
 }
