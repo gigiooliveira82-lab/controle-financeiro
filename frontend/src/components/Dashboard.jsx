@@ -424,7 +424,12 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
   }
 
   return (
-    <div style={{ ...s.linha, opacity: salvando ? 0.45 : 1, ...(vencida ? { background: '#fff1f1' } : {}) }}>
+    <div style={{
+      ...s.linha,
+      ...(isMobile ? s.linhaMobile : {}),
+      opacity: salvando ? 0.45 : 1,
+      ...(vencida ? { background: '#fff1f1' } : {}),
+    }}>
       <div style={s.linhaEsq}>
         {editandoDia ? (
           <input
@@ -579,7 +584,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
         </div>
       </div>
 
-      <div style={{ ...s.linhaDir, ...(isMobile ? { gap: 2 } : {}) }}>
+      <div style={{ ...s.linhaDir, ...(isMobile ? { gap: 2, justifyContent: 'flex-end', width: '100%' } : {}) }}>
         {editandoValor ? (
           <input
             autoFocus
@@ -888,10 +893,13 @@ const s = {
   aplicSecTitulo:  { margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' },
 
   // Linhas
-  linha:           { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--surface-line)', gap: 8 },
+  linha:           { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--surface-line)', gap: 8 },
+  // No mobile, empilha o bloco esquerdo (dia/nome/categoria) e o direito (valor/status/ícones)
+  // em vez de espremer os dois lado a lado — evita sobreposição quando há muitos ícones de ação
+  linhaMobile:     { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 },
   linhaPatrimonio: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid var(--surface-line)' },
   linhaPatrimonioEsq: { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
-  linhaEsq:        { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0, flex: 1 },
+  linhaEsq:        { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
   diaTag: {
     fontSize: 10, fontWeight: 700, border: '1.5px solid',
     borderRadius: 4, padding: '1px 4px', minWidth: 22,
@@ -901,10 +909,10 @@ const s = {
   linhaDescRow: { display: 'flex', alignItems: 'flex-start', gap: 6 },
   parcelaTag:  { fontSize: 10, fontWeight: 700, color: '#6366f1', background: '#ede9fe', padding: '2px 5px', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0, marginTop: 2 },
   linhaDesc:   { flex: 1, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 14, fontWeight: 600, color: '#1e293b', lineHeight: 1.35, cursor: 'pointer' },
-  linhaCatRow: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 2, gap: 4, marginTop: 2 },
-  linhaCat:    { fontSize: 11, color: '#94a3b8', textTransform: 'capitalize', cursor: 'pointer' },
+  linhaCatRow: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 2 },
+  linhaCat:    { fontSize: 11, color: '#94a3b8', textTransform: 'capitalize', cursor: 'pointer', overflowWrap: 'anywhere' },
   catSep:      { fontSize: 10, color: '#9ca3af', flexShrink: 0 },
-  linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer' },
+  linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer', overflowWrap: 'anywhere' },
   addSub:      { fontSize: 10, color: '#9ca3af', cursor: 'pointer', lineHeight: 1, padding: '0 1px' },
   tipoTag:     { fontSize: 11, color: '#a78bfa', cursor: 'pointer', fontStyle: 'italic' },
   cartaoBadge: { fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' },
