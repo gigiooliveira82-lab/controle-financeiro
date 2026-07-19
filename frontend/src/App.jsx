@@ -177,8 +177,18 @@ export default function App() {
               <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav}>›</button>
             </div>
             <div style={estilos.usuarioArea}>
-              {!isMobileHeader && <span style={estilos.usuarioEmail} title={usuario.email}>{usuario.email}</span>}
-              <button onClick={handleLogout} style={estilos.botaoLogout}>Sair</button>
+              <span
+                style={{ ...estilos.usuarioEmail, maxWidth: isMobileHeader ? 92 : 220, fontSize: isMobileHeader ? 10 : 12 }}
+                title={usuario.email}
+              >
+                {usuario.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                style={{ ...estilos.botaoLogout, ...(isMobileHeader ? { padding: '5px 10px', fontSize: 11 } : {}) }}
+              >
+                Sair
+              </button>
             </div>
           </header>
 
@@ -231,11 +241,11 @@ const estilos = {
     zIndex: 10,
   },
   navMes: { display: 'flex', alignItems: 'center', gap: 8 },
-  usuarioArea: { display: 'flex', alignItems: 'center', gap: 12 },
+  usuarioArea: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 },
   usuarioEmail: {
     fontSize: 12,
     color: '#9DC9B5',
-    maxWidth: 220,
+    minWidth: 0,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',

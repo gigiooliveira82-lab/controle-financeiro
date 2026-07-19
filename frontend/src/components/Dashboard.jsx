@@ -901,7 +901,7 @@ const s = {
   linhaDescRow: { display: 'flex', alignItems: 'flex-start', gap: 6 },
   parcelaTag:  { fontSize: 10, fontWeight: 700, color: '#6366f1', background: '#ede9fe', padding: '2px 5px', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0, marginTop: 2 },
   linhaDesc:   { flex: 1, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 14, fontWeight: 600, color: '#1e293b', lineHeight: 1.35, cursor: 'pointer' },
-  linhaCatRow: { display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 },
+  linhaCatRow: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 2, gap: 4, marginTop: 2 },
   linhaCat:    { fontSize: 11, color: '#94a3b8', textTransform: 'capitalize', cursor: 'pointer' },
   catSep:      { fontSize: 10, color: '#9ca3af', flexShrink: 0 },
   linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer' },

@@ -6,7 +6,7 @@ const NAV_ITENS = [
   { path: '/dashboard',     icone: '⊡', label: 'Dashboard',     curto: 'Dashboard'  },
   { path: '/despesas',      icone: '≡',  label: 'Despesas',      curto: 'Despesas'   },
   { path: '/receitas',      icone: '⊕',  label: 'Receitas',      curto: 'Receitas'   },
-  { path: '/cartoes',       icone: '▤',  label: 'Cartões',       curto: 'Cartões'    },
+  { path: '/cartoes',       icone: '💳', label: 'Cartões',       curto: 'Cartões'    },
   { path: '/aplicacoes',    icone: '◎',  label: 'Aplicações',    curto: 'Aplicações' },
   { path: '/configuracoes', icone: '⚙',  label: 'Configurações', curto: 'Config.'    },
 ]

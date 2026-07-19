@@ -126,7 +126,7 @@ export default function PaginaLancamentos({
           </p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))', gap: 16, alignItems: 'start' }}>
           {TIPOS.map(tipo => (
             <BlocoTipo
               key={tipo}
