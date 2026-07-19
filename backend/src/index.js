@@ -10,6 +10,8 @@ const PORT = process.env.PORT || 3001
 const ORIGENS_PERMITIDAS = [
   'http://localhost:5173',
   'https://controle-financeiro-peach-alpha.vercel.app',
+  'https://contasclaras.app.br',
+  'https://www.contasclaras.app.br',
 ]
 app.use(cors({ origin: ORIGENS_PERMITIDAS }))
 app.use(express.json())
