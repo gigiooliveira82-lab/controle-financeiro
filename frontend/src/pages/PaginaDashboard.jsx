@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { buscarComparativoMensal } from '../services/api'
 import LancamentoTexto from '../components/LancamentoTexto'
 import {
-  CardDestaque, CardSaldo, CardNeutro, CardComparativo,
+  CardHeroProjetado, CardSaldo, CardNeutro, CardComparativo,
   BarraCategoria, BlocoAnalise, BlocoPerguntas,
   soma, fmtSaldo, labelMes, mesAnteriorISO, COR_CAT, useIsMobile,
 } from '../components/Dashboard'
@@ -100,49 +100,59 @@ export default function PaginaDashboard({
     )
   )
 
+  const mesEmAndamento = mesSelecionado === mesHojeISO
+
   const cardsSaldo = (
-    <div style={p.cardRow}>
-      {saldosIdenticos ? (
-        <CardDestaque valor={saldoReal} />
-      ) : (
-        <>
-          <CardSaldo label="Saldo Real"      valor={saldoReal}      sub="créditos recebidos − despesas pagas" />
-          <CardSaldo label="Saldo Projetado" valor={saldoProjetado} sub="incluindo valores pendentes" />
-          <CardNeutro
-            label="A Pagar"
-            valor={totalAPagar}
-            sub={`${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`}
-          />
-        </>
-      )}
-      <CardComparativo
-        percentualVariacao={comparativo?.percentualVariacao ?? null}
-        despesaMesAtual={comparativo?.despesaMesAtual ?? 0}
-        despesaMesAnterior={comparativo?.despesaMesAnterior ?? null}
-        mesAtualISO={mesSelecionado}
-        mesAnteriorISO={mesAnt}
+    <div style={p.cardsSaldoWrap}>
+      <CardHeroProjetado
+        valor={saldoProjetado}
+        saldoReal={saldoReal}
+        totalAPagar={totalAPagar}
+        qtdPendente={qtdPendente}
+        tudoEmDia={saldosIdenticos}
       />
+      <div style={p.cardRowSecundario}>
+        {!saldosIdenticos && (
+          <>
+            <CardSaldo label="Saldo Real" valor={saldoReal} sub="créditos recebidos − despesas pagas" />
+            <CardNeutro
+              label="A Pagar"
+              valor={totalAPagar}
+              sub={`${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`}
+            />
+          </>
+        )}
+        <CardComparativo
+          percentualVariacao={comparativo?.percentualVariacao ?? null}
+          despesaMesAtual={comparativo?.despesaMesAtual ?? 0}
+          despesaMesAnterior={comparativo?.despesaMesAnterior ?? null}
+          mesAtualISO={mesSelecionado}
+          mesAnteriorISO={mesAnt}
+          parcial={mesEmAndamento}
+        />
+      </div>
+    </div>
+  )
+
+  const concentracao = catOrdenadas.length > 0 && (
+    <div style={p.secao}>
+      <p style={p.secaoTitulo}>Concentração de gastos</p>
+      <div style={p.barrasWrap}>
+        {catOrdenadas.map(([cat, val]) => (
+          <BarraCategoria
+            key={cat}
+            categoria={cat}
+            valor={val}
+            total={totalDespesa}
+            cor={COR_CAT[cat] || '#94a3b8'}
+          />
+        ))}
+      </div>
     </div>
   )
 
   const colDir = (
     <div style={p.colDir}>
-      {catOrdenadas.length > 0 && (
-        <div style={p.secao}>
-          <p style={p.secaoTitulo}>Concentração de gastos</p>
-          <div style={p.barrasWrap}>
-            {catOrdenadas.map(([cat, val]) => (
-              <BarraCategoria
-                key={cat}
-                categoria={cat}
-                valor={val}
-                total={totalDespesa}
-                cor={COR_CAT[cat] || '#94a3b8'}
-              />
-            ))}
-          </div>
-        </div>
-      )}
       <BlocoAnalise usuarioId={usuarioId} mesSelecionado={mesSelecionado} />
       <BlocoPerguntas usuarioId={usuarioId} />
     </div>
@@ -153,9 +163,10 @@ export default function PaginaDashboard({
       <div style={p.root}>
         {lancamento}
         {!semDados && cardsSaldo}
-        {mesSelecionado === mesHojeISO && proximosVencimentos.length > 0 && (
+        {mesEmAndamento && proximosVencimentos.length > 0 && (
           <ProximosVencimentos items={proximosVencimentos} diaHoje={diaHoje} />
         )}
+        {concentracao}
         {colDir}
       </div>
     )
@@ -167,9 +178,10 @@ export default function PaginaDashboard({
       <div style={p.grid}>
         <div style={p.colEsq}>
           {!semDados && cardsSaldo}
-          {mesSelecionado === mesHojeISO && proximosVencimentos.length > 0 && (
+          {mesEmAndamento && proximosVencimentos.length > 0 && (
             <ProximosVencimentos items={proximosVencimentos} diaHoje={diaHoje} />
           )}
+          {concentracao}
         </div>
         {colDir}
       </div>
@@ -215,7 +227,8 @@ const p = {
     textAlign: 'center', boxSizing: 'border-box',
     boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
   },
-  cardRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 },
+  cardsSaldoWrap:     { display: 'flex', flexDirection: 'column', gap: 12 },
+  cardRowSecundario:  { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 },
 
   // Próximos vencimentos
   proximoBloco:  { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },

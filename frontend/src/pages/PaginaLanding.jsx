@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 import LogoMarca from '../components/LogoMarca'
 
@@ -120,6 +120,8 @@ function FormularioListaEspera({ variante = 'hero' }) {
       <div style={s.formEsperaCampo}>
         <input
           type="email"
+          name="email"
+          autoComplete="email"
           inputMode="email"
           placeholder="seu@email.com"
           value={email}
@@ -138,7 +140,6 @@ function FormularioListaEspera({ variante = 'hero' }) {
 }
 
 export default function PaginaLanding() {
-  const navigate    = useNavigate()
   const isMobile     = useIsMobile()
   const intensidade = useScrollIntensity()
   const ctaFinalRef  = useRef(null)
@@ -156,7 +157,7 @@ export default function PaginaLanding() {
           <span style={s.navLogoTexto}>Contas Claras</span>
         </div>
         <div style={s.navAcoes}>
-          <button onClick={() => navigate('/login')} style={s.navLinkEntrar}>Entrar</button>
+          <Link to="/login" style={s.navLinkEntrar}>Entrar</Link>
           {!isMobile && (
             <button onClick={scrollAteFormulario} style={s.navBotaoDestaque}>
               Entrar na lista de espera
@@ -191,9 +192,9 @@ export default function PaginaLanding() {
             <button onClick={scrollAteFormulario} style={s.botaoPrimario}>
               Entrar na lista de espera
             </button>
-            <button onClick={() => navigate('/login')} style={s.botaoSecundario}>
+            <Link to="/login" style={s.botaoSecundario}>
               Já tenho conta
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -299,7 +300,7 @@ export default function PaginaLanding() {
           <LogoMarca size={18} rayColor="rgba(245,240,228,0.75)" />
           <span style={s.rodapeLogoTexto}>Contas Claras</span>
         </div>
-        <button onClick={() => navigate('/login')} style={s.rodapeLink}>Entrar</button>
+        <Link to="/login" style={s.rodapeLink}>Entrar</Link>
         <span style={s.rodapeAno}>© {new Date().getFullYear()}</span>
       </footer>
     </div>
@@ -331,7 +332,7 @@ const s = {
   navLogoTexto: { fontSize: 16, fontWeight: 800, color: '#1F5D45', letterSpacing: '-0.02em' },
   navAcoes: { display: 'flex', alignItems: 'center', gap: 10 },
   navLinkEntrar: {
-    background: 'none', border: 'none', color: '#1F5D45',
+    background: 'none', border: 'none', color: '#1F5D45', textDecoration: 'none',
     fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '8px 4px',
   },
   navBotaoDestaque: {
@@ -359,6 +360,7 @@ const s = {
   botaoSecundario: {
     background: 'transparent', color: '#F5F0E4', border: '1.5px solid rgba(245,240,228,0.5)',
     borderRadius: 8, padding: '14px 24px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+    textDecoration: 'none', display: 'inline-block', boxSizing: 'border-box',
   },
 
   secao: { maxWidth: 1080, margin: '0 auto', boxSizing: 'border-box', width: '100%' },
@@ -442,7 +444,7 @@ const s = {
   },
   rodapeLogoTexto: { fontSize: 13, fontWeight: 700, color: 'rgba(245,240,228,0.85)' },
   rodapeLink: {
-    background: 'none', border: 'none', color: 'rgba(245,240,228,0.75)',
+    background: 'none', border: 'none', color: 'rgba(245,240,228,0.75)', textDecoration: 'none',
     fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0,
   },
   rodapeAno: { marginLeft: 'auto', fontSize: 12, color: 'rgba(245,240,228,0.5)' },

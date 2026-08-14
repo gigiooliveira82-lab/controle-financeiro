@@ -10,6 +10,24 @@ function calcularMesesRestantes(dataAlvoISO) {
   return meses
 }
 
+// A data alvo já passou de verdade (comparação por dia, sem hora) — só nesse
+// caso a meta está de fato vencida. calcularMesesRestantes pode arredondar
+// para 0 mesmo com o prazo ainda em aberto (ex: faltam 6 dias), então não dá
+// pra usar "meses <= 0" sozinho para decidir se venceu.
+function prazoVencido(dataAlvoISO) {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const alvo = new Date(`${dataAlvoISO}T00:00:00`)
+  return alvo < hoje
+}
+
+function diasRestantes(dataAlvoISO) {
+  const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
+  const alvo = new Date(`${dataAlvoISO}T00:00:00`)
+  return Math.round((alvo - hoje) / 86400000)
+}
+
 function formatarDataAlvo(dataAlvoISO) {
   const [ano, mes, dia] = dataAlvoISO.split('-')
   return `${dia}/${mes}/${ano}`
@@ -100,6 +118,8 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
   const realizado  = guardado >= total
   const progresso  = Math.min(100, (guardado / total) * 100)
   const meses      = calcularMesesRestantes(sonho.data_alvo)
+  const vencido    = prazoVencido(sonho.data_alvo)
+  const dias       = diasRestantes(sonho.data_alvo)
   const corSonho   = sonho.cor || 'var(--verde-profundo)'
 
   async function handleExcluir() {
@@ -170,14 +190,20 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
 
       <p style={s.dataAlvo}>
         Meta para {formatarDataAlvo(sonho.data_alvo)}
-        {!realizado && (meses > 0 ? ` · faltam ${meses} ${meses === 1 ? 'mês' : 'meses'}` : '')}
+        {!realizado && !vencido && (
+          meses > 0
+            ? ` · faltam ${meses} ${meses === 1 ? 'mês' : 'meses'}`
+            : ` · faltam ${dias} ${dias === 1 ? 'dia' : 'dias'}`
+        )}
       </p>
 
       {!realizado && (
-        meses > 0 ? (
+        vencido ? (
+          <p style={s.mensalAlerta}>Prazo já passou — hora de revisar a meta</p>
+        ) : meses > 0 ? (
           <p style={s.mensal}>Guarde {fmtBRL(Math.ceil((total - guardado) / meses))} por mês para chegar lá</p>
         ) : (
-          <p style={s.mensalAlerta}>Prazo já passou — hora de revisar a meta</p>
+          <p style={s.mensal}>Guarde {fmtBRL(Math.ceil(total - guardado))} até o prazo para chegar lá</p>
         )
       )}
 

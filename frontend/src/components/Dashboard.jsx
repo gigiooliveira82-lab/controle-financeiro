@@ -52,20 +52,47 @@ export function useIsMobile() {
   return mobile
 }
 
-// ── Card de destaque (saldos idênticos) ───────────────────────────────────────
+// ── Card-herói (saldo projetado do mês) ────────────────────────────────────────
+// Primeira coisa que o usuário vê ao entrar no app — usa a mesma identidade
+// visual do login/landing (verde profundo, serifada, sol) em vez do cartão
+// branco genérico do resto da página.
 
-export function CardDestaque({ valor }) {
-  const positivo = valor >= 0
-  const cor = positivo ? 'var(--verde-profundo)' : '#dc2626'
+function SolMarcaDagua({ size = 200 }) {
+  const cx = size / 2, cy = size / 2
+  const r = size * 0.2, rayIn = size * 0.27, rayOut = size * 0.42
+  const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
+    const rad = (deg * Math.PI) / 180
+    return {
+      x1: cx + rayIn * Math.sin(rad), y1: cy - rayIn * Math.cos(rad),
+      x2: cx + rayOut * Math.sin(rad), y2: cy - rayOut * Math.cos(rad),
+    }
+  })
   return (
-    <div style={{ ...s.cardDestaque, borderTop: `5px solid ${cor}`, background: positivo ? '#E8F2EC' : '#fff5f5' }}>
-      <div style={s.cardDestaqueEsq}>
-        <span style={s.cardLabel}>Saldo do Mês</span>
-        <span style={{ ...s.cardDestaqueValor, color: cor }}>{fmtSaldo(valor)}</span>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true"
+      style={{ position: 'absolute', top: -size * 0.28, right: -size * 0.22, pointerEvents: 'none' }}>
+      <circle cx={cx} cy={cy} r={r} fill="#E3A008" opacity={0.85} />
+      <g stroke="#E3A008" strokeWidth={size * 0.018} strokeLinecap="round" opacity={0.55}>
+        {rays.map((ray, i) => <line key={i} {...ray} />)}
+      </g>
+    </svg>
+  )
+}
+
+export function CardHeroProjetado({ valor, saldoReal, totalAPagar, qtdPendente, tudoEmDia }) {
+  const positivo = valor >= 0
+  const cor = positivo ? '#F5F0E4' : '#FCA5A5'
+  return (
+    <div style={{ ...s.cardHero, background: positivo ? 'var(--verde-profundo)' : '#7a2323' }}>
+      <SolMarcaDagua />
+      <div style={s.cardHeroConteudo}>
+        <span style={s.cardHeroLabel}>{tudoEmDia ? 'Saldo do mês' : 'Saldo projetado'}</span>
+        <span style={{ ...s.cardHeroValor, color: cor }}>{fmtSaldo(valor)}</span>
+        <span style={s.cardHeroSub}>
+          {tudoEmDia
+            ? (positivo ? '✓ Tudo em dia · nenhum valor pendente' : '! Negativo · nenhum valor pendente')
+            : `${fmtSaldo(saldoReal)} garantido agora · ${fmtSaldo(totalAPagar)} em ${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`}
+        </span>
       </div>
-      <span style={{ ...s.cardDestaqueSub, color: cor }}>
-        {positivo ? '✓ Tudo em dia · nenhum valor pendente' : '! Negativo · nenhum valor pendente'}
-      </span>
     </div>
   )
 }
@@ -96,25 +123,29 @@ export function CardNeutro({ label, valor, sub }) {
 
 // ── Card comparativo (vs mês anterior) ───────────────────────────────────────
 
-export function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnterior, mesAtualISO, mesAnteriorISO: mesAntISO }) {
+export function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnterior, mesAtualISO, mesAnteriorISO: mesAntISO, parcial }) {
+  const label = `VS MÊS ANTERIOR${parcial ? ' (parcial)' : ''}`
   if (percentualVariacao === null) {
     return (
       <div style={{ ...s.card, borderTop: '3px solid #e2e8f0' }}>
-        <span style={s.cardLabel}>VS MÊS ANTERIOR</span>
+        <span style={s.cardLabel}>{label}</span>
         <span style={{ fontSize: 16, fontWeight: 600, color: '#94a3b8', lineHeight: 1.3 }}>Sem histórico</span>
         <span style={s.cardSub}>Volte no próximo mês para comparar</span>
       </div>
     )
   }
+  // Num mês ainda em andamento, a comparação é enganosa (despesas variáveis do
+  // mês atual ainda vão crescer) — mostramos neutro em vez de verde/vermelho.
   const subindo = percentualVariacao > 0
-  const cor = subindo ? '#dc2626' : 'var(--verde-profundo)'
+  const cor = parcial ? '#64748b' : (subindo ? '#dc2626' : 'var(--verde-profundo)')
   const seta = subindo ? '▲' : '▼'
   return (
     <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
-      <span style={s.cardLabel}>VS MÊS ANTERIOR</span>
+      <span style={s.cardLabel}>{label}</span>
       <span style={{ ...s.cardValor, color: cor }}>{seta} {Math.abs(percentualVariacao).toFixed(1)}%</span>
       <span style={s.cardSub}>
         R$ {fmt(despesaMesAtual)} em {labelMes(mesAtualISO)} vs R$ {fmt(despesaMesAnterior)} em {labelMes(mesAntISO)}
+        {parcial ? ' · mês em andamento' : ''}
       </span>
     </div>
   )
@@ -304,6 +335,26 @@ function Pill({ text, cor, bg }) {
 
 // ── Linha de transação ────────────────────────────────────────────────────────
 
+// Campo de texto que vira edição inline ao ser ativado — via clique ou teclado
+// (Enter/Espaço), já que é o mecanismo central de edição das linhas de lançamento.
+function CampoEditavel({ onAtivar, style, title, children }) {
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={onAtivar}
+      onKeyDown={ev => {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); onAtivar() }
+      }}
+      style={style}
+      title={title}
+      aria-label={title}
+    >
+      {children}
+    </span>
+  )
+}
+
 export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
   const [editandoValor, setEditandoValor] = useState(false)
   const [novoValor, setNovoValor]         = useState(String(t.valor))
@@ -462,13 +513,13 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             style={s.inputDia}
           />
         ) : (
-          <span
+          <CampoEditavel
             style={{ ...s.diaTag, borderColor: cor, color: cor, cursor: 'pointer', ...(isMobile ? { minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
-            onClick={() => { setNovoDia(String(t.dia_pagamento)); setEditandoDia(true) }}
-            title="Clique para editar o dia"
+            onAtivar={() => { setNovoDia(String(t.dia_pagamento)); setEditandoDia(true) }}
+            title="Editar o dia"
           >
             {t.dia_pagamento}
-          </span>
+          </CampoEditavel>
         )}
         <div style={s.linhaTexto}>
           <div style={s.linhaDescRow}>
@@ -485,16 +536,16 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                 style={s.inputDesc}
               />
             ) : (
-              <span
-                onClick={() => { setNovaDesc(t.descricao); setEditandoDesc(true) }}
+              <CampoEditavel
+                onAtivar={() => { setNovaDesc(t.descricao); setEditandoDesc(true) }}
                 style={s.linhaDesc}
-                title={t.descricao}
+                title={`Editar descrição: ${t.descricao}`}
               >
                 {t.descricao}
                 {mostrarRecorrente && t.recorrente && (
-                  <span style={{ color: cor, marginLeft: 5, fontSize: 11 }} title="Recorrente">↺</span>
+                  <span style={{ color: cor, marginLeft: 5, fontSize: 11 }} aria-hidden="true">↺</span>
                 )}
-              </span>
+              </CampoEditavel>
             )}
             {!editandoDesc && t.total_parcelas && (
               <span style={s.parcelaTag}>{t.parcela_atual}/{t.total_parcelas}</span>
@@ -515,13 +566,13 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             />
           ) : (
             <div style={s.linhaCatRow}>
-              <span
-                onClick={() => { setNovaCat(t.categoria || ''); setEditandoCat(true) }}
+              <CampoEditavel
+                onAtivar={() => { setNovaCat(t.categoria || ''); setEditandoCat(true) }}
                 style={s.linhaCat}
-                title="Clique para editar categoria"
+                title={`Editar categoria: ${t.categoria}`}
               >
                 {t.categoria}
-              </span>
+              </CampoEditavel>
               {editandoSub ? (
                 <>
                   <span style={s.catSep}>·</span>
@@ -540,20 +591,20 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
               ) : t.subcategoria?.trim() ? (
                 <>
                   <span style={s.catSep}>·</span>
-                  <span
-                    onClick={() => { setNovaSub(t.subcategoria.trim()); setEditandoSub(true) }}
+                  <CampoEditavel
+                    onAtivar={() => { setNovaSub(t.subcategoria.trim()); setEditandoSub(true) }}
                     style={s.linhaSub}
-                    title="Clique para editar subcategoria"
+                    title={`Editar subcategoria: ${t.subcategoria.trim()}`}
                   >
                     {t.subcategoria.trim()}
-                  </span>
+                  </CampoEditavel>
                 </>
               ) : (
-                <span
-                  onClick={() => { setNovaSub(''); setEditandoSub(true) }}
+                <CampoEditavel
+                  onAtivar={() => { setNovaSub(''); setEditandoSub(true) }}
                   style={s.addSub}
                   title="Adicionar subcategoria"
-                >+</span>
+                >+</CampoEditavel>
               )}
               {podeEditarTipo && (
                 <>
@@ -576,13 +627,13 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                       <option value="aplicacao">Aplicação</option>
                     </select>
                   ) : (
-                    <span
-                      onClick={() => { setNovoTipo(t.tipo); setEditandoTipo(true) }}
+                    <CampoEditavel
+                      onAtivar={() => { setNovoTipo(t.tipo); setEditandoTipo(true) }}
                       style={s.tipoTag}
-                      title="Clique para mudar o tipo"
+                      title={`Mudar o tipo: ${TIPO_SHORT[t.tipo]}`}
                     >
                       {TIPO_SHORT[t.tipo]}
-                    </span>
+                    </CampoEditavel>
                   )}
                 </>
               )}
@@ -607,13 +658,13 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                       style={s.inputDataCompra}
                     />
                   ) : (
-                    <span
-                      onClick={() => { setNovaDataCompra(t.data_compra || ''); setEditandoDataCompra(true) }}
+                    <CampoEditavel
+                      onAtivar={() => { setNovaDataCompra(t.data_compra || ''); setEditandoDataCompra(true) }}
                       style={s.linhaSub}
-                      title="Clique para corrigir a data da compra (recalcula o vencimento)"
+                      title={`Corrigir a data da compra (recalcula o vencimento): ${formatarDataCompra(t.data_compra)}`}
                     >
                       compra {formatarDataCompra(t.data_compra)}
-                    </span>
+                    </CampoEditavel>
                   )}
                 </>
               )}
@@ -636,13 +687,13 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             style={s.inputValor}
           />
         ) : (
-          <span
-            onClick={() => { setNovoValor(String(t.valor)); setEditandoValor(true) }}
+          <CampoEditavel
+            onAtivar={() => { setNovoValor(String(t.valor)); setEditandoValor(true) }}
             style={{ ...s.linhaValor, color: valorNum < 0 ? '#dc2626' : '#1e293b' }}
-            title="Clique para editar valor"
+            title={`Editar valor: ${fmtSaldo(valorNum)}`}
           >
             {fmtSaldo(valorNum)}
-          </span>
+          </CampoEditavel>
         )}
 
         {mostrarStatus && (
@@ -889,22 +940,30 @@ export function BlocoPerguntas({ usuarioId }) {
 // ── Estilos ───────────────────────────────────────────────────────────────────
 
 const s = {
-  // Cards de saldo
-  cardDestaque: {
-    background: '#fff', borderRadius: 10, padding: '20px 24px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+  // Card-herói (saldo projetado)
+  cardHero: {
+    position: 'relative', overflow: 'hidden', borderRadius: 14,
+    padding: '26px 28px', boxShadow: '0 4px 18px rgba(31,93,69,0.22)',
   },
-  cardDestaqueEsq:   { display: 'flex', flexDirection: 'column', gap: 2 },
-  cardDestaqueValor: { fontSize: 38, fontWeight: 800, lineHeight: 1.1 },
-  cardDestaqueSub:   { fontSize: 13, fontWeight: 500 },
+  cardHeroConteudo: { position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 4 },
+  cardHeroLabel: {
+    fontSize: 11, fontWeight: 700, color: 'rgba(245,240,228,0.7)',
+    textTransform: 'uppercase', letterSpacing: '0.07em',
+  },
+  cardHeroValor: {
+    fontSize: 42, fontWeight: 700, lineHeight: 1.1,
+    fontFamily: 'Georgia, "Times New Roman", serif', fontVariantNumeric: 'tabular-nums',
+  },
+  cardHeroSub: { fontSize: 13.5, fontWeight: 500, color: 'rgba(245,240,228,0.82)', marginTop: 4 },
+
+  // Cards de saldo
   card: {
     background: '#fff', borderRadius: 10, padding: '16px 20px',
     boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
     display: 'flex', flexDirection: 'column', gap: 4,
   },
   cardLabel: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
-  cardValor: { fontSize: 26, fontWeight: 800, lineHeight: 1.15 },
+  cardValor: { fontSize: 26, fontWeight: 800, lineHeight: 1.15, fontVariantNumeric: 'tabular-nums' },
   cardSub:   { fontSize: 12, color: '#64748b', marginTop: 2 },
 
   // Seção de categorias
@@ -920,7 +979,7 @@ const s = {
   bloco:           { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
   blocoTopo:       { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
   blocoTitulo:     { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', paddingTop: 2 },
-  blocoTotalValor: { fontSize: 20, fontWeight: 800, color: '#1e293b' },
+  blocoTotalValor: { fontSize: 20, fontWeight: 800, color: '#1e293b', fontVariantNumeric: 'tabular-nums' },
   patrimonioLabel: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'right', marginBottom: 2 },
   blocoResumo:     { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   pill:            { padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 600 },
@@ -956,7 +1015,7 @@ const s = {
   cartaoBadge: { fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' },
   selectTipo:  { fontSize: 11, border: '1.5px solid #3b82f6', borderRadius: 4, outline: 'none', background: '#f8fafc', cursor: 'pointer', padding: '1px 2px', fontFamily: 'inherit' },
   linhaDir:    { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
-  linhaValor:  { fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' },
+  linhaValor:  { fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
 
   // Inputs de edição
   inputDia: {

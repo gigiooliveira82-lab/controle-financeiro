@@ -107,9 +107,12 @@ export default function Login({ onLogin }) {
             </p>
             <form onSubmit={handleLogin} style={m.form}>
               <div style={m.inputWrap}>
-                <label style={m.label}>Email</label>
+                <label style={m.label} htmlFor="login-email">Email</label>
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="seu@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -118,9 +121,12 @@ export default function Login({ onLogin }) {
                 />
               </div>
               <div style={m.inputWrap}>
-                <label style={m.label}>Senha</label>
+                <label style={m.label} htmlFor="login-senha">Senha</label>
                 <input
+                  id="login-senha"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
@@ -149,9 +155,12 @@ export default function Login({ onLogin }) {
             ) : (
               <form onSubmit={handleRecuperar} style={m.form}>
                 <div style={m.inputWrap}>
-                  <label style={m.label}>Seu e-mail</label>
+                  <label style={m.label} htmlFor="login-email-recuperar">Seu e-mail</label>
                   <input
+                    id="login-email-recuperar"
+                    name="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="seu@email.com"
                     value={emailRec}
                     onChange={e => setEmailRec(e.target.value)}
