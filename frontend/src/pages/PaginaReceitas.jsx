@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { BlocoTipo, useIsMobile } from '../components/Dashboard'
 import LancamentoTexto from '../components/LancamentoTexto'
+import CabecalhoPagina from '../components/CabecalhoPagina'
 
 export default function PaginaReceitas({
   transacoes, usuarioId, mesSelecionado,
@@ -51,6 +52,7 @@ export default function PaginaReceitas({
 
   return (
     <div style={r.root}>
+      <CabecalhoPagina icone="⊕" titulo="Receitas" subtitulo="Salários, créditos e outras entradas do mês." />
       {lancamento}
       {semDados ? (
         <div style={r.placeholder}>

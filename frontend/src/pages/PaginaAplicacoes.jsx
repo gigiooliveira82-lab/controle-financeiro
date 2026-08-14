@@ -3,6 +3,7 @@ import { buscarAcumuladosAplicacao } from '../services/api'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { BlocoTipo } from '../components/Dashboard'
 import LancamentoTexto from '../components/LancamentoTexto'
+import CabecalhoPagina from '../components/CabecalhoPagina'
 
 export default function PaginaAplicacoes({
   transacoes, usuarioId, mesSelecionado,
@@ -61,6 +62,7 @@ export default function PaginaAplicacoes({
 
   return (
     <div style={a.root}>
+      <CabecalhoPagina icone="◎" titulo="Aplicações" subtitulo="O que você guardou e investiu ao longo do tempo." />
       {lancamento}
       <BlocoTipo
         tipo="aplicacao"
