@@ -5,6 +5,7 @@ import { supabase } from './services/supabase'
 import { buscarTransacoes, gerarRecorrentes, buscarCartoes } from './services/api'
 import Login from './components/Login'
 import RedefinirSenha from './components/RedefinirSenha'
+import PaginaLanding from './pages/PaginaLanding'
 import NavLateral from './components/NavLateral'
 import PaginaDashboard from './pages/PaginaDashboard'
 import PaginaLancamentos from './pages/PaginaLancamentos'
@@ -135,7 +136,15 @@ export default function App() {
     }} />
   )
 
-  if (!usuario) return <Login onLogin={setUsuario} />
+  if (!usuario) return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login onLogin={setUsuario} />} />
+        <Route path="/"      element={<PaginaLanding />} />
+        <Route path="*"      element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
 
   // Badge de vencidas para NavLateral
   const hoje       = new Date()
@@ -195,6 +204,8 @@ export default function App() {
 
           <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 90 : 32 }}>
             <Routes>
+              <Route path="/"              element={<Navigate to="/dashboard" replace />} />
+              <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
               <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
               <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
