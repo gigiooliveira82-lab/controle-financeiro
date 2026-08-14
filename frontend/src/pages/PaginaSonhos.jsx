@@ -3,12 +3,24 @@ import { buscarSonhos, criarSonho, atualizarSonho, guardarValorSonho, removerSon
 import { fmtBRL } from '../utils/fmt'
 import CabecalhoPagina from '../components/CabecalhoPagina'
 
-function calcularMesesRestantes(dataAlvoISO) {
+// Decompõe o tempo até a data alvo em meses de calendário completos + os dias
+// que sobram no mês parcial, e também no total de dias corridos. Usamos os
+// dias totais (não os meses arredondados pra baixo) pra sugerir o valor
+// mensal — senão um prazo de "1 mês e 19 dias" vira só "1 mês" na conta, e a
+// sugestão de quanto guardar fica inflada.
+function calcularTempoRestante(dataAlvoISO) {
   const hoje = new Date()
+  hoje.setHours(0, 0, 0, 0)
   const alvo = new Date(`${dataAlvoISO}T00:00:00`)
+
   let meses = (alvo.getFullYear() - hoje.getFullYear()) * 12 + (alvo.getMonth() - hoje.getMonth())
   if (alvo.getDate() < hoje.getDate()) meses -= 1
-  return meses
+
+  const marcador = new Date(hoje.getFullYear(), hoje.getMonth() + meses, hoje.getDate())
+  const diasExtra  = Math.round((alvo - marcador) / 86400000)
+  const diasTotais = Math.round((alvo - hoje) / 86400000)
+
+  return { meses, diasExtra, diasTotais }
 }
 
 // A data alvo já passou de verdade (comparação por dia, sem hora) — só nesse
@@ -20,13 +32,6 @@ function prazoVencido(dataAlvoISO) {
   hoje.setHours(0, 0, 0, 0)
   const alvo = new Date(`${dataAlvoISO}T00:00:00`)
   return alvo < hoje
-}
-
-function diasRestantes(dataAlvoISO) {
-  const hoje = new Date()
-  hoje.setHours(0, 0, 0, 0)
-  const alvo = new Date(`${dataAlvoISO}T00:00:00`)
-  return Math.round((alvo - hoje) / 86400000)
 }
 
 function formatarDataAlvo(dataAlvoISO) {
@@ -119,9 +124,8 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
   const guardado   = Number(sonho.valor_guardado)
   const realizado  = guardado >= total
   const progresso  = Math.min(100, (guardado / total) * 100)
-  const meses      = calcularMesesRestantes(sonho.data_alvo)
+  const { meses, diasExtra, diasTotais } = calcularTempoRestante(sonho.data_alvo)
   const vencido    = prazoVencido(sonho.data_alvo)
-  const dias       = diasRestantes(sonho.data_alvo)
   const corSonho   = sonho.cor || 'var(--verde-profundo)'
 
   async function handleExcluir() {
@@ -194,16 +198,18 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
         Meta para {formatarDataAlvo(sonho.data_alvo)}
         {!realizado && !vencido && (
           meses > 0
-            ? ` · ${meses === 1 ? 'falta 1 mês' : `faltam ${meses} meses`}`
-            : ` · ${dias === 1 ? 'falta 1 dia' : `faltam ${dias} dias`}`
+            ? ` · ${meses === 1 ? 'falta 1 mês' : `faltam ${meses} meses`}${
+                diasExtra > 0 ? ` e ${diasExtra === 1 ? '1 dia' : `${diasExtra} dias`}` : ''
+              }`
+            : ` · ${diasTotais === 1 ? 'falta 1 dia' : `faltam ${diasTotais} dias`}`
         )}
       </p>
 
       {!realizado && (
         vencido ? (
           <p style={s.mensalAlerta}>Prazo já passou — hora de revisar a meta</p>
-        ) : meses > 0 ? (
-          <p style={s.mensal}>Guarde {fmtBRL(Math.ceil((total - guardado) / meses))} por mês para chegar lá</p>
+        ) : diasTotais >= 30 ? (
+          <p style={s.mensal}>Guarde {fmtBRL(Math.ceil((total - guardado) / (diasTotais / 30)))} por mês para chegar lá</p>
         ) : (
           <p style={s.mensal}>Guarde {fmtBRL(Math.ceil(total - guardado))} até o prazo para chegar lá</p>
         )
