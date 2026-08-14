@@ -30,6 +30,12 @@ export const fmtSaldo = fmtBRL
 const MESES_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
 export const labelMes = (mesISO) => MESES_SHORT[parseInt(mesISO.split('-')[1]) - 1]
 
+function formatarDataCompra(dataISO) {
+  if (!dataISO) return '—'
+  const [ano, mes, dia] = dataISO.split('-')
+  return `${dia}/${mes}`
+}
+
 export function mesAnteriorISO(mesISO) {
   const [ano, mes] = mesISO.split('-').map(Number)
   const d = new Date(ano, mes - 2, 1)
@@ -309,6 +315,8 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
   const [novaSub, setNovaSub]             = useState(t.subcategoria || '')
   const [editandoDia, setEditandoDia]     = useState(false)
   const [novoDia, setNovoDia]             = useState(String(t.dia_pagamento))
+  const [editandoDataCompra, setEditandoDataCompra] = useState(false)
+  const [novaDataCompra, setNovaDataCompra]         = useState(t.data_compra || '')
   const [editandoTipo, setEditandoTipo]   = useState(false)
   const [novoTipo, setNovoTipo]           = useState(t.tipo)
   const [salvando, setSalvando]           = useState(false)
@@ -382,6 +390,13 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
     setSalvando(true)
     try { await onAtualizar({ dia_pagamento: v }) }
     finally { setSalvando(false); setEditandoDia(false) }
+  }
+
+  async function salvarDataCompra() {
+    if (!novaDataCompra || novaDataCompra === t.data_compra) { setEditandoDataCompra(false); return }
+    setSalvando(true)
+    try { await onAtualizar({ data_compra: novaDataCompra }) }
+    finally { setSalvando(false); setEditandoDataCompra(false) }
   }
 
   async function salvarTipo() {
@@ -577,6 +592,29 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                   <span style={{ ...s.cartaoBadge, color: cartoesById[t.cartao_id].cor || '#64748b' }} title="Compra no cartão">
                     ▤ {cartoesById[t.cartao_id].nome}
                   </span>
+                  <span style={s.catSep}>·</span>
+                  {editandoDataCompra ? (
+                    <input
+                      autoFocus
+                      type="date"
+                      value={novaDataCompra}
+                      onChange={ev => setNovaDataCompra(ev.target.value)}
+                      onBlur={salvarDataCompra}
+                      onKeyDown={ev => {
+                        if (ev.key === 'Enter') salvarDataCompra()
+                        if (ev.key === 'Escape') { setNovaDataCompra(t.data_compra || ''); setEditandoDataCompra(false) }
+                      }}
+                      style={s.inputDataCompra}
+                    />
+                  ) : (
+                    <span
+                      onClick={() => { setNovaDataCompra(t.data_compra || ''); setEditandoDataCompra(true) }}
+                      style={s.linhaSub}
+                      title="Clique para corrigir a data da compra (recalcula o vencimento)"
+                    >
+                      compra {formatarDataCompra(t.data_compra)}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -945,6 +983,11 @@ const s = {
   },
   inputSub: {
     width: 110, padding: '1px 5px', borderRadius: 4,
+    border: '1.5px solid #3b82f6', fontSize: 11,
+    outline: 'none', background: '#f8fafc', fontFamily: 'inherit',
+  },
+  inputDataCompra: {
+    width: 128, padding: '1px 5px', borderRadius: 4,
     border: '1.5px solid #3b82f6', fontSize: 11,
     outline: 'none', background: '#f8fafc', fontFamily: 'inherit',
   },

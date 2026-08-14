@@ -683,7 +683,7 @@ router.get('/:usuario_id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params
   const usuario_id = req.usuarioId
-  const { valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria, tipo } = req.body
+  const { valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria, tipo, data_compra } = req.body
 
   const TIPOS_VALIDOS = ['despesa_fixa', 'despesa_variavel', 'credito', 'aplicacao']
 
@@ -698,6 +698,42 @@ router.put('/:id', async (req, res) => {
   if (tipo          !== undefined) {
     if (!TIPOS_VALIDOS.includes(tipo)) return res.status(400).json({ erro: 'Tipo inválido' })
     campos.tipo = tipo
+  }
+
+  // ── Correção da data da compra em despesa de cartão: recalcula o vencimento
+  //    (mes_referencia + dia_pagamento) com a mesma regra usada na criação,
+  //    nunca aceita o vencimento em si como campo editável diretamente ──────
+  if (data_compra !== undefined) {
+    const { data: transacaoAtual, error: erroTransacao } = await supabase
+      .from('transacoes')
+      .select('cartao_id')
+      .eq('id', id)
+      .eq('usuario_id', usuario_id)
+      .single()
+
+    if (erroTransacao || !transacaoAtual) {
+      return res.status(404).json({ erro: 'Transação não encontrada' })
+    }
+
+    if (!transacaoAtual.cartao_id) {
+      return res.status(400).json({ erro: 'Campo data_compra só se aplica a despesas vinculadas a um cartão' })
+    }
+
+    const { data: cartao, error: erroCartao } = await supabase
+      .from('cartoes')
+      .select('dia_fechamento, dia_vencimento')
+      .eq('id', transacaoAtual.cartao_id)
+      .eq('usuario_id', usuario_id)
+      .single()
+
+    if (erroCartao || !cartao) {
+      return res.status(404).json({ erro: 'Cartão não encontrado' })
+    }
+
+    const vencimento = calcularVencimentoCartao(data_compra, cartao.dia_fechamento, cartao.dia_vencimento)
+    campos.data_compra    = data_compra
+    campos.dia_pagamento  = vencimento.dia_pagamento
+    campos.mes_referencia = vencimento.mes_referencia
   }
 
   if (Object.keys(campos).length === 0) {
