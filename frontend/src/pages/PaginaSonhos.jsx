@@ -177,7 +177,7 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
     <div style={{ ...s.bloco, ...(realizado ? s.blocoRealizado : { borderLeft: `4px solid ${corSonho}` }) }}>
       <div style={s.blocoTopo}>
         <div style={s.blocoNomeRow}>
-          <span style={{ ...s.blocoTitulo, color: realizado ? '#B8860B' : corSonho }}>{sonho.nome}</span>
+          <span style={{ ...s.blocoTitulo, color: realizado ? '#B8860B' : '#1a1a2e' }}>{sonho.nome}</span>
           {realizado && <span style={s.seloRealizado}>🎉 Sonho realizado!</span>}
           <button onClick={() => setEditando(true)} style={s.iconBtn} title="Editar sonho" aria-label={`Editar sonho: ${sonho.nome}`}>✎</button>
           <button onClick={handleExcluir} disabled={excluindo} style={s.iconBtn} title="Excluir sonho" aria-label={`Excluir sonho: ${sonho.nome}`}>×</button>
@@ -194,8 +194,8 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
         Meta para {formatarDataAlvo(sonho.data_alvo)}
         {!realizado && !vencido && (
           meses > 0
-            ? ` · faltam ${meses} ${meses === 1 ? 'mês' : 'meses'}`
-            : ` · faltam ${dias} ${dias === 1 ? 'dia' : 'dias'}`
+            ? ` · ${meses === 1 ? 'falta 1 mês' : `faltam ${meses} meses`}`
+            : ` · ${dias === 1 ? 'falta 1 dia' : `faltam ${dias} dias`}`
         )}
       </p>
 
