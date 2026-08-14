@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { criarCartao, atualizarCartao, contarComprasCartao, removerCartao } from '../services/api'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { ItemLinha, soma, fmtSaldo } from '../components/Dashboard'
+import CabecalhoPagina from '../components/CabecalhoPagina'
 
 export default function PaginaCartoes({
   cartoes, transacoes, usuarioId, mesSelecionado,
@@ -26,6 +27,7 @@ export default function PaginaCartoes({
 
   return (
     <div style={c.root}>
+      <CabecalhoPagina icone="💳" titulo="Cartões" subtitulo="Compras no crédito sem duplicar no orçamento do mês." />
       {expandido ? (
         <FormCartao
           titulo="Novo cartão"
@@ -121,8 +123,8 @@ function BlocoCartao({
         <div>
           <div style={c.blocoNomeRow}>
             <span style={{ ...c.blocoTitulo, color: corCartao }}>{cartao.nome}</span>
-            <button onClick={() => setEditando(true)} style={c.iconBtn} title="Editar cartão">✎</button>
-            <button onClick={handleExcluir} disabled={excluindo} style={c.iconBtn} title="Excluir cartão">×</button>
+            <button onClick={() => setEditando(true)} style={c.iconBtn} title="Editar cartão" aria-label={`Editar cartão: ${cartao.nome}`}>✎</button>
+            <button onClick={handleExcluir} disabled={excluindo} style={c.iconBtn} title="Excluir cartão" aria-label={`Excluir cartão: ${cartao.nome}`}>×</button>
           </div>
           <p style={c.blocoSub}>Fecha dia {cartao.dia_fechamento} · Vence dia {cartao.dia_vencimento}</p>
         </div>
@@ -189,6 +191,7 @@ function FormCartao({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
       <h2 style={c.formTitulo}>{titulo}</h2>
 
       <input
+        aria-label="Nome do cartão"
         placeholder="Nome do cartão (ex: Cartão Master)"
         value={nome}
         onChange={(e) => setNome(e.target.value)}

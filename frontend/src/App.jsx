@@ -180,11 +180,11 @@ export default function App() {
         <div style={estilos.conteudo}>
           <header style={{ ...estilos.header, padding: isMobileHeader ? '10px 14px' : '12px 28px' }}>
             <div style={estilos.navMes}>
-              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav}>‹</button>
+              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav} aria-label="Mês anterior">‹</button>
               <span style={{ ...estilos.headerMes, minWidth: isMobileHeader ? 110 : 150, fontSize: isMobileHeader ? 14 : 17 }}>
                 {formatarMesHeader(mesSelecionado)}
               </span>
-              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav}>›</button>
+              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav} aria-label="Próximo mês">›</button>
             </div>
             <div style={estilos.usuarioArea}>
               <span

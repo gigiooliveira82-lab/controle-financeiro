@@ -500,6 +500,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
         {editandoDia ? (
           <input
             autoFocus
+            aria-label="Dia do vencimento"
             type="number"
             min="1"
             max="31"
@@ -526,6 +527,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             {editandoDesc ? (
               <input
                 autoFocus
+                aria-label="Descrição do lançamento"
                 value={novaDesc}
                 onChange={ev => setNovaDesc(ev.target.value)}
                 onBlur={salvarDesc}
@@ -555,6 +557,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
           {editandoCat ? (
             <input
               autoFocus
+              aria-label="Categoria do lançamento"
               value={novaCat}
               onChange={ev => setNovaCat(ev.target.value)}
               onBlur={salvarCat}
@@ -578,6 +581,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                   <span style={s.catSep}>·</span>
                   <input
                     autoFocus
+                    aria-label="Subcategoria do lançamento"
                     value={novaSub}
                     onChange={ev => setNovaSub(ev.target.value)}
                     onBlur={salvarSub}
@@ -647,6 +651,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                   {editandoDataCompra ? (
                     <input
                       autoFocus
+                      aria-label="Data da compra"
                       type="date"
                       value={novaDataCompra}
                       onChange={ev => setNovaDataCompra(ev.target.value)}
@@ -677,6 +682,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
         {editandoValor ? (
           <input
             autoFocus
+            aria-label="Valor do lançamento"
             value={novoValor}
             onChange={ev => setNovoValor(ev.target.value)}
             onBlur={salvarValor}
@@ -718,6 +724,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             disabled={salvando}
             style={{ ...s.iconBtn, color: t.recorrente ? cor : '#9ca3af', ...iconBtnMobile }}
             title={t.recorrente ? 'Remover recorrência' : 'Tornar recorrente'}
+            aria-label={t.recorrente ? 'Remover recorrência' : 'Tornar recorrente'}
           >↺</button>
         )}
 
@@ -726,6 +733,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
           disabled={salvando}
           style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 14, ...iconBtnMobile }}
           title="Duplicar lançamento"
+          aria-label="Duplicar lançamento"
         >⧉</button>
 
         {(t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && podeEditarTipo && (
@@ -734,6 +742,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             disabled={salvando}
             style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 15, ...iconBtnMobile }}
             title={t.tipo === 'despesa_fixa' ? 'Mover para Despesas Variáveis' : 'Mover para Despesas Fixas'}
+            aria-label={t.tipo === 'despesa_fixa' ? 'Mover para Despesas Variáveis' : 'Mover para Despesas Fixas'}
           >⇄</button>
         )}
 
@@ -743,6 +752,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             disabled={salvando}
             style={{ ...s.iconBtn, color: '#f97316', fontSize: 14, ...iconBtnMobile }}
             title="Cancelar parcelas futuras"
+            aria-label="Cancelar parcelas futuras"
           >⊗</button>
         )}
 
@@ -751,6 +761,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
           disabled={removendo}
           style={{ ...s.iconBtn, color: '#9ca3af', ...iconBtnMobile }}
           title="Remover"
+          aria-label="Remover lançamento"
         >×</button>
       </div>
     </div>
@@ -887,6 +898,7 @@ export function BlocoPerguntas({ usuarioId }) {
 
       <div style={s.perguntaForm}>
         <input
+          aria-label="Pergunte sobre suas finanças"
           value={pergunta}
           onChange={ev => setPergunta(ev.target.value)}
           onKeyDown={ev => ev.key === 'Enter' && handlePerguntar()}

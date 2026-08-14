@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarSonhos, criarSonho, atualizarSonho, guardarValorSonho, removerSonho } from '../services/api'
 import { fmtBRL } from '../utils/fmt'
+import CabecalhoPagina from '../components/CabecalhoPagina'
 
 function calcularMesesRestantes(dataAlvoISO) {
   const hoje = new Date()
@@ -70,6 +71,7 @@ export default function PaginaSonhos({ usuarioId }) {
 
   return (
     <div style={s.root}>
+      <CabecalhoPagina icone="★" titulo="Meus Sonhos" subtitulo="Metas com prazo, guardadas aos poucos." />
       {expandido ? (
         <FormSonho
           titulo="Novo sonho"
@@ -177,8 +179,8 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
         <div style={s.blocoNomeRow}>
           <span style={{ ...s.blocoTitulo, color: realizado ? '#B8860B' : corSonho }}>{sonho.nome}</span>
           {realizado && <span style={s.seloRealizado}>🎉 Sonho realizado!</span>}
-          <button onClick={() => setEditando(true)} style={s.iconBtn} title="Editar sonho">✎</button>
-          <button onClick={handleExcluir} disabled={excluindo} style={s.iconBtn} title="Excluir sonho">×</button>
+          <button onClick={() => setEditando(true)} style={s.iconBtn} title="Editar sonho" aria-label={`Editar sonho: ${sonho.nome}`}>✎</button>
+          <button onClick={handleExcluir} disabled={excluindo} style={s.iconBtn} title="Excluir sonho" aria-label={`Excluir sonho: ${sonho.nome}`}>×</button>
         </div>
       </div>
 
@@ -212,6 +214,7 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
       {guardando ? (
         <form onSubmit={handleGuardarSubmit} style={s.formGuardar}>
           <input
+            aria-label="Valor guardado"
             type="number" step="0.01" min="0.01"
             placeholder="Valor guardado (ex: 200)"
             value={valorGuardar}
@@ -271,6 +274,7 @@ function FormSonho({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
       <h2 style={s.formTitulo}>{titulo}</h2>
 
       <input
+        aria-label="Nome do sonho"
         placeholder="Nome do sonho (ex: Viagem para a praia)"
         value={nome}
         onChange={(e) => setNome(e.target.value)}

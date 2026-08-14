@@ -46,6 +46,8 @@ export default function RedefinirSenha({ onConcluido }) {
           <form onSubmit={handleSubmit} style={e.form}>
             <input
               type="password"
+              aria-label="Nova senha"
+              autoComplete="new-password"
               placeholder="Nova senha"
               value={senha}
               onChange={ev => setSenha(ev.target.value)}
@@ -55,6 +57,8 @@ export default function RedefinirSenha({ onConcluido }) {
             />
             <input
               type="password"
+              aria-label="Confirmar nova senha"
+              autoComplete="new-password"
               placeholder="Confirmar nova senha"
               value={confirmar}
               onChange={ev => setConfirmar(ev.target.value)}

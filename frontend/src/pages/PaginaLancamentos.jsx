@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { BlocoTipo, useIsMobile } from '../components/Dashboard'
 import LancamentoTexto from '../components/LancamentoTexto'
+import CabecalhoPagina from '../components/CabecalhoPagina'
 
 const TIPOS = ['despesa_fixa', 'despesa_variavel']
 
@@ -93,8 +94,9 @@ export default function PaginaLancamentos({
 
   const campoBusca = (
     <div style={l.buscaWrap}>
-      <span style={l.buscaIcone}>⌕</span>
+      <span style={l.buscaIcone} aria-hidden="true">⌕</span>
       <input
+        aria-label="Buscar por nome ou categoria"
         type="text"
         placeholder="Buscar por nome ou categoria"
         value={busca}
@@ -102,7 +104,7 @@ export default function PaginaLancamentos({
         style={l.buscaInput}
       />
       {busca && (
-        <button onClick={() => setBusca('')} style={l.buscaClear}>✕</button>
+        <button onClick={() => setBusca('')} style={l.buscaClear} aria-label="Limpar busca">✕</button>
       )}
     </div>
   )
@@ -110,6 +112,7 @@ export default function PaginaLancamentos({
   return (
     <div style={l.root}>
       <Toast msg={toast} />
+      <CabecalhoPagina icone="≡" titulo="Despesas" subtitulo="Fixas, variáveis e parceladas — tudo num só lugar." />
       {lancamento}
       {!semDados && campoBusca}
       {semDados ? (

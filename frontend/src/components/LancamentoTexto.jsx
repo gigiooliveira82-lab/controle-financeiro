@@ -128,6 +128,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
       <form onSubmit={handleSubmit} style={estilos.form}>
         <div style={estilos.textareaWrap}>
           <textarea
+            aria-label="Descreva o lançamento"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -142,6 +143,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
               onClick={iniciarVoz}
               disabled={carregando}
               title={ouvindo ? 'Parar gravação' : 'Falar lançamento'}
+              aria-label={ouvindo ? 'Parar gravação' : 'Falar lançamento'}
               style={{ ...estilos.micBtn, ...(ouvindo ? estilos.micBtnOuvindo : {}) }}
             >
               🎙
@@ -159,6 +161,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
         {cartoes.length > 0 && (
           <div style={estilos.cartaoRow}>
             <select
+              aria-label="Cartão da compra"
               value={cartaoId}
               onChange={(e) => setCartaoId(e.target.value)}
               disabled={carregando}
@@ -172,6 +175,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
             {cartaoId && (
               <input
                 type="date"
+                aria-label="Data da compra"
                 value={dataCompra}
                 onChange={(e) => setDataCompra(e.target.value)}
                 disabled={carregando}
