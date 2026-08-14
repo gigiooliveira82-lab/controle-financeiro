@@ -8,6 +8,7 @@ const NAV_ITENS = [
   { path: '/receitas',      icone: '⊕',  label: 'Receitas',      curto: 'Receitas'   },
   { path: '/cartoes',       icone: '💳', label: 'Cartões',       curto: 'Cartões'    },
   { path: '/aplicacoes',    icone: '◎',  label: 'Aplicações',    curto: 'Aplicações' },
+  { path: '/sonhos',        icone: '★',  label: 'Meus Sonhos',   curto: 'Sonhos'     },
   { path: '/configuracoes', icone: '⚙',  label: 'Configurações', curto: 'Config.'    },
 ]
 

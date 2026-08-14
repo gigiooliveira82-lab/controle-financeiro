@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import transacoesRouter from './routes/transacoes.js'
 import cartoesRouter from './routes/cartoes.js'
+import sonhosRouter from './routes/sonhos.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -19,6 +20,7 @@ app.use(express.json())
 app.get('/health', (_, res) => res.json({ status: 'ok' }))
 app.use('/transacoes', transacoesRouter)
 app.use('/cartoes', cartoesRouter)
+app.use('/sonhos', sonhosRouter)
 
 app.listen(PORT, () => {
   console.log(`Backend rodando em http://localhost:${PORT}`)

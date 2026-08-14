@@ -161,6 +161,58 @@ export async function buscarComparativoMensal(usuarioId, mesReferencia) {
   return json
 }
 
+export async function buscarSonhos(usuarioId) {
+  const res = await fetch(`${BASE_URL}/sonhos/${usuarioId}`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar sonhos')
+  return json.sonhos
+}
+
+export async function criarSonho(dados) {
+  const res = await fetch(`${BASE_URL}/sonhos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao criar sonho')
+  return json.sonho
+}
+
+export async function atualizarSonho(id, dados) {
+  const res = await fetch(`${BASE_URL}/sonhos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao atualizar sonho')
+  return json.sonho
+}
+
+export async function guardarValorSonho(id, valor) {
+  const res = await fetch(`${BASE_URL}/sonhos/${id}/guardar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify({ valor }),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao guardar valor')
+  return json.sonho
+}
+
+export async function removerSonho(id) {
+  const res = await fetch(`${BASE_URL}/sonhos/${id}`, {
+    method: 'DELETE',
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao excluir sonho')
+  return json
+}
+
 export async function removerTransacao(id, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/${id}`, {
     method: 'DELETE',

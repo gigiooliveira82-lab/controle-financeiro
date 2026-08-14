@@ -11,6 +11,7 @@ import PaginaLancamentos from './pages/PaginaLancamentos'
 import PaginaReceitas from './pages/PaginaReceitas'
 import PaginaCartoes from './pages/PaginaCartoes'
 import PaginaAplicacoes from './pages/PaginaAplicacoes'
+import PaginaSonhos from './pages/PaginaSonhos'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 
 function useIsMobileHeader() {
@@ -199,6 +200,7 @@ export default function App() {
               <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
               <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
               <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
+              <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
               <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
               <Route path="*"              element={<Navigate to="/dashboard" replace />} />
             </Routes>
