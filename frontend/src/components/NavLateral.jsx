@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
-import LogoMarca from './LogoMarca'
+import LogoIcone from './LogoIcone'
 import Wordmark from './Wordmark'
 
 const NAV_ITENS = [
@@ -41,7 +41,7 @@ export default function NavLateral({ qtdVencidas }) {
   return (
     <nav style={st.sidebar}>
       <div style={st.sidebarLogo}>
-        <LogoMarca size={30} />
+        <LogoIcone size={44} />
         <Wordmark tone="onDark" size={15} showSubtitulo={false} />
       </div>
 

@@ -53,37 +53,19 @@ export function useIsMobile() {
 }
 
 // ── Card-herói (saldo projetado do mês) ────────────────────────────────────────
-// Primeira coisa que o usuário vê ao entrar no app — usa a mesma identidade
-// visual do login/landing (verde profundo, serifada, sol) em vez do cartão
-// branco genérico do resto da página.
-
-function SolMarcaDagua({ size = 200 }) {
-  const cx = size / 2, cy = size / 2
-  const r = size * 0.2, rayIn = size * 0.27, rayOut = size * 0.42
-  const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
-    const rad = (deg * Math.PI) / 180
-    return {
-      x1: cx + rayIn * Math.sin(rad), y1: cy - rayIn * Math.cos(rad),
-      x2: cx + rayOut * Math.sin(rad), y2: cy - rayOut * Math.cos(rad),
-    }
-  })
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true"
-      style={{ position: 'absolute', top: -size * 0.28, right: -size * 0.22, pointerEvents: 'none' }}>
-      <circle cx={cx} cy={cy} r={r} fill="#E3A008" opacity={0.85} />
-      <g stroke="#E3A008" strokeWidth={size * 0.018} strokeLinecap="round" opacity={0.55}>
-        {rays.map((ray, i) => <line key={i} {...ray} />)}
-      </g>
-    </svg>
-  )
-}
+// Primeira coisa que o usuário vê ao entrar no app — usa a identidade Midnight
+// Emerald (superfície escura + acento esmeralda) em vez do cartão branco
+// genérico do resto da página.
 
 export function CardHeroProjetado({ valor, saldoReal, totalAPagar, qtdPendente, tudoEmDia }) {
   const positivo = valor >= 0
-  const cor = positivo ? '#F5F0E4' : '#FCA5A5'
+  const cor = positivo ? 'var(--mint)' : 'var(--status-vencida-fg)'
   return (
-    <div style={{ ...s.cardHero, background: positivo ? 'var(--verde-profundo)' : '#7a2323' }}>
-      <SolMarcaDagua />
+    <div style={{
+      ...s.cardHero,
+      background: positivo ? 'var(--surface-raised)' : '#2A1414',
+      border: `1px solid ${positivo ? 'var(--border)' : 'rgba(248,113,113,0.35)'}`,
+    }}>
       <div style={s.cardHeroConteudo}>
         <span style={s.cardHeroLabel}>{tudoEmDia ? 'Saldo do mês' : 'Saldo projetado'}</span>
         <span style={{ ...s.cardHeroValor, color: cor }}>{fmtSaldo(valor)}</span>
@@ -101,7 +83,7 @@ export function CardHeroProjetado({ valor, saldoReal, totalAPagar, qtdPendente, 
 
 export function CardSaldo({ label, valor, sub }) {
   const positivo = valor >= 0
-  const cor = positivo ? 'var(--verde-profundo)' : '#dc2626'
+  const cor = positivo ? 'var(--emerald)' : 'var(--status-vencida-fg)'
   return (
     <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
       <span style={s.cardLabel}>{label}</span>
@@ -113,10 +95,10 @@ export function CardSaldo({ label, valor, sub }) {
 
 export function CardNeutro({ label, valor, sub }) {
   return (
-    <div style={{ ...s.card, borderTop: '3px solid #f59e0b' }}>
+    <div style={{ ...s.card, borderTop: '3px solid var(--status-pendente-fg)' }}>
       <span style={s.cardLabel}>{label}</span>
-      <span style={{ ...s.cardValor, color: '#b45309' }}>R$ {fmt(valor)}</span>
-      <span style={s.cardSub}><span style={{ color: '#f59e0b' }}>● </span>{sub}</span>
+      <span style={{ ...s.cardValor, color: 'var(--status-pendente-fg)' }}>R$ {fmt(valor)}</span>
+      <span style={s.cardSub}><span style={{ color: 'var(--status-pendente-fg)' }}>● </span>{sub}</span>
     </div>
   )
 }
@@ -127,9 +109,9 @@ export function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMe
   const label = `VS MÊS ANTERIOR${parcial ? ' (parcial)' : ''}`
   if (percentualVariacao === null) {
     return (
-      <div style={{ ...s.card, borderTop: '3px solid #e2e8f0' }}>
+      <div style={{ ...s.card, borderTop: '3px solid var(--border)' }}>
         <span style={s.cardLabel}>{label}</span>
-        <span style={{ fontSize: 16, fontWeight: 600, color: '#94a3b8', lineHeight: 1.3 }}>Sem histórico</span>
+        <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', lineHeight: 1.3 }}>Sem histórico</span>
         <span style={s.cardSub}>Volte no próximo mês para comparar</span>
       </div>
     )
@@ -137,7 +119,7 @@ export function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMe
   // Num mês ainda em andamento, a comparação é enganosa (despesas variáveis do
   // mês atual ainda vão crescer) — mostramos neutro em vez de verde/vermelho.
   const subindo = percentualVariacao > 0
-  const cor = parcial ? '#64748b' : (subindo ? '#dc2626' : 'var(--verde-profundo)')
+  const cor = parcial ? 'var(--text-muted)' : (subindo ? 'var(--status-vencida-fg)' : 'var(--emerald)')
   const seta = subindo ? '▲' : '▼'
   return (
     <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
@@ -822,7 +804,7 @@ export function BlocoAnalise({ usuarioId, mesSelecionado }) {
 
       {carregando && <p style={s.analiseDica}>Consultando IA... isso leva alguns segundos.</p>}
 
-      {erro && <p style={{ ...s.analiseDica, color: '#dc2626' }}>{erro}</p>}
+      {erro && <p style={{ ...s.analiseDica, color: 'var(--status-vencida-fg)' }}>{erro}</p>}
 
       {analise && (
         <div style={s.analiseConteudo}>
@@ -845,7 +827,7 @@ export function BlocoAnalise({ usuarioId, mesSelecionado }) {
                 <ReactMarkdown
                   components={{
                     p:      ({ children }) => <p style={{ margin: '0 0 4px' }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: '#1e293b' }}>{children}</strong>,
+                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: 'var(--text)' }}>{children}</strong>,
                     ul:     ({ children }) => <ul style={{ margin: '4px 0', paddingLeft: 16 }}>{children}</ul>,
                     li:     ({ children }) => <li style={{ marginBottom: 1 }}>{children}</li>,
                   }}
@@ -916,7 +898,7 @@ export function BlocoPerguntas({ usuarioId }) {
       </div>
 
       {carregando && <p style={s.perguntaDica}>Consultando seus dados...</p>}
-      {erro && <p style={{ ...s.perguntaDica, color: '#dc2626' }}>{erro}</p>}
+      {erro && <p style={{ ...s.perguntaDica, color: 'var(--status-vencida-fg)' }}>{erro}</p>}
 
       {historico.length > 0 && (
         <div style={s.perguntaHistorico}>
@@ -924,7 +906,7 @@ export function BlocoPerguntas({ usuarioId }) {
             <div
               key={i}
               style={i > 0
-                ? { ...s.perguntaItem, borderTop: '1px solid #f1f5f9', paddingTop: 14 }
+                ? { ...s.perguntaItem, borderTop: '1px solid var(--border)', paddingTop: 14 }
                 : s.perguntaItem
               }
             >
@@ -933,7 +915,7 @@ export function BlocoPerguntas({ usuarioId }) {
                 <ReactMarkdown
                   components={{
                     p:      ({ children }) => <p style={{ margin: '0 0 6px' }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: '#1e293b' }}>{children}</strong>,
+                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: 'var(--text)' }}>{children}</strong>,
                     ul:     ({ children }) => <ul style={{ margin: '4px 0 6px', paddingLeft: 18 }}>{children}</ul>,
                     li:     ({ children }) => <li style={{ marginBottom: 2, fontSize: 13 }}>{children}</li>,
                   }}
@@ -955,36 +937,36 @@ const s = {
   // Card-herói (saldo projetado)
   cardHero: {
     position: 'relative', overflow: 'hidden', borderRadius: 14,
-    padding: '26px 28px', boxShadow: '0 4px 18px rgba(31,93,69,0.22)',
+    padding: '26px 28px', boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
   },
   cardHeroConteudo: { position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 4 },
   cardHeroLabel: {
-    fontSize: 11, fontWeight: 700, color: 'rgba(245,240,228,0.7)',
+    fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
     textTransform: 'uppercase', letterSpacing: '0.07em',
   },
   cardHeroValor: {
     fontSize: 42, fontWeight: 700, lineHeight: 1.1,
     fontFamily: 'Georgia, "Times New Roman", serif', fontVariantNumeric: 'tabular-nums',
   },
-  cardHeroSub: { fontSize: 13.5, fontWeight: 500, color: 'rgba(245,240,228,0.82)', marginTop: 4 },
+  cardHeroSub: { fontSize: 13.5, fontWeight: 500, color: 'var(--text-muted)', marginTop: 4 },
 
   // Cards de saldo
   card: {
-    background: '#fff', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+    background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.24)',
     display: 'flex', flexDirection: 'column', gap: 4,
   },
-  cardLabel: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
+  cardLabel: { fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' },
   cardValor: { fontSize: 26, fontWeight: 800, lineHeight: 1.15, fontVariantNumeric: 'tabular-nums' },
-  cardSub:   { fontSize: 12, color: '#64748b', marginTop: 2 },
+  cardSub:   { fontSize: 12, color: 'var(--text-muted)', marginTop: 2 },
 
   // Seção de categorias
   barraItem:   { display: 'flex', flexDirection: 'column', gap: 5 },
   barraHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' },
-  barraNome:   { fontSize: 13, fontWeight: 500, color: '#334155', textTransform: 'capitalize' },
-  barraInfo:   { fontSize: 13, color: '#475569' },
-  barraPct:    { color: '#94a3b8', fontSize: 12, marginLeft: 4 },
-  barraTrilho: { height: 7, background: '#EEE5D8', borderRadius: 99, overflow: 'hidden' },
+  barraNome:   { fontSize: 13, fontWeight: 500, color: 'var(--text)', textTransform: 'capitalize' },
+  barraInfo:   { fontSize: 13, color: 'var(--text-muted)' },
+  barraPct:    { color: 'var(--text-muted)', fontSize: 12, marginLeft: 4 },
+  barraTrilho: { height: 7, background: 'var(--surface)', borderRadius: 99, overflow: 'hidden' },
   barraFill:   { height: '100%', borderRadius: 99, transition: 'width 0.5s ease' },
 
   // Blocos de transações
@@ -1074,58 +1056,59 @@ const s = {
 
   // Bloco de análise
   analiseBloco: {
-    background: '#fff', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+    background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.24)',
   },
   analiseTopo: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
   },
   analiseTitulo: {
-    fontSize: 10, fontWeight: 700, color: '#94a3b8',
+    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
     textTransform: 'uppercase', letterSpacing: '0.07em',
   },
   analiseBotao: {
     padding: '6px 14px', borderRadius: 6, border: 'none',
-    background: 'var(--verde-profundo)', color: 'var(--creme-header)',
+    background: 'var(--emerald)', color: 'var(--bg-deep)',
     fontSize: 12, fontWeight: 600, cursor: 'pointer',
   },
-  analiseDica:       { margin: 0, fontSize: 13, color: '#94a3b8' },
+  analiseDica:       { margin: 0, fontSize: 13, color: 'var(--text-muted)' },
   analiseConteudo:   { display: 'flex', flexDirection: 'column', gap: 12 },
-  analiseResumo:     { margin: 0, fontSize: 15, fontWeight: 500, color: '#1e293b', lineHeight: 1.55 },
-  analiseSeparador:  { height: 1, background: 'var(--surface-line)' },
+  analiseResumo:     { margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--text)', lineHeight: 1.55 },
+  analiseSeparador:  { height: 1, background: 'var(--border)' },
   analisePonto:      { display: 'flex', flexDirection: 'column', gap: 3 },
   analisePontoHeader: { display: 'flex', alignItems: 'center', gap: 6 },
   analisePontoTitulo: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' },
-  analisePontoTexto:  { margin: 0, fontSize: 13, color: '#334155', lineHeight: 1.55, paddingLeft: 19 },
+  analisePontoTexto:  { margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55, paddingLeft: 19 },
 
   // Bloco de perguntas
   perguntaBloco: {
-    background: '#fff', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+    background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.24)',
   },
   perguntaTopo: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   perguntaLimparBtn: {
-    background: 'none', border: 'none', fontSize: 11, color: '#94a3b8',
+    background: 'none', border: 'none', fontSize: 11, color: 'var(--text-muted)',
     cursor: 'pointer', padding: 0, textDecoration: 'underline',
   },
   perguntaTituloLabel: {
-    fontSize: 10, fontWeight: 700, color: '#94a3b8',
+    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
     textTransform: 'uppercase', letterSpacing: '0.07em',
   },
   perguntaForm:  { display: 'flex', flexDirection: 'column', gap: 8 },
   perguntaInput: {
-    padding: '9px 12px', borderRadius: 6, border: '1.5px solid #e2e8f0',
+    padding: '9px 12px', borderRadius: 6, border: '1.5px solid var(--border)',
+    background: 'var(--surface)', color: 'var(--text)',
     fontSize: 13, fontFamily: 'inherit', outline: 'none',
   },
   perguntaBotao: {
     alignSelf: 'flex-end',
     padding: '7px 16px', borderRadius: 6, border: 'none',
-    background: 'var(--verde-profundo)', color: 'var(--creme-header)',
+    background: 'var(--emerald)', color: 'var(--bg-deep)',
     fontSize: 12, fontWeight: 600, cursor: 'pointer',
   },
-  perguntaDica:     { margin: '10px 0 0', fontSize: 13, color: '#94a3b8' },
+  perguntaDica:     { margin: '10px 0 0', fontSize: 13, color: 'var(--text-muted)' },
   perguntaHistorico: { marginTop: 14, display: 'flex', flexDirection: 'column', gap: 0 },
   perguntaItem:     { paddingBottom: 14 },
-  perguntaQ:        { margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: '#475569' },
-  perguntaR:        { margin: 0, fontSize: 13, color: '#1e293b', lineHeight: 1.65 },
+  perguntaQ:        { margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' },
+  perguntaR:        { margin: 0, fontSize: 13, color: 'var(--text)', lineHeight: 1.65 },
 }

@@ -1,33 +1,9 @@
 import { useState } from 'react'
 import { supabase } from '../services/supabase'
 import { useIsMobile } from './Dashboard'
-import LogoMarca from './LogoMarca'
+import LogoIcone from './LogoIcone'
 import Wordmark from './Wordmark'
-
-function SolDecorativo({ size = 360, style = {} }) {
-  const cx = size / 2, cy = size / 2
-  const r      = size * 0.215
-  const rayIn  = size * 0.285
-  const rayOut = size * 0.435
-  const sw     = size * 0.018
-  const rays   = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
-    const rad = (deg * Math.PI) / 180
-    return {
-      x1: cx + rayIn  * Math.sin(rad), y1: cy - rayIn  * Math.cos(rad),
-      x2: cx + rayOut * Math.sin(rad), y2: cy - rayOut * Math.cos(rad),
-    }
-  })
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} xmlns="http://www.w3.org/2000/svg" style={style}>
-      <circle cx={cx} cy={cy} r={r} fill="#E3A008" />
-      <g stroke="#E3A008" strokeWidth={sw} strokeLinecap="round">
-        {rays.map((ray, i) => (
-          <line key={i} x1={ray.x1} y1={ray.y1} x2={ray.x2} y2={ray.y2} />
-        ))}
-      </g>
-    </svg>
-  )
-}
+import logomarcaPng from '../assets/logomarca.png'
 
 export default function Login({ onLogin }) {
   const [email, setEmail]         = useState('')
@@ -72,15 +48,11 @@ export default function Login({ onLogin }) {
 
   const painelEsq = (
     <div style={isMobile ? m.esqMobile : m.esqDesktop}>
-      <SolDecorativo
-        size={isMobile ? 200 : 360}
-        style={{
-          position: 'absolute',
-          top: isMobile ? -60 : -80,
-          right: isMobile ? -60 : -90,
-          opacity: 0.8,
-          pointerEvents: 'none',
-        }}
+      <img
+        src={logomarcaPng}
+        alt=""
+        aria-hidden="true"
+        style={{ ...m.marcaDagua, width: isMobile ? 240 : 420 }}
       />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <h2 style={isMobile ? m.headlineMobile : m.headlineDesktop}>
@@ -97,8 +69,8 @@ export default function Login({ onLogin }) {
     <div style={isMobile ? m.formAreaMobile : m.formAreaDesktop}>
       <div style={isMobile ? m.formWrapMobile : m.formWrapDesktop}>
         <div style={m.logoRow}>
-          <LogoMarca size={isMobile ? 30 : 36} />
-          <Wordmark tone="onLight" size={isMobile ? 14 : 16} />
+          <LogoIcone size={isMobile ? 40 : 46} />
+          <Wordmark tone="onDark" size={isMobile ? 14 : 16} />
         </div>
 
         {!modoRecuperar ? (
@@ -196,48 +168,52 @@ export default function Login({ onLogin }) {
 const m = {
   esqDesktop: {
     width: '45%', minHeight: '100vh',
-    background: '#1F5D45',
+    background: 'var(--bg-deep)',
     position: 'relative', overflow: 'hidden',
     padding: '0 52px 72px',
     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
     flexShrink: 0,
   },
   esqMobile: {
-    background: '#1F5D45',
+    background: 'var(--bg-deep)',
     position: 'relative', overflow: 'hidden',
     padding: '36px 28px 40px',
     flexShrink: 0,
+  },
+  marcaDagua: {
+    position: 'absolute', top: '-6%', right: '-8%',
+    opacity: 0.92, pointerEvents: 'none',
   },
   headlineDesktop: {
     margin: '0 0 18px',
     fontFamily: 'Georgia, "Times New Roman", serif',
     fontSize: 46, fontWeight: 700, lineHeight: 1.18,
-    color: '#F5F0E4', letterSpacing: '-0.01em',
+    color: 'var(--text)', letterSpacing: '-0.01em',
   },
   headlineMobile: {
     margin: '0 0 12px',
     fontFamily: 'Georgia, "Times New Roman", serif',
     fontSize: 28, fontWeight: 700, lineHeight: 1.22,
-    color: '#F5F0E4', letterSpacing: '-0.01em',
+    color: 'var(--text)', letterSpacing: '-0.01em',
   },
   subDesktop: {
     margin: 0, fontSize: 16, lineHeight: 1.65,
-    color: 'rgba(245,240,228,0.68)', maxWidth: 320,
+    color: 'var(--text-muted)', maxWidth: 320,
   },
   subMobile: {
     margin: 0, fontSize: 14, lineHeight: 1.6,
-    color: 'rgba(245,240,228,0.72)',
+    color: 'var(--text-muted)',
   },
 
   formAreaDesktop: {
     flex: 1,
-    background: '#F5F0E4',
+    background: 'var(--surface)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: '48px 40px',
   },
   formAreaMobile: {
     flex: 1,
-    background: '#F5F0E4',
+    background: 'var(--surface)',
     padding: '36px 28px 40px',
   },
   formWrapDesktop: { width: '100%', maxWidth: 380 },
@@ -249,39 +225,39 @@ const m = {
   },
 
   formSubtitulo: {
-    margin: '0 0 24px', fontSize: 14, color: '#64748b', fontWeight: 500,
+    margin: '0 0 24px', fontSize: 14, color: 'var(--text-muted)', fontWeight: 500,
   },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   inputWrap: { display: 'flex', flexDirection: 'column', gap: 5 },
-  label: { fontSize: 13, fontWeight: 600, color: '#374151' },
+  label: { fontSize: 13, fontWeight: 600, color: 'var(--text)' },
   input: {
     padding: '11px 14px',
     borderRadius: 8,
-    border: '1.5px solid #D1C9B8',
-    fontSize: 15, background: '#fff',
-    outline: 'none', color: '#1e293b',
+    border: '1.5px solid var(--border)',
+    fontSize: 15, background: 'var(--surface-raised)',
+    outline: 'none', color: 'var(--text)',
     boxSizing: 'border-box', width: '100%',
   },
   botao: {
     marginTop: 4,
     padding: '13px',
     borderRadius: 8, border: 'none',
-    background: '#1F5D45', color: '#F5F0E4',
+    background: 'var(--emerald)', color: 'var(--bg-deep)',
     fontSize: 15, fontWeight: 700,
     cursor: 'pointer', letterSpacing: '0.01em',
   },
-  erro: { color: '#dc2626', fontSize: 13, margin: 0 },
+  erro: { color: 'var(--status-vencida-fg)', fontSize: 13, margin: 0 },
   linkBtn: {
     marginTop: 18,
     display: 'block', background: 'none', border: 'none',
-    color: '#2D7A5C', fontSize: 13, fontWeight: 500,
+    color: 'var(--mint)', fontSize: 13, fontWeight: 500,
     cursor: 'pointer', textAlign: 'center',
     padding: 0, width: '100%',
   },
   sucessoBox: {
     padding: '14px 16px', borderRadius: 8,
-    background: '#f0fdf4', border: '1px solid #bbf7d0',
+    background: 'var(--status-pago-bg)', border: '1px solid var(--status-pago-fg)',
     marginBottom: 4,
   },
-  sucessoTexto: { margin: 0, fontSize: 14, fontWeight: 500, color: '#16a34a' },
+  sucessoTexto: { margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--status-pago-fg)' },
 }

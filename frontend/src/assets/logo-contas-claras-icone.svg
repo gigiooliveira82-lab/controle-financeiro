@@ -7,8 +7,6 @@
     </linearGradient>
   </defs>
 
-  <rect width="100" height="100" rx="22" fill="#0A0F0D"/>
-
   <!-- silhueta mínima do cérebro: um único contorno fechado, sem dobras internas -->
   <path d="M46 14C34 8 20 16 20 28c-9 3-13 14-6 22-6 8-2 19 8 22
            2 9 12 15 21 12"

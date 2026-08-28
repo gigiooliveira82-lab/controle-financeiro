@@ -1,9 +1,20 @@
 import { useId } from 'react'
 
-export default function LogoMarca({ size = 28 }) {
+/**
+ * Símbolo Contas Claras (cérebro + seta de crescimento).
+ *
+ * variant="full"  — traços finos, com as dobras internas do cérebro.
+ *                    Reservado para usos grandes (landing page, telas de
+ *                    apresentação), onde o detalhe fica legível.
+ * variant="icon"  — traços mais grossos, sem as dobras internas finas, que
+ *                    borram em tamanhos pequenos. Usado no menu lateral e
+ *                    no login.
+ */
+export default function LogoMarca({ size = 28, variant = 'icon' }) {
   const uid = useId()
   const brainId = `cc-brain-${uid}`
   const arrowId = `cc-arrow-${uid}`
+  const cheio = variant === 'full'
 
   return (
     <svg
@@ -29,20 +40,24 @@ export default function LogoMarca({ size = 28 }) {
 
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {/* silhueta do cérebro */}
-        <g stroke={`url(#${brainId})`} strokeWidth="6.5" opacity="0.95">
+        <g stroke={`url(#${brainId})`} strokeWidth={cheio ? 6.5 : 9} opacity="0.95">
           <path d="M60 24C50 15 34 17 30 29 19 31 13 42 18 52 9 60 11 75 22 81 25 93 39 99 50 94" />
           <path d="M60 24c9-8 24-6 28 6 10 3 15 14 10 24" />
           <path d="M60 24v72" />
-          {/* dobras internas */}
-          <path d="M30 29c7 2 10 8 9 14" opacity="0.75" />
-          <path d="M18 52c8-2 14 2 16 8" opacity="0.75" />
-          <path d="M22 81c6-5 14-5 19 1" opacity="0.75" />
-          <path d="M88 30c-7 3-11 9-10 16" opacity="0.75" />
+          {/* dobras internas — só na versão detalhada */}
+          {cheio && (
+            <>
+              <path d="M30 29c7 2 10 8 9 14" opacity="0.75" />
+              <path d="M18 52c8-2 14 2 16 8" opacity="0.75" />
+              <path d="M22 81c6-5 14-5 19 1" opacity="0.75" />
+              <path d="M88 30c-7 3-11 9-10 16" opacity="0.75" />
+            </>
+          )}
         </g>
 
         {/* seta de crescimento */}
-        <path d="M13 88C35 88 39 54 58 54s21-20 44-34" stroke={`url(#${arrowId})`} strokeWidth="10" />
-        <path d="M84 18h20v20" stroke={`url(#${arrowId})`} strokeWidth="10" />
+        <path d="M13 88C35 88 39 54 58 54s21-20 44-34" stroke={`url(#${arrowId})`} strokeWidth={cheio ? 10 : 13} />
+        <path d="M84 18h20v20" stroke={`url(#${arrowId})`} strokeWidth={cheio ? 10 : 13} />
       </g>
     </svg>
   )

@@ -196,14 +196,14 @@ function ProximosVencimentos({ items, diaHoje }) {
       {items.map(t => {
         const vencida = t.dia_pagamento < diaHoje
         return (
-          <div key={t.id} style={{ ...p.proximoLinha, ...(vencida ? { background: '#fff1f1' } : {}) }}>
+          <div key={t.id} style={{ ...p.proximoLinha, ...(vencida ? { background: 'var(--status-vencida-bg)' } : {}) }}>
             <span style={p.proximoDia}>{t.dia_pagamento}</span>
             <span style={p.proximoDesc}>{t.descricao}</span>
             <span style={{
               ...p.proximoStatus,
-              background: vencida ? '#fee2e2' : '#fef9c3',
-              color:      vencida ? '#b91c1c' : '#92400e',
-              ...(vencida ? { border: '1px solid #fca5a5', fontWeight: 700 } : {}),
+              background: vencida ? 'var(--status-vencida-bg)' : 'var(--status-pendente-bg)',
+              color:      vencida ? 'var(--status-vencida-fg)' : 'var(--status-pendente-fg)',
+              ...(vencida ? { border: '1px solid var(--status-vencida-fg)', fontWeight: 700 } : {}),
             }}>
               {vencida ? '⚠ Vencida' : 'Pendente'}
             </span>
@@ -217,46 +217,46 @@ function ProximosVencimentos({ items, diaHoje }) {
 
 const p = {
   root: { display: 'flex', flexDirection: 'column', gap: 20 },
-  placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  placeholderTexto: { margin: 0, color: '#64748b' },
+  placeholder:      { background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' },
+  placeholderTexto: { margin: 0, color: 'var(--text-muted)' },
   botaoNovo: {
     display: 'block', width: '100%', padding: '16px',
-    borderRadius: 12, border: '2px dashed #BDD5CC',
-    background: '#fff', color: 'var(--verde-profundo)',
+    borderRadius: 12, border: '2px dashed var(--border)',
+    background: 'var(--surface)', color: 'var(--emerald)',
     fontSize: 15, fontWeight: 600, cursor: 'pointer',
     textAlign: 'center', boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
   },
   cardsSaldoWrap:     { display: 'flex', flexDirection: 'column', gap: 12 },
   cardRowSecundario:  { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 },
 
   // Próximos vencimentos
-  proximoBloco:  { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
-  proximoTitulo: { margin: '0 0 12px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
+  proximoBloco:  { background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.24)' },
+  proximoTitulo: { margin: '0 0 12px', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' },
   proximoLinha: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '8px 10px', borderRadius: 6, marginBottom: 4,
   },
   proximoDia: {
-    fontSize: 11, fontWeight: 700, color: '#64748b',
-    background: '#f1f5f9', borderRadius: 4, padding: '2px 6px',
+    fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
+    background: 'var(--surface)', borderRadius: 4, padding: '2px 6px',
     minWidth: 28, textAlign: 'center', flexShrink: 0,
   },
   proximoDesc: {
-    flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: '#1e293b',
+    flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--text)',
     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
   },
   proximoStatus: {
     padding: '2px 8px', borderRadius: 20, border: 'none',
     fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
   },
-  proximoValor: { fontSize: 13, fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', flexShrink: 0 },
+  proximoValor: { fontSize: 13, fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', flexShrink: 0 },
 
   // Grid 2 colunas (desktop)
   grid:   { display: 'grid', gridTemplateColumns: '65fr 35fr', gap: 24, alignItems: 'start' },
   colEsq: { display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 },
   colDir: { display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 },
-  secao:       { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
-  secaoTitulo: { margin: '0 0 14px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em' },
+  secao:       { background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.24)' },
+  secaoTitulo: { margin: '0 0 14px', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' },
   barrasWrap:  { display: 'flex', flexDirection: 'column', gap: 10 },
 }
