@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
 import LogoMarca from './LogoMarca'
+import Wordmark from './Wordmark'
 
 const NAV_ITENS = [
   { path: '/dashboard',     icone: '⊡', label: 'Dashboard',     curto: 'Dashboard'  },
@@ -41,7 +42,7 @@ export default function NavLateral({ qtdVencidas }) {
     <nav style={st.sidebar}>
       <div style={st.sidebarLogo}>
         <LogoMarca size={30} />
-        <span style={st.sidebarLogoText}>Contas<br />Claras</span>
+        <Wordmark tone="onDark" size={15} showSubtitulo={false} />
       </div>
 
       {NAV_ITENS.map(item => (
@@ -78,10 +79,6 @@ const st = {
     display: 'flex', alignItems: 'center', gap: 12,
     padding: '0 4px 28px', marginBottom: 16,
     borderBottom: '1px solid rgba(255,255,255,0.12)',
-  },
-  sidebarLogoText: {
-    color: 'var(--creme-header)', fontWeight: 800, fontSize: 17,
-    letterSpacing: '-0.02em', lineHeight: 1.2,
   },
   sidebarItem: {
     display: 'flex', alignItems: 'center', gap: 11,

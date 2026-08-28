@@ -12,20 +12,22 @@
     </linearGradient>
   </defs>
 
-  <rect width="120" height="120" rx="26" fill="#0A0F0D"/>
-
   <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- silhueta do cérebro -->
     <g stroke="url(#cc-brain)" stroke-width="6.5" opacity="0.95">
       <path d="M60 24C50 15 34 17 30 29 19 31 13 42 18 52 9 60 11 75 22 81 25 93 39 99 50 94"/>
       <path d="M60 24c9-8 24-6 28 6 10 3 15 14 10 24"/>
       <path d="M60 24v72"/>
+      <!-- dobras internas -->
       <path d="M30 29c7 2 10 8 9 14" opacity="0.75"/>
       <path d="M18 52c8-2 14 2 16 8" opacity="0.75"/>
       <path d="M22 81c6-5 14-5 19 1" opacity="0.75"/>
       <path d="M88 30c-7 3-11 9-10 16" opacity="0.75"/>
     </g>
 
-    <path d="M13 88C35 88 39 54 58 54s21-20 44-34" stroke="url(#cc-arrow)" stroke-width="10"/>
+    <!-- seta de crescimento -->
+    <path d="M13 88C35 88 39 54 58 54s21-20 44-34"
+          stroke="url(#cc-arrow)" stroke-width="10"/>
     <path d="M84 18h20v20" stroke="url(#cc-arrow)" stroke-width="10"/>
   </g>
 </svg>

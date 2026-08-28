@@ -1,0 +1,34 @@
+/*
+ * Midnight Emerald — tokens de tema (Rebranding Fase 1)
+ *
+ * Fonte única de verdade para as cores da nova identidade.
+ * As telas ainda usam os tokens antigos (--verde-profundo, --creme-fundo
+ * etc., em src/index.css) e valores hardcoded — a migração página a
+ * página acontece nas próximas fases. Ver CHANGELOG_SESSAO.md / revisão
+ * de escopo para o levantamento dos lugares que ainda precisam migrar.
+ */
+
+:root {
+  /* Fundos */
+  --bg-deep:        #0A0F0D;
+  --surface:        #141B18;
+  --surface-raised: #1B2621;
+  --border:         #23312B;
+
+  /* Marca */
+  --emerald: #10B981;
+  --mint:    #6EE7B7;
+  --gold:    #D9C48A;
+
+  /* Texto */
+  --text:       #E8F0EC;
+  --text-muted: #8FA69B;
+
+  /* Status */
+  --status-pago-fg:      #34D399;
+  --status-pago-bg:      rgba(52, 211, 153, 0.12);
+  --status-pendente-fg:  #E3C88A;
+  --status-pendente-bg:  rgba(227, 200, 138, 0.12);
+  --status-vencida-fg:   #F87171;
+  --status-vencida-bg:   rgba(248, 113, 113, 0.12);
+}

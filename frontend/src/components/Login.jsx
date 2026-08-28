@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../services/supabase'
 import { useIsMobile } from './Dashboard'
 import LogoMarca from './LogoMarca'
+import Wordmark from './Wordmark'
 
 function SolDecorativo({ size = 360, style = {} }) {
   const cx = size / 2, cy = size / 2
@@ -96,8 +97,8 @@ export default function Login({ onLogin }) {
     <div style={isMobile ? m.formAreaMobile : m.formAreaDesktop}>
       <div style={isMobile ? m.formWrapMobile : m.formWrapDesktop}>
         <div style={m.logoRow}>
-          <LogoMarca size={isMobile ? 22 : 26} rayColor="rgba(31,93,69,0.7)" />
-          <span style={isMobile ? m.logoTextoMobile : m.logoTextoDesktop}>Contas Claras</span>
+          <LogoMarca size={isMobile ? 30 : 36} />
+          <Wordmark tone="onLight" size={isMobile ? 14 : 16} />
         </div>
 
         {!modoRecuperar ? (
@@ -243,16 +244,8 @@ const m = {
   formWrapMobile:  { width: '100%' },
 
   logoRow: {
-    display: 'flex', alignItems: 'center', gap: 9,
+    display: 'flex', alignItems: 'center', gap: 12,
     marginBottom: 32,
-  },
-  logoTextoDesktop: {
-    fontSize: 17, fontWeight: 800, color: '#1F5D45',
-    letterSpacing: '-0.02em', lineHeight: 1,
-  },
-  logoTextoMobile: {
-    fontSize: 15, fontWeight: 800, color: '#1F5D45',
-    letterSpacing: '-0.02em', lineHeight: 1,
   },
 
   formSubtitulo: {
