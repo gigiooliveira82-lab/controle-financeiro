@@ -33,7 +33,7 @@ export default function RedefinirSenha({ onConcluido }) {
   }
 
   return (
-    <div style={e.container}>
+    <div style={e.container} data-theme="dark" data-theme-locked="dark" className="theme-dark-locked">
       <div style={e.card}>
         <h1 style={e.titulo}>Contas Claras</h1>
         <p style={e.subtitulo}>Defina sua nova senha</p>
@@ -82,42 +82,47 @@ const e = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#f0f4f8',
+    background: '#0A0F0D',
   },
   card: {
-    background: '#fff',
-    borderRadius: 12,
+    background: '#121A16',
+    border: '1px solid #1E2C26',
+    borderRadius: 16,
     padding: '40px 36px',
     width: 360,
-    boxShadow: '0 2px 16px rgba(0,0,0,0.1)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
   },
-  titulo:    { margin: '0 0 4px', fontSize: 24, fontWeight: 700, color: '#1a1a2e' },
-  subtitulo: { margin: '0 0 28px', color: '#666', fontSize: 14 },
-  form:      { display: 'flex', flexDirection: 'column', gap: 12 },
+  titulo:    { margin: '0 0 4px', fontSize: 24, fontWeight: 700, color: '#FFFFFF', fontFamily: 'var(--font-headline)' },
+  subtitulo: { margin: '0 0 28px', color: '#8FA69B', fontSize: 14 },
+  form:      { display: 'flex', flexDirection: 'column', gap: 14 },
   input: {
-    padding: '10px 14px',
+    padding: '12px 14px',
     borderRadius: 8,
-    border: '1px solid #ddd',
-    fontSize: 15,
+    border: '1px solid #1E2C26',
+    background: '#18231E',
+    color: '#FFFFFF',
+    fontSize: 14,
     outline: 'none',
   },
   botao: {
     padding: '12px',
     borderRadius: 8,
     border: 'none',
-    background: '#2563eb',
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 600,
+    background: '#10B981',
+    color: '#0A0F0D',
+    fontSize: 14,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
     marginTop: 4,
+    boxShadow: '0 0 14px rgba(16, 185, 129, 0.25)',
   },
-  erro: { color: '#dc2626', fontSize: 13, margin: 0 },
+  erro: { color: '#FC7C78', fontSize: 13, margin: 0 },
   sucessoBox: {
     padding: '14px 16px',
     borderRadius: 8,
-    background: '#f0fdf4',
-    border: '1px solid #bbf7d0',
+    background: 'rgba(16, 185, 129, 0.14)',
+    border: '1px solid #10B981',
   },
-  sucessoTexto: { margin: 0, fontSize: 14, fontWeight: 600, color: '#16a34a' },
+  sucessoTexto: { margin: 0, fontSize: 14, fontWeight: 600, color: '#10B981' },
 }

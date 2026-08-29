@@ -6,7 +6,11 @@
  */
 
 :root,
-[data-theme="dark"] {
+[data-theme="dark"],
+[data-theme-locked="dark"],
+[data-theme="light"] [data-theme="dark"],
+[data-theme="light"] [data-theme-locked="dark"],
+.theme-dark-locked {
   /* Cores Base / Superfícies (Dark) */
   --bg-deep:        #0A0F0D;
   --surface:        #121A16;
@@ -68,8 +72,8 @@
   --creme-header:   #E8F0EC;
 }
 
-/* ── Light Mode Tokens ──────────────────────────────────────────────────────── */
-[data-theme="light"] {
+/* ── Light Mode Tokens (Apenas para áreas que não estejam bloqueadas em dark) ── */
+[data-theme="light"]:not([data-theme-locked="dark"]) {
   /* Cores Base / Superfícies (Light — Inspirado no design FINA) */
   --bg-deep:        #F8FAFC;
   --surface:        #FFFFFF;

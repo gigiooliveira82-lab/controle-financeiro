@@ -79,7 +79,7 @@ export default function PaginaLanding() {
   }
 
   return (
-    <div style={s.pagina}>
+    <div style={s.pagina} data-theme="dark" data-theme-locked="dark" className="theme-dark-locked">
       {/* MENU TOPO */}
       <header style={{ ...s.nav, padding: isMobile ? '14px 20px' : '18px 48px' }}>
         <div style={s.navLogo}>

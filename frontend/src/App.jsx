@@ -130,13 +130,15 @@ export default function App() {
   )
 
   if (!usuario) return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login onLogin={setUsuario} />} />
-        <Route path="/"      element={<PaginaLanding />} />
-        <Route path="*"      element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <div data-theme="dark" data-theme-locked="dark" className="theme-dark-locked" style={{ minHeight: '100vh', background: '#0A0F0D' }}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login onLogin={setUsuario} />} />
+          <Route path="/"      element={<PaginaLanding />} />
+          <Route path="*"      element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   )
 
   // Badge de pendências vencidas

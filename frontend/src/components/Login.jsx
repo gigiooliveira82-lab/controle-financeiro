@@ -214,7 +214,7 @@ export default function Login({ onLogin }) {
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh', background: 'var(--bg-deep)' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh', background: 'var(--bg-deep)' }} data-theme="dark" data-theme-locked="dark" className="theme-dark-locked">
       {painelEsq}
       {formulario}
     </div>
