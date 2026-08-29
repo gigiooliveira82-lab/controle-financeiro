@@ -284,12 +284,16 @@ export function BlocoAnaliseIA({ usuarioId, mesSelecionado, transacoes, totalDes
       const resultado = await gerarAnaliseMes(usuarioId, mesSelecionado)
       setAnalise(resultado)
     } catch (err) {
-      // Fallback local se API key não estiver disponível
-      setAnalise({
-        resumo: catOrdenadas.length > 0
-          ? `A maior concentração dos seus gastos está em **${catOrdenadas[0][0]} (${totalDespesa > 0 ? Math.round((catOrdenadas[0][1] / totalDespesa) * 100) : 0}%)**. Suas finanças estão organizadas neste mês.`
-          : 'Adicione despesas para que a IA analise seus padrões de consumo.'
-      })
+      if (err.status === 429 || err.codigo === 'RATE_LIMIT_EXCEEDED' || err.message?.includes('limite') || err.message?.includes('Limite')) {
+        setErro(err.message || 'Limite de análises com IA atingido. Por favor, aguarde alguns minutos antes de tentar novamente.')
+      } else {
+        // Fallback local se API key não estiver disponível
+        setAnalise({
+          resumo: catOrdenadas.length > 0
+            ? `A maior concentração dos seus gastos está em **${catOrdenadas[0][0]} (${totalDespesa > 0 ? Math.round((catOrdenadas[0][1] / totalDespesa) * 100) : 0}%)**. Suas finanças estão organizadas neste mês.`
+            : 'Adicione despesas para que a IA analise seus padrões de consumo.'
+        })
+      }
     } finally {
       setCarregando(false)
     }
@@ -408,7 +412,14 @@ export function FloatingAIPromptBar({ usuarioId }) {
       setResposta({ pergunta: q, texto: res })
       setPergunta('')
     } catch (err) {
-      setResposta({ pergunta: q, texto: 'Desculpe, não consegui responder agora. Verifique a configuração da chave de IA no backend.' })
+      if (err.status === 429 || err.codigo === 'RATE_LIMIT_EXCEEDED' || err.message?.includes('limite') || err.message?.includes('Limite')) {
+        setResposta({
+          pergunta: q,
+          texto: `⏱️ **Limite da IA atingido**\n\n${err.message || 'Você atingiu o limite de perguntas ao assistente. Por favor, aguarde alguns minutos para perguntar novamente.'}`,
+        })
+      } else {
+        setResposta({ pergunta: q, texto: 'Desculpe, não consegui responder agora. Tente novamente em instantes.' })
+      }
     } finally {
       setCarregando(false)
     }

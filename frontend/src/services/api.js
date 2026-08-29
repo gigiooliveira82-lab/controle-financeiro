@@ -14,7 +14,13 @@ export async function lancarTexto(texto, usuarioId, cartaoInfo) {
     body: JSON.stringify({ texto, ...cartaoInfo }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.erro || 'Erro ao lançar transação')
+  if (!res.ok) {
+    const error = new Error(json.erro || (res.status === 429 ? 'Limite de lançamentos com IA atingido. Por favor, aguarde alguns minutos para tentar novamente.' : 'Erro ao lançar transação'))
+    error.status = res.status
+    error.codigo = json.codigo
+    error.detalhe = json.detalhe
+    throw error
+  }
   return json
 }
 
@@ -85,7 +91,13 @@ export async function gerarAnaliseMes(usuarioId, mesReferencia) {
     body: JSON.stringify({ mes_referencia: mesReferencia }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.erro || 'Erro ao gerar análise')
+  if (!res.ok) {
+    const error = new Error(json.erro || (res.status === 429 ? 'Limite de análises com IA atingido. Por favor, aguarde alguns minutos antes de gerar uma nova análise.' : 'Erro ao gerar análise'))
+    error.status = res.status
+    error.codigo = json.codigo
+    error.detalhe = json.detalhe
+    throw error
+  }
   return json.analise
 }
 
@@ -138,7 +150,13 @@ export async function perguntarSobreFinancas(usuarioId, pergunta) {
     body: JSON.stringify({ pergunta }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.erro || 'Erro ao processar pergunta')
+  if (!res.ok) {
+    const error = new Error(json.erro || (res.status === 429 ? 'Limite de perguntas ao assistente IA atingido. Por favor, aguarde alguns minutos antes de perguntar novamente.' : 'Erro ao processar pergunta'))
+    error.status = res.status
+    error.codigo = json.codigo
+    error.detalhe = json.detalhe
+    throw error
+  }
   return json.resposta
 }
 
