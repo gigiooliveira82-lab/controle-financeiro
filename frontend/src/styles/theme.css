@@ -1,34 +1,60 @@
 /*
- * Midnight Emerald — tokens de tema (Rebranding Fase 1)
- *
- * Fonte única de verdade para as cores da nova identidade.
- * As telas ainda usam os tokens antigos (--verde-profundo, --creme-fundo
- * etc., em src/index.css) e valores hardcoded — a migração página a
- * página acontece nas próximas fases. Ver CHANGELOG_SESSAO.md / revisão
- * de escopo para o levantamento dos lugares que ainda precisam migrar.
+ * Midnight Emerald Design System — Stitch Theme Tokens
+ * Baseado no design system oficial:
+ * Primary: #10B981, Secondary: #0F766E, Tertiary: #FC7C78, Neutral: #0A0F0D
+ * Typography: Plus Jakarta Sans (Headlines), Inter (Body & Labels)
  */
 
 :root {
-  /* Fundos */
+  /* Cores Base / Superfícies */
   --bg-deep:        #0A0F0D;
-  --surface:        #141B18;
-  --surface-raised: #1B2621;
-  --border:         #23312B;
+  --surface:        #121A16;
+  --surface-raised: #18231E;
+  --surface-hover:  #1E2C26;
+  --surface-active: #24352E;
+  --surface-overlay:#13201A;
+  --surface-line:   #1E2C26;
+  --border:         #1E2C26;
+  --border-focus:   #10B981;
+  --border-subtle:  rgba(255, 255, 255, 0.07);
 
-  /* Marca */
-  --emerald: #10B981;
-  --mint:    #6EE7B7;
-  --gold:    #D9C48A;
+  /* Paleta Stitch */
+  --primary:        #10B981;
+  --primary-hover:  #0EA372;
+  --primary-glow:   rgba(16, 185, 129, 0.22);
+  --secondary:      #0F766E;
+  --secondary-hover:#115E59;
+  --tertiary:       #FC7C78;
+  --tertiary-glow:  rgba(252, 124, 120, 0.22);
+
+  /* Variáveis de compatibilidade de Marca */
+  --emerald:        #10B981;
+  --mint:           #6EE7B7;
+  --teal:           #0F766E;
+  --coral:          #FC7C78;
+  --gold:           #F59E0B;
 
   /* Texto */
-  --text:       #E8F0EC;
-  --text-muted: #8FA69B;
+  --text:           #E8F0EC;
+  --text-pure:      #FFFFFF;
+  --text-muted:     #8FA69B;
+  --text-dim:       #5E756A;
 
   /* Status */
-  --status-pago-fg:      #34D399;
-  --status-pago-bg:      rgba(52, 211, 153, 0.12);
-  --status-pendente-fg:  #E3C88A;
-  --status-pendente-bg:  rgba(227, 200, 138, 0.12);
-  --status-vencida-fg:   #F87171;
-  --status-vencida-bg:   rgba(248, 113, 113, 0.12);
+  --status-pago-fg:      #10B981;
+  --status-pago-bg:      rgba(16, 185, 129, 0.14);
+  --status-pendente-fg:  #F59E0B;
+  --status-pendente-bg:  rgba(245, 158, 11, 0.14);
+  --status-vencida-fg:   #FC7C78;
+  --status-vencida-bg:   rgba(252, 124, 120, 0.14);
+
+  /* Fontes */
+  --font-headline: 'Plus Jakarta Sans', sans-serif;
+  --font-body:     'Inter', sans-serif;
+
+  /* Compatibilidade com variáveis antigas */
+  --verde-profundo: #0F766E;
+  --verde-medium:   #10B981;
+  --creme-fundo:    #0A0F0D;
+  --creme-header:   #E8F0EC;
 }

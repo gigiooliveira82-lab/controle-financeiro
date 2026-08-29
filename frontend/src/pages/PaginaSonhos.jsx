@@ -2,12 +2,8 @@ import { useState, useEffect } from 'react'
 import { buscarSonhos, criarSonho, atualizarSonho, guardarValorSonho, removerSonho } from '../services/api'
 import { fmtBRL } from '../utils/fmt'
 import CabecalhoPagina from '../components/CabecalhoPagina'
+import { IconSonhos } from '../components/Icones'
 
-// Decompõe o tempo até a data alvo em meses de calendário completos + os dias
-// que sobram no mês parcial, e também no total de dias corridos. Usamos os
-// dias totais (não os meses arredondados pra baixo) pra sugerir o valor
-// mensal — senão um prazo de "1 mês e 19 dias" vira só "1 mês" na conta, e a
-// sugestão de quanto guardar fica inflada.
 function calcularTempoRestante(dataAlvoISO) {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
@@ -23,10 +19,6 @@ function calcularTempoRestante(dataAlvoISO) {
   return { meses, diasExtra, diasTotais }
 }
 
-// A data alvo já passou de verdade (comparação por dia, sem hora) — só nesse
-// caso a meta está de fato vencida. calcularMesesRestantes pode arredondar
-// para 0 mesmo com o prazo ainda em aberto (ex: faltam 6 dias), então não dá
-// pra usar "meses <= 0" sozinho para decidir se venceu.
 function prazoVencido(dataAlvoISO) {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
@@ -37,6 +29,17 @@ function prazoVencido(dataAlvoISO) {
 function formatarDataAlvo(dataAlvoISO) {
   const [ano, mes, dia] = dataAlvoISO.split('-')
   return `${dia}/${mes}/${ano}`
+}
+
+function formatarTextoTempo(meses, diasExtra, diasTotais) {
+  if (diasTotais < 0) return 'prazo encerrado'
+  if (diasTotais === 0) return 'vence hoje'
+  if (meses <= 0) {
+    return `faltam ${diasTotais} ${diasTotais === 1 ? 'dia' : 'dias'}`
+  }
+  const parteMes = `${meses} ${meses === 1 ? 'mês' : 'meses'}`
+  const parteDias = diasExtra > 0 ? ` e ${diasExtra} ${diasExtra === 1 ? 'dia' : 'dias'}` : ''
+  return `faltam ${parteMes}${parteDias}`
 }
 
 export default function PaginaSonhos({ usuarioId }) {
@@ -76,7 +79,7 @@ export default function PaginaSonhos({ usuarioId }) {
 
   return (
     <div style={s.root}>
-      <CabecalhoPagina icone="★" titulo="Meus Sonhos" subtitulo="Metas com prazo, guardadas aos poucos." />
+      <CabecalhoPagina icone={<IconSonhos size={20} />} titulo="Meus Sonhos" subtitulo="Metas financeiras planejadas com data e objetivo claro." />
       {expandido ? (
         <FormSonho
           titulo="Novo sonho"
@@ -89,24 +92,26 @@ export default function PaginaSonhos({ usuarioId }) {
         />
       ) : (
         <button onClick={() => setExpandido(true)} style={s.botaoNovo}>
-          + Novo sonho
+          + Adicionar novo sonho
         </button>
       )}
 
       {sonhos.length === 0 ? (
         <div style={s.placeholder}>
-          <p style={{ ...s.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhum sonho cadastrado.</p>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o botão acima para cadastrar seu primeiro objetivo.</p>
+          <p style={{ ...s.placeholderTexto, fontWeight: 600, color: 'var(--text-pure)' }}>Nenhum sonho cadastrado.</p>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>Use o botão acima para cadastrar seu primeiro objetivo.</p>
         </div>
       ) : (
-        sonhos.map(sonho => (
-          <CardSonho
-            key={sonho.id}
-            sonho={sonho}
-            onAtualizou={handleAtualizouSonho}
-            onRemoveu={handleRemoveuSonho}
-          />
-        ))
+        <div style={s.gridSonhos}>
+          {sonhos.map(sonho => (
+            <CardSonho
+              key={sonho.id}
+              sonho={sonho}
+              onAtualizou={handleAtualizouSonho}
+              onRemoveu={handleRemoveuSonho}
+            />
+          ))}
+        </div>
       )}
     </div>
   )
@@ -126,7 +131,12 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
   const progresso  = Math.min(100, (guardado / total) * 100)
   const { meses, diasExtra, diasTotais } = calcularTempoRestante(sonho.data_alvo)
   const vencido    = prazoVencido(sonho.data_alvo)
-  const corSonho   = sonho.cor || 'var(--verde-profundo)'
+  const corSonho   = sonho.cor || 'var(--primary)'
+
+  // Cálculo da sugestão de economia mensal
+  const restante = Math.max(0, total - guardado)
+  const mesesCalculo = meses > 0 ? (meses + (diasExtra >= 15 ? 1 : 0)) : (diasTotais > 0 ? 1 : 0)
+  const valorMensal = mesesCalculo > 0 ? Math.ceil(restante / mesesCalculo) : restante
 
   async function handleExcluir() {
     if (!confirm(`Tem certeza que deseja excluir o sonho "${sonho.nome}"?`)) return
@@ -161,113 +171,126 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
     }
   }
 
-  if (editando) {
-    return (
-      <FormSonho
-        inicial={sonho}
-        titulo={`Editar ${sonho.nome}`}
-        textoSalvar="Salvar alterações"
-        onSalvar={async (dados) => {
-          const atualizado = await atualizarSonho(sonho.id, dados)
-          onAtualizou(sonho.id, atualizado)
-          setEditando(false)
-        }}
-        onCancelar={() => setEditando(false)}
-      />
-    )
-  }
-
   return (
-    <div style={{ ...s.bloco, ...(realizado ? s.blocoRealizado : { borderLeft: `4px solid ${corSonho}` }) }}>
+    <div style={{
+      ...s.bloco,
+      ...(realizado ? s.blocoRealizado : {}),
+    }}>
       <div style={s.blocoTopo}>
         <div style={s.blocoNomeRow}>
-          <span style={{ ...s.blocoTitulo, color: realizado ? '#B8860B' : '#1a1a2e' }}>{sonho.nome}</span>
-          {realizado && <span style={s.seloRealizado}>🎉 Sonho realizado!</span>}
-          <button onClick={() => setEditando(true)} style={s.iconBtn} title="Editar sonho" aria-label={`Editar sonho: ${sonho.nome}`}>✎</button>
-          <button onClick={handleExcluir} disabled={excluindo} style={s.iconBtn} title="Excluir sonho" aria-label={`Excluir sonho: ${sonho.nome}`}>×</button>
+          <div style={{ ...s.sonhoDot, background: corSonho }} />
+          <span style={{ ...s.blocoTitulo, color: realizado ? '#F59E0B' : 'var(--text-pure)' }}>{sonho.nome}</span>
+          {realizado && <span style={s.seloRealizado}>★ Conquistado!</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={() => setEditando(!editando)} style={s.iconBtn} title="Editar">✎</button>
+          <button onClick={handleExcluir} disabled={excluindo} style={{ ...s.iconBtn, color: 'var(--text-dim)' }} title="Excluir">✕</button>
         </div>
       </div>
 
-      <div style={s.progressoTrilha}>
-        <div style={{ ...s.progressoBarra, width: `${progresso}%`, background: realizado ? '#D4AF37' : corSonho }} />
-      </div>
-
-      <p style={s.valores}>{fmtBRL(guardado)} de {fmtBRL(total)}</p>
-
-      <p style={s.dataAlvo}>
-        Meta para {formatarDataAlvo(sonho.data_alvo)}
-        {!realizado && !vencido && (
-          meses > 0
-            ? ` · ${meses === 1 ? 'falta 1 mês' : `faltam ${meses} meses`}${
-                diasExtra > 0 ? ` e ${diasExtra === 1 ? '1 dia' : `${diasExtra} dias`}` : ''
-              }`
-            : ` · ${diasTotais === 1 ? 'falta 1 dia' : `faltam ${diasTotais} dias`}`
-        )}
-      </p>
-
-      {!realizado && (
-        vencido ? (
-          <p style={s.mensalAlerta}>Prazo já passou — hora de revisar a meta</p>
-        ) : diasTotais >= 30 ? (
-          <p style={s.mensal}>Guarde {fmtBRL(Math.ceil((total - guardado) / (diasTotais / 30)))} por mês para chegar lá</p>
-        ) : (
-          <p style={s.mensal}>Guarde {fmtBRL(Math.ceil(total - guardado))} até o prazo para chegar lá</p>
-        )
-      )}
-
-      <div style={s.separador} />
-
-      {guardando ? (
-        <form onSubmit={handleGuardarSubmit} style={s.formGuardar}>
-          <input
-            aria-label="Valor guardado"
-            type="number" step="0.01" min="0.01"
-            placeholder="Valor guardado (ex: 200)"
-            value={valorGuardar}
-            onChange={(e) => setValorGuardar(e.target.value)}
-            style={s.inputGuardar}
-            disabled={salvandoGuardar}
-            autoFocus
-          />
-          {erroGuardar && <div style={s.erroBox}>{erroGuardar}</div>}
-          <div style={s.formBotoes}>
-            <button type="submit" style={s.botaoSalvar} disabled={salvandoGuardar}>
-              {salvandoGuardar ? 'Salvando...' : 'Confirmar'}
-            </button>
-            <button type="button" style={s.botaoCancelar} onClick={() => { setGuardando(false); setErroGuardar('') }} disabled={salvandoGuardar}>
-              Cancelar
-            </button>
-          </div>
-        </form>
+      {editando ? (
+        <FormSonho
+          titulo={`Editar ${sonho.nome}`}
+          dadosIniciais={sonho}
+          textoSalvar="Salvar"
+          onSalvar={async (dados) => {
+            const atualizado = await atualizarSonho(sonho.id, dados)
+            onAtualizou(sonho.id, atualizado)
+            setEditando(false)
+          }}
+          onCancelar={() => setEditando(false)}
+        />
       ) : (
-        <button onClick={() => setGuardando(true)} style={s.botaoGuardar}>
-          + Guardei dinheiro
-        </button>
+        <>
+          <div style={s.progressoTrilha}>
+            <div style={{
+              ...s.progressoBarra,
+              width: `${progresso}%`,
+              background: realizado ? '#F59E0B' : corSonho,
+            }} />
+          </div>
+
+          <div style={s.valores}>
+            <span style={{ color: 'var(--text-pure)' }}>{fmtBRL(guardado)}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}> de {fmtBRL(total)}</span>
+          </div>
+
+          <div style={s.infoMeta}>
+            <p style={s.dataAlvo}>
+              Meta para {formatarDataAlvo(sonho.data_alvo)} · {formatarTextoTempo(meses, diasExtra, diasTotais)}
+            </p>
+            {!realizado && !vencido && (
+              <p style={s.aporteSugerido}>
+                Guarde <span style={s.aporteDestaque}>{fmtBRL(valorMensal)}</span> por mês para chegar lá
+              </p>
+            )}
+            {realizado && (
+              <p style={{ ...s.aporteSugerido, color: '#F59E0B' }}>
+                ★ Meta atingida com sucesso!
+              </p>
+            )}
+          </div>
+
+          <div style={s.separador} />
+
+          {guardando ? (
+            <form onSubmit={handleGuardarSubmit} style={s.formGuardar}>
+              <input
+                type="text"
+                placeholder="Valor a guardar (R$)"
+                value={valorGuardar}
+                onChange={e => setValorGuardar(e.target.value)}
+                style={s.inputGuardar}
+                autoFocus
+              />
+              {erroGuardar && <p style={{ color: 'var(--tertiary)', fontSize: 12, margin: 0 }}>{erroGuardar}</p>}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button type="submit" disabled={salvandoGuardar} style={s.btnSalvarPequeno}>
+                  {salvandoGuardar ? 'Guardando...' : 'Confirmar'}
+                </button>
+                <button type="button" onClick={() => setGuardando(false)} style={s.btnCancelarPequeno}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button onClick={() => setGuardando(true)} style={s.botaoGuardar}>
+              + Guardei dinheiro
+            </button>
+          )}
+        </>
       )}
     </div>
   )
 }
 
-function FormSonho({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
-  const [nome, setNome]           = useState(inicial?.nome || '')
-  const [valorTotal, setValorTotal] = useState(inicial ? String(inicial.valor_total) : '')
-  const [dataAlvo, setDataAlvo]   = useState(inicial?.data_alvo || '')
-  const [cor, setCor]             = useState(inicial?.cor || '#1F5D45')
-  const [salvando, setSalvando]   = useState(false)
-  const [erro, setErro]           = useState('')
+function FormSonho({ titulo, dadosIniciais = {}, textoSalvar, onSalvar, onCancelar }) {
+  const [nome, setNome]               = useState(dadosIniciais.nome || '')
+  const [valorTotal, setValorTotal]   = useState(dadosIniciais.valor_total ? String(dadosIniciais.valor_total) : '')
+  const [valorGuardado, setValorGuardado] = useState(dadosIniciais.valor_guardado ? String(dadosIniciais.valor_guardado) : '0')
+  const [dataAlvo, setDataAlvo]       = useState(dadosIniciais.data_alvo || '')
+  const [cor, setCor]                 = useState(dadosIniciais.cor || '#10B981')
+  const [salvando, setSalvando]       = useState(false)
+  const [erro, setErro]               = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErro('')
-
-    const total = Number(valorTotal.replace(',', '.'))
-    if (!nome.trim()) { setErro('Informe o nome do sonho'); return }
-    if (!Number.isFinite(total) || total <= 0) { setErro('Valor total deve ser maior que zero'); return }
-    if (!dataAlvo) { setErro('Informe a data alvo'); return }
-
+    const total = parseFloat(valorTotal.replace(',', '.'))
+    const guard = parseFloat(valorGuardado.replace(',', '.'))
+    if (!nome.trim() || isNaN(total) || total <= 0 || !dataAlvo) {
+      setErro('Preencha os campos obrigatórios')
+      return
+    }
     setSalvando(true)
     try {
-      await onSalvar({ nome: nome.trim(), valor_total: total, data_alvo: dataAlvo, cor })
+      await onSalvar({
+        nome: nome.trim(),
+        valor_total: total,
+        valor_guardado: isNaN(guard) ? 0 : guard,
+        data_alvo: dataAlvo,
+        cor,
+      })
     } catch (err) {
       setErro(err.message)
     } finally {
@@ -276,159 +299,265 @@ function FormSonho({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={s.form}>
-      <h2 style={s.formTitulo}>{titulo}</h2>
+    <div style={s.formWrap}>
+      <h4 style={s.formTitulo}>{titulo}</h4>
+      <form onSubmit={handleSubmit} style={s.form}>
+        <div style={s.formRow}>
+          <label style={s.label}>
+            Nome da Meta
+            <input required value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Viagem, Carro..." style={s.input} />
+          </label>
+        </div>
+        <div style={s.formRow}>
+          <label style={s.label}>
+            Valor Total (R$)
+            <input required type="text" value={valorTotal} onChange={e => setValorTotal(e.target.value)} placeholder="5000" style={s.input} />
+          </label>
+          <label style={s.label}>
+            Já Guardado (R$)
+            <input type="text" value={valorGuardado} onChange={e => setValorGuardado(e.target.value)} placeholder="0" style={s.input} />
+          </label>
+          <label style={s.label}>
+            Data Alvo
+            <input required type="date" value={dataAlvo} onChange={e => setDataAlvo(e.target.value)} style={s.input} />
+          </label>
+        </div>
 
-      <input
-        aria-label="Nome do sonho"
-        placeholder="Nome do sonho (ex: Viagem para a praia)"
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        style={s.input}
-        disabled={salvando}
-      />
+        {erro && <p style={{ color: 'var(--tertiary)', fontSize: 13, margin: 0 }}>{erro}</p>}
 
-      <div style={s.formRow}>
-        <label style={s.label}>
-          Valor total
-          <input
-            type="number" step="0.01" min="0.01"
-            value={valorTotal}
-            onChange={(e) => setValorTotal(e.target.value)}
-            style={s.inputPequeno}
-            disabled={salvando}
-          />
-        </label>
-        <label style={s.label}>
-          Data alvo
-          <input
-            type="date"
-            value={dataAlvo}
-            onChange={(e) => setDataAlvo(e.target.value)}
-            style={s.inputPequeno}
-            disabled={salvando}
-          />
-        </label>
-        <label style={s.label}>
-          Cor
-          <input
-            type="color"
-            value={cor}
-            onChange={(e) => setCor(e.target.value)}
-            style={s.inputCor}
-            disabled={salvando}
-          />
-        </label>
-      </div>
-
-      {erro && <div style={s.erroBox}>{erro}</div>}
-
-      <div style={s.formBotoes}>
-        <button type="submit" style={s.botaoSalvar} disabled={salvando}>
-          {salvando ? 'Salvando...' : textoSalvar}
-        </button>
-        <button type="button" style={s.botaoCancelar} onClick={onCancelar} disabled={salvando}>
-          Cancelar
-        </button>
-      </div>
-    </form>
+        <div style={s.formBotoes}>
+          <button type="submit" disabled={salvando} style={s.botaoSalvar}>
+            {salvando ? 'Salvando...' : textoSalvar}
+          </button>
+          <button type="button" onClick={onCancelar} style={s.botaoCancelar}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 
 const s = {
-  root: { display: 'flex', flexDirection: 'column', gap: 20, width: '100%', boxSizing: 'border-box' },
-  placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  placeholderTexto: { margin: 0, color: '#64748b' },
+  root: { display: 'flex', flexDirection: 'column', gap: 20 },
+  gridSonhos: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: 20,
+  },
+  placeholder: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '48px 24px',
+    textAlign: 'center',
+  },
+  placeholderTexto: { margin: 0, color: 'var(--text-muted)' },
   botaoNovo: {
     display: 'block', width: '100%', padding: '16px',
-    borderRadius: 12, border: '2px dashed #BDD5CC',
-    background: '#fff', color: 'var(--verde-profundo)',
-    fontSize: 15, fontWeight: 600, cursor: 'pointer',
-    textAlign: 'center', boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-  },
-
-  form: {
-    background: '#fff', borderRadius: 12, padding: '24px 28px',
-    boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
-    display: 'flex', flexDirection: 'column', gap: 12,
-    width: '100%', boxSizing: 'border-box',
-  },
-  formTitulo: { margin: 0, fontSize: 18, fontWeight: 700, color: '#1a1a2e' },
-  formRow: { display: 'flex', gap: 16, flexWrap: 'wrap' },
-  input: {
-    width: '100%', boxSizing: 'border-box',
-    padding: '10px 12px', borderRadius: 8,
-    border: '1px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none',
-  },
-  label: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b', fontWeight: 600 },
-  inputPequeno: {
-    width: 140, maxWidth: '100%', padding: '8px 10px', borderRadius: 8,
-    border: '1px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none',
-    boxSizing: 'border-box',
-  },
-  inputCor: { width: 60, height: 36, padding: 2, borderRadius: 8, border: '1px solid #ddd', cursor: 'pointer' },
-  erroBox: {
-    padding: '10px 14px', borderRadius: 8,
-    background: '#fef2f2', color: '#dc2626',
-    fontSize: 14, border: '1px solid #fecaca',
-  },
-  formBotoes: { display: 'flex', gap: 8, flexWrap: 'wrap' },
-  botaoSalvar: {
-    padding: '10px 18px', borderRadius: 8, border: 'none',
-    background: 'var(--verde-profundo)', color: 'var(--creme-header)',
+    borderRadius: 12, border: '1.5px dashed var(--border)',
+    background: 'var(--surface)', color: 'var(--primary)',
     fontSize: 14, fontWeight: 600, cursor: 'pointer',
+    textAlign: 'center', boxSizing: 'border-box',
+    fontFamily: 'var(--font-headline)',
   },
-  botaoCancelar: {
-    padding: '10px 18px', borderRadius: 8, border: '1px solid #ddd',
-    background: '#fff', color: '#64748b', fontSize: 14, cursor: 'pointer',
-  },
-
   bloco: {
-    background: '#fff', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.07)', width: '100%', boxSizing: 'border-box',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: '20px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
   },
   blocoRealizado: {
-    border: '2px solid #D4AF37',
-    background: 'linear-gradient(135deg, #fffdf5 0%, #fff 60%)',
+    border: '1.5px solid #F59E0B',
+    background: 'rgba(245, 158, 11, 0.05)',
   },
-  blocoTopo:    { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
-  blocoNomeRow: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  blocoTitulo:  { fontSize: 16, fontWeight: 700 },
+  blocoTopo: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  blocoNomeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sonhoDot: {
+    width: 12,
+    height: 12,
+    borderRadius: '50%',
+  },
+  blocoTitulo: {
+    fontSize: 16,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+  },
   seloRealizado: {
-    fontSize: 12, fontWeight: 700, color: '#B8860B',
-    background: '#FEF3C7', borderRadius: 20, padding: '3px 10px',
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#F59E0B',
+    background: 'rgba(245, 158, 11, 0.15)',
+    padding: '2px 8px',
+    borderRadius: 99,
   },
-
   progressoTrilha: {
-    marginTop: 12, height: 10, borderRadius: 6,
-    background: '#EEF2F0', overflow: 'hidden',
+    height: 8,
+    background: 'var(--surface-hover)',
+    borderRadius: 99,
+    overflow: 'hidden',
+    marginTop: 4,
   },
-  progressoBarra: { height: '100%', borderRadius: 6, transition: 'width 0.3s ease' },
-
-  valores: { margin: '10px 0 0', fontSize: 15, fontWeight: 700, color: '#1e293b' },
-  dataAlvo: { margin: '4px 0 0', fontSize: 12, color: '#94a3b8' },
-  mensal: { margin: '8px 0 0', fontSize: 13, fontWeight: 600, color: 'var(--verde-profundo)' },
-  mensalAlerta: { margin: '8px 0 0', fontSize: 13, fontWeight: 600, color: '#dc2626' },
-
-  separador: { height: 1, background: 'var(--surface-line)', margin: '14px -20px' },
-
+  progressoBarra: {
+    height: '100%',
+    borderRadius: 99,
+    transition: 'width 0.4s ease',
+  },
+  valores: {
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+  },
+  infoMeta: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    marginTop: -4,
+  },
+  dataAlvo: {
+    margin: 0,
+    fontSize: 12.5,
+    color: 'var(--text-muted)',
+  },
+  aporteSugerido: {
+    margin: 0,
+    fontSize: 13,
+    color: 'var(--text)',
+    fontWeight: 500,
+  },
+  aporteDestaque: {
+    color: 'var(--primary)',
+    fontWeight: 700,
+  },
+  separador: {
+    height: 1,
+    background: 'var(--border-subtle)',
+    margin: '4px 0',
+  },
   iconBtn: {
-    background: 'none', border: 'none', fontSize: 14,
-    color: '#9ca3af', cursor: 'pointer', padding: '4px 6px', lineHeight: 1,
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    padding: '2px 6px',
+    fontSize: 14,
   },
-
   botaoGuardar: {
-    display: 'block', width: '100%', padding: '10px',
-    borderRadius: 8, border: '1px solid #BDD5CC',
-    background: '#fff', color: 'var(--verde-profundo)',
-    fontSize: 13, fontWeight: 600, cursor: 'pointer',
-    textAlign: 'center', boxSizing: 'border-box',
+    width: '100%',
+    padding: '10px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'var(--surface-hover)',
+    color: 'var(--primary)',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
   },
-  formGuardar: { display: 'flex', flexDirection: 'column', gap: 8 },
+  formGuardar: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
   inputGuardar: {
-    width: '100%', boxSizing: 'border-box',
-    padding: '8px 10px', borderRadius: 8,
-    border: '1px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none',
+    padding: '8px 12px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'var(--surface-raised)',
+    color: 'var(--text-pure)',
+    fontSize: 13,
+    outline: 'none',
+  },
+  btnSalvarPequeno: {
+    flex: 1,
+    padding: '8px',
+    borderRadius: 6,
+    border: 'none',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontWeight: 700,
+    fontSize: 12,
+    cursor: 'pointer',
+  },
+  btnCancelarPequeno: {
+    padding: '8px 12px',
+    borderRadius: 6,
+    border: '1px solid var(--border)',
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 12,
+    cursor: 'pointer',
+  },
+  formWrap: {
+    background: 'var(--surface-raised)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '20px',
+  },
+  formTitulo: {
+    margin: '0 0 14px',
+    fontSize: 15,
+    color: 'var(--text-pure)',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  formRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: 12,
+  },
+  label: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    fontSize: 12,
+    color: 'var(--text-muted)',
+    fontWeight: 600,
+  },
+  input: {
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--text-pure)',
+    fontSize: 13,
+    outline: 'none',
+  },
+  formBotoes: {
+    display: 'flex',
+    gap: 10,
+    marginTop: 6,
+  },
+  botaoSalvar: {
+    padding: '10px 20px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontWeight: 700,
+    fontSize: 13,
+    cursor: 'pointer',
+  },
+  botaoCancelar: {
+    padding: '10px 16px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 13,
+    cursor: 'pointer',
   },
 }

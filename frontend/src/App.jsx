@@ -14,16 +14,7 @@ import PaginaCartoes from './pages/PaginaCartoes'
 import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaSonhos from './pages/PaginaSonhos'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
-
-function useIsMobileHeader() {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 500)
-  useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 500)
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
-  return mobile
-}
+import { IconLogout } from './components/Icones'
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -44,15 +35,14 @@ function formatarMesHeader(mesISO) {
 }
 
 export default function App() {
-  const [usuario, setUsuario]               = useState(null)
-  const [transacoes, setTransacoes]         = useState([])
-  const [cartoes, setCartoes]               = useState([])
-  const [carregando, setCarregando]         = useState(true)
+  const [usuario, setUsuario]                 = useState(null)
+  const [transacoes, setTransacoes]           = useState([])
+  const [cartoes, setCartoes]                 = useState([])
+  const [carregando, setCarregando]           = useState(true)
   const [carregandoDados, setCarregandoDados] = useState(false)
-  const [mesSelecionado, setMesSelecionado] = useState(mesISOHoje)
-  const [modoRedefinir, setModoRedefinir]   = useState(false)
-  const isMobileHeader = useIsMobileHeader()
-  const isMobileNav    = useIsNavMobile()
+  const [mesSelecionado, setMesSelecionado]   = useState(mesISOHoje)
+  const [modoRedefinir, setModoRedefinir]     = useState(false)
+  const isMobileNav                           = useIsNavMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -79,7 +69,9 @@ export default function App() {
 
   useEffect(() => {
     if (!usuario) { setCartoes([]); return }
-    buscarCartoes(usuario.id).then(setCartoes).catch(err => console.error('Erro ao buscar cartões:', err.message))
+    buscarCartoes(usuario.id)
+      .then(setCartoes)
+      .catch(err => console.error('Erro ao buscar cartões:', err.message))
   }, [usuario])
 
   async function inicializarMes() {
@@ -127,7 +119,7 @@ export default function App() {
     setTransacoes([])
   }
 
-  if (carregando) return <div style={estilos.loading}>Carregando...</div>
+  if (carregando) return <div style={estilos.loading}>Carregando Contas Claras...</div>
 
   if (modoRedefinir) return (
     <RedefinirSenha onConcluido={async () => {
@@ -146,7 +138,7 @@ export default function App() {
     </BrowserRouter>
   )
 
-  // Badge de vencidas para NavLateral
+  // Badge de pendências vencidas
   const hoje       = new Date()
   const diaHoje    = hoje.getDate()
   const mesHojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
@@ -172,37 +164,58 @@ export default function App() {
     carregando:       carregandoDados,
   }
 
+  const letraInicial = usuario.email ? usuario.email[0].toUpperCase() : 'U'
+
   return (
     <BrowserRouter>
       <div style={estilos.layout}>
         <NavLateral qtdVencidas={qtdVencidas} />
 
         <div style={estilos.conteudo}>
-          <header style={{ ...estilos.header, padding: isMobileHeader ? '10px 14px' : '12px 28px' }}>
-            <div style={estilos.navMes}>
-              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))} style={estilos.botaoNav} aria-label="Mês anterior">‹</button>
-              <span style={{ ...estilos.headerMes, minWidth: isMobileHeader ? 110 : 150, fontSize: isMobileHeader ? 14 : 17 }}>
-                {formatarMesHeader(mesSelecionado)}
-              </span>
-              <button onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))} style={estilos.botaoNav} aria-label="Próximo mês">›</button>
+          {/* Header Superior — Conforme solicitado pelo usuário */}
+          <header style={estilos.header}>
+            <div style={estilos.headerLeft}>
+              <div style={estilos.mesNavegacao}>
+                <button
+                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
+                  style={estilos.botaoSetaMes}
+                  aria-label="Mês anterior"
+                >
+                  ‹
+                </button>
+                <h1 style={estilos.tituloMes}>
+                  {formatarMesHeader(mesSelecionado)}
+                </h1>
+                <button
+                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
+                  style={estilos.botaoSetaMes}
+                  aria-label="Próximo mês"
+                >
+                  ›
+                </button>
+              </div>
+              <span style={estilos.subtituloHeader}>Visão geral financeira</span>
             </div>
-            <div style={estilos.usuarioArea}>
-              <span
-                style={{ ...estilos.usuarioEmail, maxWidth: isMobileHeader ? 92 : 220, fontSize: isMobileHeader ? 10 : 12 }}
-                title={usuario.email}
-              >
-                {usuario.email}
-              </span>
+
+            {/* Identificação do Usuário + Botão Sair ao lado */}
+            <div style={estilos.headerRight}>
+              <div style={estilos.usuarioBadge} title={usuario.email}>
+                <div style={estilos.usuarioAvatar}>{letraInicial}</div>
+                <span style={estilos.usuarioEmail}>{usuario.email}</span>
+              </div>
+
               <button
                 onClick={handleLogout}
-                style={{ ...estilos.botaoLogout, ...(isMobileHeader ? { padding: '5px 10px', fontSize: 11 } : {}) }}
+                style={estilos.botaoLogout}
+                title="Encerrar sessão"
               >
-                Sair
+                <IconLogout size={16} />
+                <span>Sair</span>
               </button>
             </div>
           </header>
 
-          <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 90 : 32 }}>
+          <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
             <Routes>
               <Route path="/"              element={<Navigate to="/dashboard" replace />} />
               <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
@@ -226,7 +239,7 @@ const estilos = {
   layout: {
     display: 'flex',
     minHeight: '100vh',
-    background: 'var(--creme-fundo)',
+    background: 'var(--bg-deep)',
   },
   conteudo: {
     flex: 1,
@@ -239,48 +252,111 @@ const estilos = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#666',
+    background: 'var(--bg-deep)',
+    color: 'var(--text-muted)',
+    fontFamily: 'var(--font-headline)',
+    fontSize: 16,
   },
   header: {
-    background: 'var(--verde-profundo)',
-    color: 'var(--creme-header)',
-    padding: '14px 28px',
+    padding: '24px 36px 12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    boxShadow: '0 2px 12px rgba(31,93,69,0.30)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
+    gap: 16,
+    flexWrap: 'wrap',
   },
-  navMes: { display: 'flex', alignItems: 'center', gap: 8 },
-  usuarioArea: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 },
-  usuarioEmail: {
-    fontSize: 12,
-    color: '#9DC9B5',
-    minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+  headerLeft: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
   },
-  headerMes: { fontSize: 16, fontWeight: 700, color: 'var(--creme-header)', textTransform: 'capitalize', minWidth: 140, textAlign: 'center', letterSpacing: '0.01em' },
-  botaoNav: {
+  mesNavegacao: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tituloMes: {
+    margin: 0,
+    fontSize: 28,
+    fontWeight: 800,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+    letterSpacing: '-0.02em',
+  },
+  subtituloHeader: {
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    fontWeight: 500,
+  },
+  botaoSetaMes: {
     background: 'transparent',
     border: 'none',
-    color: '#9DC9B5',
-    fontSize: 24,
+    color: 'var(--text-muted)',
+    fontSize: 22,
     cursor: 'pointer',
-    padding: '0 6px',
+    padding: '0 4px',
     lineHeight: 1,
+    display: 'flex',
+    alignItems: 'center',
   },
-  main: { maxWidth: 1400, margin: '0 auto', padding: '24px 16px', width: '100%', boxSizing: 'border-box' },
-  botaoLogout: {
-    background: 'transparent',
-    border: '1px solid #ffffff44',
-    color: '#fff',
-    padding: '6px 14px',
-    borderRadius: 6,
-    cursor: 'pointer',
+  headerRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  usuarioBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    padding: '6px 14px 6px 8px',
+    borderRadius: 99,
+    maxWidth: 260,
+  },
+  usuarioAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.18)',
+    border: '1px solid rgba(16, 185, 129, 0.4)',
+    color: 'var(--primary)',
+    fontSize: 12,
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    fontFamily: 'var(--font-headline)',
+  },
+  usuarioEmail: {
     fontSize: 13,
+    color: 'var(--text)',
+    fontWeight: 500,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: 180,
+  },
+  botaoLogout: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '8px 14px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--text-muted)',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  main: {
+    maxWidth: 1200,
+    margin: '0 auto',
+    padding: '16px 36px 36px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
 }

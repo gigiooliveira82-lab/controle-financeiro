@@ -4,6 +4,7 @@ import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { BlocoTipo } from '../components/Dashboard'
 import LancamentoTexto from '../components/LancamentoTexto'
 import CabecalhoPagina from '../components/CabecalhoPagina'
+import { IconAplicacoes } from '../components/Icones'
 
 export default function PaginaAplicacoes({
   transacoes, usuarioId, mesSelecionado,
@@ -46,24 +47,22 @@ export default function PaginaAplicacoes({
     setExpandido(false)
   }
 
-  const lancamento = mostrarLancamento && (
-    expandido ? (
-      <LancamentoTexto
-        usuarioId={usuarioId}
-        onNovaTransacao={handleNovaComColapso}
-        onAtualizouTransacao={onAtualizou}
-      />
-    ) : (
-      <button onClick={() => setExpandido(true)} style={a.botaoNovo}>
-        + Novo lançamento
-      </button>
-    )
-  )
-
   return (
     <div style={a.root}>
-      <CabecalhoPagina icone="◎" titulo="Aplicações" subtitulo="O que você guardou e investiu ao longo do tempo." />
-      {lancamento}
+      <CabecalhoPagina icone={<IconAplicacoes size={20} />} titulo="Aplicações & Patrimônio" subtitulo="O que você guardou e investiu ao longo do tempo." />
+      {mostrarLancamento && (
+        expandido ? (
+          <LancamentoTexto
+            usuarioId={usuarioId}
+            onNovaTransacao={handleNovaComColapso}
+            onAtualizouTransacao={onAtualizou}
+          />
+        ) : (
+          <button onClick={() => setExpandido(true)} style={a.botaoNovo}>
+            + Novo aporte ou aplicação
+          </button>
+        )
+      )}
       <BlocoTipo
         tipo="aplicacao"
         transacoes={aplicacoes}
@@ -80,14 +79,20 @@ export default function PaginaAplicacoes({
 
 const a = {
   root: { display: 'flex', flexDirection: 'column', gap: 20 },
-  placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  placeholderTexto: { margin: 0, color: '#64748b' },
+  placeholder: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '48px 24px',
+    textAlign: 'center',
+  },
+  placeholderTexto: { margin: 0, color: 'var(--text-muted)' },
   botaoNovo: {
     display: 'block', width: '100%', padding: '16px',
-    borderRadius: 12, border: '2px dashed #BDD5CC',
-    background: '#fff', color: 'var(--verde-profundo)',
-    fontSize: 15, fontWeight: 600, cursor: 'pointer',
+    borderRadius: 12, border: '1.5px dashed var(--border)',
+    background: 'var(--surface)', color: 'var(--primary)',
+    fontSize: 14, fontWeight: 600, cursor: 'pointer',
     textAlign: 'center', boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+    fontFamily: 'var(--font-headline)',
   },
 }

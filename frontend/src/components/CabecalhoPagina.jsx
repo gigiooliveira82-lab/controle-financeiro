@@ -1,29 +1,61 @@
-// Cabeçalho leve reaproveitado nas páginas de CRUD (Despesas, Cartões, Sonhos)
-// pra trazer um pouco da identidade visual do login/landing (verde profundo,
-// serifada) pro miolo do app, sem virar um hero pesado numa tela de lista.
-export default function CabecalhoPagina({ icone, titulo, subtitulo }) {
+export default function CabecalhoPagina({ icone, titulo, subtitulo, acao }) {
   return (
     <div style={s.wrap}>
-      <span style={s.icone} aria-hidden="true">{icone}</span>
-      <div style={s.textos}>
-        <h1 style={s.titulo}>{titulo}</h1>
-        {subtitulo && <p style={s.subtitulo}>{subtitulo}</p>}
+      <div style={s.esquerda}>
+        {icone && <span style={s.icone} aria-hidden="true">{icone}</span>}
+        <div style={s.textos}>
+          <h1 style={s.titulo}>{titulo}</h1>
+          {subtitulo && <p style={s.subtitulo}>{subtitulo}</p>}
+        </div>
       </div>
+      {acao && <div style={s.acao}>{acao}</div>}
     </div>
   )
 }
 
 const s = {
-  wrap: { display: 'flex', alignItems: 'center', gap: 12 },
+  wrap: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: 8,
+    flexWrap: 'wrap',
+  },
+  esquerda: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
+  },
   icone: {
-    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-    background: 'var(--verde-profundo)', color: '#E3A008',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    flexShrink: 0,
+    background: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    color: 'var(--primary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 18,
   },
   textos: { minWidth: 0 },
   titulo: {
-    margin: 0, fontFamily: 'Georgia, "Times New Roman", serif',
-    fontSize: 22, fontWeight: 700, color: '#1a1a2e', letterSpacing: '-0.01em',
+    margin: 0,
+    fontFamily: 'var(--font-headline)',
+    fontSize: 24,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    letterSpacing: '-0.02em',
   },
-  subtitulo: { margin: '2px 0 0', fontSize: 13, color: '#64748b' },
+  subtitulo: {
+    margin: '3px 0 0',
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    fontFamily: 'var(--font-body)',
+  },
+  acao: {
+    marginLeft: 'auto',
+  },
 }

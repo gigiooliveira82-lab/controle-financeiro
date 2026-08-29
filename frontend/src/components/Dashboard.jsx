@@ -4,23 +4,31 @@ import { fmtBRL, fmtNum } from '../utils/fmt'
 import { gerarAnaliseMes, perguntarSobreFinancas } from '../services/api'
 
 export const TIPO = {
-  despesa_fixa:     { label: 'Despesas Fixas',    cor: '#6B3DB8' },
-  despesa_variavel: { label: 'Despesas Variáveis', cor: '#dc2626' },
-  credito:          { label: 'Créditos',           cor: 'var(--verde-profundo)' },
-  aplicacao:        { label: 'Aplicações',         cor: '#1E5FAD' },
+  despesa_fixa:     { label: 'Despesas Fixas',     cor: '#A78BFA' },
+  despesa_variavel: { label: 'Despesas Variáveis', cor: '#FC7C78' },
+  credito:          { label: 'Receitas / Entradas', cor: '#10B981' },
+  aplicacao:        { label: 'Aplicações',          cor: '#0F766E' },
 }
 
 const TIPO_SHORT = {
   despesa_fixa:     'Fixa',
   despesa_variavel: 'Variável',
-  credito:          'Crédito',
+  credito:          'Receita',
   aplicacao:        'Aplicação',
 }
 
 export const COR_CAT = {
-  moradia: '#f59e0b', alimentação: '#10b981', transporte: '#3b82f6',
-  saúde: '#ef4444', lazer: '#8b5cf6', educação: '#06b6d4',
-  assinaturas: '#f97316', investimentos: '#14b8a6', renda: '#22c55e',
+  alimentação:   '#10B981',
+  moradia:       '#0F766E',
+  habitação:     '#0F766E',
+  transporte:    '#2DD4BF',
+  saúde:         '#F59E0B',
+  lazer:         '#8B5CF6',
+  educação:      '#06B6D4',
+  assinaturas:   '#EC4899',
+  investimentos: '#10B981',
+  renda:         '#10B981',
+  outros:        '#64748B',
 }
 
 export const soma     = (arr) => arr.reduce((acc, t) => acc + Number(t.valor), 0)
@@ -52,273 +60,320 @@ export function useIsMobile() {
   return mobile
 }
 
-// ── Card-herói (saldo projetado do mês) ────────────────────────────────────────
-// Primeira coisa que o usuário vê ao entrar no app — usa a identidade Midnight
-// Emerald (superfície escura + acento esmeralda) em vez do cartão branco
-// genérico do resto da página.
-
-export function CardHeroProjetado({ valor, saldoReal, totalAPagar, qtdPendente, tudoEmDia }) {
-  const positivo = valor >= 0
-  const cor = positivo ? 'var(--mint)' : 'var(--status-vencida-fg)'
+// ── Card de Balanço do Mês (Stitch Design) ──────────────────────────────────
+export function CardBalancoMes({ saldo, totalReceitas, totalDespesas }) {
+  const positivo = saldo >= 0
   return (
-    <div style={{
-      ...s.cardHero,
-      background: positivo ? 'var(--surface-raised)' : '#2A1414',
-      border: `1px solid ${positivo ? 'var(--border)' : 'rgba(248,113,113,0.35)'}`,
-    }}>
-      <div style={s.cardHeroConteudo}>
-        <span style={s.cardHeroLabel}>{tudoEmDia ? 'Saldo do mês' : 'Saldo projetado'}</span>
-        <span style={{ ...s.cardHeroValor, color: cor }}>{fmtSaldo(valor)}</span>
-        <span style={s.cardHeroSub}>
-          {tudoEmDia
-            ? (positivo ? '✓ Tudo em dia · nenhum valor pendente' : '! Negativo · nenhum valor pendente')
-            : `${fmtSaldo(saldoReal)} garantido agora · ${fmtSaldo(totalAPagar)} em ${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-// ── Cards normais ─────────────────────────────────────────────────────────────
-
-export function CardSaldo({ label, valor, sub }) {
-  const positivo = valor >= 0
-  const cor = positivo ? 'var(--emerald)' : 'var(--status-vencida-fg)'
-  return (
-    <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
-      <span style={s.cardLabel}>{label}</span>
-      <span style={{ ...s.cardValor, color: cor }}>{fmtSaldo(valor)}</span>
-      <span style={s.cardSub}><span style={{ color: cor }}>{positivo ? '▲' : '▼'} </span>{sub}</span>
-    </div>
-  )
-}
-
-export function CardNeutro({ label, valor, sub }) {
-  return (
-    <div style={{ ...s.card, borderTop: '3px solid var(--status-pendente-fg)' }}>
-      <span style={s.cardLabel}>{label}</span>
-      <span style={{ ...s.cardValor, color: 'var(--status-pendente-fg)' }}>R$ {fmt(valor)}</span>
-      <span style={s.cardSub}><span style={{ color: 'var(--status-pendente-fg)' }}>● </span>{sub}</span>
-    </div>
-  )
-}
-
-// ── Card comparativo (vs mês anterior) ───────────────────────────────────────
-
-export function CardComparativo({ percentualVariacao, despesaMesAtual, despesaMesAnterior, mesAtualISO, mesAnteriorISO: mesAntISO, parcial }) {
-  const label = `VS MÊS ANTERIOR${parcial ? ' (parcial)' : ''}`
-  if (percentualVariacao === null) {
-    return (
-      <div style={{ ...s.card, borderTop: '3px solid var(--border)' }}>
-        <span style={s.cardLabel}>{label}</span>
-        <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-muted)', lineHeight: 1.3 }}>Sem histórico</span>
-        <span style={s.cardSub}>Volte no próximo mês para comparar</span>
-      </div>
-    )
-  }
-  // Num mês ainda em andamento, a comparação é enganosa (despesas variáveis do
-  // mês atual ainda vão crescer) — mostramos neutro em vez de verde/vermelho.
-  const subindo = percentualVariacao > 0
-  const cor = parcial ? 'var(--text-muted)' : (subindo ? 'var(--status-vencida-fg)' : 'var(--emerald)')
-  const seta = subindo ? '▲' : '▼'
-  return (
-    <div style={{ ...s.card, borderTop: `3px solid ${cor}` }}>
-      <span style={s.cardLabel}>{label}</span>
-      <span style={{ ...s.cardValor, color: cor }}>{seta} {Math.abs(percentualVariacao).toFixed(1)}%</span>
-      <span style={s.cardSub}>
-        R$ {fmt(despesaMesAtual)} em {labelMes(mesAtualISO)} vs R$ {fmt(despesaMesAnterior)} em {labelMes(mesAntISO)}
-        {parcial ? ' · mês em andamento' : ''}
-      </span>
-    </div>
-  )
-}
-
-// ── Barra de categoria ────────────────────────────────────────────────────────
-
-export function BarraCategoria({ categoria, valor, total, cor }) {
-  const pct = total > 0 ? (valor / total) * 100 : 0
-  return (
-    <div style={s.barraItem}>
-      <div style={s.barraHeader}>
-        <span style={s.barraNome}>{categoria}</span>
-        <span style={s.barraInfo}>R$ {fmt(valor)} <span style={s.barraPct}>{pct.toFixed(0)}%</span></span>
-      </div>
-      <div style={s.barraTrilho}>
-        <div style={{ ...s.barraFill, width: `${pct}%`, background: cor }} />
-      </div>
-    </div>
-  )
-}
-
-// ── Bloco de tipo ─────────────────────────────────────────────────────────────
-
-export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
-  const cfg       = TIPO[tipo]
-  const ehDespesa = tipo === 'despesa_fixa' || tipo === 'despesa_variavel'
-  const ehCredito = tipo === 'credito'
-  const ehAplic   = tipo === 'aplicacao'
-
-  if (ehAplic) {
-    return (
-      <BlocoAplicacoes
-        cfg={cfg}
-        transacoes={transacoes}
-        acumulados={acumulados || {}}
-        removendo={removendo}
-        onRemover={onRemover}
-        onAtualizar={onAtualizar}
-        onDuplicar={onDuplicar}
-        onCancelarParcelas={onCancelarParcelas}
-      />
-    )
-  }
-
-  const totalPago     = soma(transacoes.filter(t => t.status === 'pago'))
-  const totalPendente = soma(transacoes.filter(t => t.status === 'pendente'))
-
-  return (
-    <div style={{ ...s.bloco, borderLeft: `4px solid ${cfg.cor}` }}>
-      <div style={s.blocoTopo}>
-        <span style={{ ...s.blocoTitulo, color: cfg.cor }}>{cfg.label}</span>
-        <span style={s.blocoTotalValor}>{fmtSaldo(totalPago + totalPendente)}</span>
-      </div>
-
-      <div style={s.blocoResumo}>
-        <Pill text={`Pago  R$ ${fmt(totalPago)}`} cor="#475569" bg="#f1f5f9" />
-        {ehDespesa && totalPendente > 0 && (
-          <Pill text={`Pendente  R$ ${fmt(totalPendente)}`} cor="#5c2400" bg="#fef9c3" />
-        )}
-        {ehCredito && totalPendente > 0 && (
-          <Pill text={`A receber  R$ ${fmt(totalPendente)}`} cor="#1d4ed8" bg="#dbeafe" />
-        )}
-      </div>
-
-      <div style={s.separador} />
-
-      {transacoes.length === 0 ? (
-        <p style={s.blocoVazio}>Nenhum lançamento neste mês</p>
-      ) : (
-        <div>
-          {transacoes.map(t => (
-            <ItemLinha
-              key={t.id}
-              transacao={t}
-              cor={cfg.cor}
-              mostrarStatus
-              mostrarRecorrente
-              removendo={removendo === t.id}
-              onRemover={() => onRemover(t.id)}
-              onAtualizar={campos => onAtualizar(t.id, campos)}
-              onDuplicar={() => onDuplicar(t.id)}
-              onCancelarParcelas={onCancelarParcelas}
-              onMoverTipo={onMoverTipo}
-              cartoesById={cartoesById}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Bloco especial: Aplicações ────────────────────────────────────────────────
-
-function BlocoAplicacoes({ cfg, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas }) {
-  const patrimonioEntradas = Object.entries(acumulados)
-    .filter(([, { total }]) => total !== 0)
-    .sort((a, b) => b[1].total - a[1].total)
-
-  const totalPatrimonio = patrimonioEntradas.reduce((s, [, { total }]) => s + total, 0)
-
-  const aportesMes  = soma(transacoes.filter(t => Number(t.valor) > 0))
-  const resgatesMes = Math.abs(soma(transacoes.filter(t => Number(t.valor) < 0)))
-
-  return (
-    <div style={{ ...s.bloco, borderLeft: `4px solid ${cfg.cor}` }}>
-      <div style={s.blocoTopo}>
-        <span style={{ ...s.blocoTitulo, color: cfg.cor }}>{cfg.label}</span>
-        <div style={{ textAlign: 'right' }}>
-          <div style={s.patrimonioLabel}>Patrimônio total</div>
-          <div style={{ ...s.blocoTotalValor, color: totalPatrimonio >= 0 ? '#1e293b' : '#dc2626' }}>
-            {fmtSaldo(totalPatrimonio)}
-          </div>
+    <div style={s.cardBalanco}>
+      <div style={s.cardBalancoTopo}>
+        <span style={s.cardLabel}>BALANÇO DO MÊS</span>
+        <div style={s.cardIconeBadge}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="20" height="14" x="2" y="5" rx="2" />
+            <line x1="2" x2="22" y1="10" stroke="#10B981" strokeWidth="2" />
+          </svg>
         </div>
       </div>
 
-      {(aportesMes > 0 || resgatesMes > 0) && (
-        <div style={s.blocoResumo}>
-          {aportesMes  > 0 && <Pill text={`Aportes  R$ ${fmt(aportesMes)}`}   cor="#1d4ed8" bg="#dbeafe" />}
-          {resgatesMes > 0 && <Pill text={`Resgates  R$ ${fmt(resgatesMes)}`} cor="#92400e" bg="#fef9c3" />}
-        </div>
-      )}
-
-      <div style={s.aplicSec}>
-        <p style={s.aplicSecTitulo}>Lançamentos deste mês</p>
-        {transacoes.length === 0 ? (
-          <p style={{ ...s.blocoVazio, fontStyle: 'normal', color: '#94a3b8', fontSize: 12, lineHeight: 1.5 }}>
-            Nenhum aporte este mês —<br />que tal guardar uma parte do que sobrou?
-          </p>
-        ) : (
-          transacoes.map(t => (
-            <ItemLinha
-              key={t.id}
-              transacao={t}
-              cor={cfg.cor}
-              mostrarStatus={false}
-              mostrarRecorrente={false}
-              removendo={removendo === t.id}
-              onRemover={() => onRemover(t.id)}
-              onAtualizar={campos => onAtualizar(t.id, campos)}
-              onDuplicar={() => onDuplicar(t.id)}
-              onCancelarParcelas={onCancelarParcelas}
-            />
-          ))
-        )}
+      <div style={{ ...s.cardBalancoValor, color: positivo ? '#FFFFFF' : 'var(--tertiary)' }}>
+        {fmtSaldo(saldo)}
       </div>
 
-      {patrimonioEntradas.length > 0 && (
+      <div style={s.cardBalancoLinhas}>
+        <div style={s.balancoSubItem}>
+          <span style={s.setaVerde}>↑</span>
+          <span style={s.balancoSubLabel}>Receitas</span>
+          <span style={s.balancoSubValorVerde}>{fmtSaldo(totalReceitas)}</span>
+        </div>
+        <div style={s.balancoSubItem}>
+          <span style={s.setaVermelha}>↓</span>
+          <span style={s.balancoSubLabel}>Despesas</span>
+          <span style={s.balancoSubValorVermelho}>{fmtSaldo(totalDespesas)}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Card Histórico / Comparativo (Stitch Design) ─────────────────────────────
+export function CardHistoricoMes({ comparativo, parcial, mesSelecionado }) {
+  const semHistorico = !comparativo || comparativo.percentualVariacao === null
+
+  return (
+    <div style={s.cardHistorico}>
+      <div style={s.cardHistoricoIcone}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA69B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+          <path d="M12 7v5l4 2" />
+        </svg>
+      </div>
+
+      {semHistorico ? (
         <>
-          <div style={s.separador} />
-          <div style={s.aplicSec}>
-            <p style={s.aplicSecTitulo}>Patrimônio acumulado</p>
-            {patrimonioEntradas.map(([chave, { total, label }]) => (
-              <LinhaPatrimonio key={chave} label={label} total={total} cor={cfg.cor} />
-            ))}
-          </div>
+          <h3 style={s.cardHistoricoTitulo}>Sem histórico</h3>
+          <p style={s.cardHistoricoSub}>
+            Não há dados suficientes do mês anterior para comparação.
+          </p>
+        </>
+      ) : (
+        <>
+          <h3 style={{
+            ...s.cardHistoricoTitulo,
+            color: comparativo.percentualVariacao > 0 ? 'var(--tertiary)' : 'var(--primary)'
+          }}>
+            {comparativo.percentualVariacao > 0 ? `+${comparativo.percentualVariacao.toFixed(1)}%` : `${comparativo.percentualVariacao.toFixed(1)}%`}
+          </h3>
+          <p style={s.cardHistoricoSub}>
+            {comparativo.percentualVariacao > 0 ? 'Despesas maiores' : 'Economia em relação'} ao mês anterior.
+          </p>
         </>
       )}
     </div>
   )
 }
 
-// ── Linha de patrimônio (somente leitura) ─────────────────────────────────────
+// ── Barra de Categoria (Stitch Design) ───────────────────────────────────────
+export function BarraCategoria({ categoria, valor, total, cor }) {
+  const pct = total > 0 ? Math.round((valor / total) * 100) : 0
+  const iconesCat = {
+    alimentação: '🍽️',
+    moradia:     '🏠',
+    habitação:   '🏠',
+    transporte:  '🚗',
+    saúde:       '💊',
+    lazer:       '🎉',
+    educação:    '📚',
+    assinaturas: '📱',
+    outros:      '📦',
+  }
+  const icone = iconesCat[categoria.toLowerCase()] || '🏷️'
 
-function LinhaPatrimonio({ label, total, cor }) {
-  const negativo = total < 0
   return (
-    <div style={s.linhaPatrimonio}>
-      <div style={s.linhaPatrimonioEsq}>
-        <span style={{ ...s.diaTag, borderColor: cor, color: cor, visibility: 'hidden' }}>00</span>
-        <div style={s.linhaTexto}>
-          <span style={s.linhaDesc}>{label}</span>
-          {negativo && <span style={s.avisoNegativo}>⚠ verificar — saldo inconsistente</span>}
+    <div style={s.barraItem}>
+      <div style={s.barraHeader}>
+        <div style={s.barraNomeWrap}>
+          <span style={s.barraIcone}>{icone}</span>
+          <span style={s.barraNome}>{categoria}</span>
+        </div>
+        <div style={s.barraValorWrap}>
+          <span style={s.barraInfo}>R$ {fmt(valor)}</span>
+          <span style={s.barraBadge}>{pct}%</span>
         </div>
       </div>
-      <span style={{ ...s.linhaValor, color: negativo ? '#dc2626' : '#1e293b' }}>
-        {fmtSaldo(total)}
-      </span>
+      <div style={s.barraTrilho}>
+        <div style={{ ...s.barraFill, width: `${pct}%`, background: cor || 'var(--primary)' }} />
+      </div>
     </div>
   )
 }
 
-function Pill({ text, cor, bg }) {
-  return <span style={{ ...s.pill, color: cor, background: bg }}>{text}</span>
+// ── Bloco Análise de IA do Mês (Destaque Central) ───────────────────────────
+export function BlocoAnaliseIA({ usuarioId, mesSelecionado, transacoes, totalDespesa, catOrdenadas }) {
+  const [analise, setAnalise] = useState(null)
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState(null)
+
+  // Reseta a análise ao mudar de mês para economizar tokens
+  useEffect(() => {
+    setAnalise(null)
+    setErro(null)
+  }, [mesSelecionado])
+
+  async function handleGerarAnalise() {
+    if (!usuarioId || carregando) return
+    if (transacoes.length === 0) {
+      setErro('Adicione lançamentos neste mês para gerar a análise.')
+      return
+    }
+    setCarregando(true)
+    setErro(null)
+    try {
+      const resultado = await gerarAnaliseMes(usuarioId, mesSelecionado)
+      setAnalise(resultado)
+    } catch (err) {
+      // Fallback local se API key não estiver disponível
+      setAnalise({
+        resumo: catOrdenadas.length > 0
+          ? `A maior concentração dos seus gastos está em **${catOrdenadas[0][0]} (${totalDespesa > 0 ? Math.round((catOrdenadas[0][1] / totalDespesa) * 100) : 0}%)**. Suas finanças estão organizadas neste mês.`
+          : 'Adicione despesas para que a IA analise seus padrões de consumo.'
+      })
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  return (
+    <div style={s.blocoAnaliseDestaque}>
+      <div style={s.blocoAnaliseHeader}>
+        <div style={s.blocoAnaliseHeaderLeft}>
+          <div style={s.botIconeBadge}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="18" height="12" x="3" y="8" rx="2" />
+              <path d="M12 2v6" />
+              <circle cx="8" cy="14" r="1" fill="#10B981" />
+              <circle cx="16" cy="14" r="1" fill="#10B981" />
+            </svg>
+          </div>
+          <h2 style={s.blocoAnaliseTitulo}>Análise do Mês</h2>
+        </div>
+
+        <button
+          onClick={handleGerarAnalise}
+          disabled={carregando}
+          style={s.btnGerarAnalise}
+        >
+          <span style={{ fontSize: 13, color: '#10B981' }}>✦</span>
+          <span>{carregando ? 'Analisando...' : analise ? 'Atualizar Análise' : 'Gerar Análise'}</span>
+        </button>
+      </div>
+
+      <div style={s.blocoAnaliseCorpo}>
+        {/* Coluna Esquerda: Concentração de Gastos */}
+        <div style={s.analiseColEsq}>
+          <span style={s.analiseSecTitulo}>CONCENTRAÇÃO DE GASTOS</span>
+          <div style={s.barrasLista}>
+            {catOrdenadas.slice(0, 4).map(([cat, val], idx) => (
+              <BarraCategoria
+                key={cat}
+                categoria={cat}
+                valor={val}
+                total={totalDespesa}
+                cor={idx === 0 ? 'var(--primary)' : idx === 1 ? 'var(--secondary)' : '#2DD4BF'}
+              />
+            ))}
+            {catOrdenadas.length === 0 && (
+              <p style={s.textoVazio}>Nenhum gasto registrado para gerar análise de categorias.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Coluna Direita: Caixa de Texto IA */}
+        <div style={s.analiseColDir}>
+          <div style={s.analiseCardInsight}>
+            {carregando ? (
+              <div style={s.insightCarregando}>
+                <span style={s.pulsoIcone}>✦</span>
+                <span>Analisando padrões financeiros com IA...</span>
+              </div>
+            ) : erro ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p style={{ color: 'var(--tertiary)', margin: 0, fontSize: 13 }}>{erro}</p>
+                <button onClick={handleGerarAnalise} style={s.btnTentarNovamente}>Tentar novamente</button>
+              </div>
+            ) : analise?.resumo ? (
+              <div style={s.insightTexto}>
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p style={{ margin: '0 0 8px', lineHeight: 1.6 }}>{children}</p>,
+                    strong: ({ children }) => <strong style={{ color: 'var(--primary)', fontWeight: 700 }}>{children}</strong>,
+                  }}
+                >
+                  {analise.resumo}
+                </ReactMarkdown>
+                {analise.concentracao && (
+                  <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    {analise.concentracao}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div style={s.insightPlaceholder}>
+                <p style={s.insightPlaceholderTexto}>
+                  Clique em <strong>Gerar Análise</strong> para processar as entradas deste mês e obter insights inteligentes da IA.
+                </p>
+                <button
+                  onClick={handleGerarAnalise}
+                  disabled={carregando}
+                  style={s.btnGerarAnaliseInline}
+                >
+                  <span>✦ Gerar Análise</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-// ── Linha de transação ────────────────────────────────────────────────────────
+// ── Barra Flutuante de Prompt AI (Stitch Design) ────────────────────────────
+export function FloatingAIPromptBar({ usuarioId }) {
+  const [pergunta, setPergunta] = useState('')
+  const [resposta, setResposta] = useState(null)
+  const [carregando, setCarregando] = useState(false)
+  const [aberto, setAberto] = useState(false)
 
-// Campo de texto que vira edição inline ao ser ativado — via clique ou teclado
-// (Enter/Espaço), já que é o mecanismo central de edição das linhas de lançamento.
+  async function handleEnviar(e) {
+    e?.preventDefault()
+    if (!pergunta.trim() || carregando) return
+    const q = pergunta.trim()
+    setCarregando(true)
+    setAberto(true)
+    try {
+      const res = await perguntarSobreFinancas(usuarioId, q)
+      setResposta({ pergunta: q, texto: res })
+      setPergunta('')
+    } catch (err) {
+      setResposta({ pergunta: q, texto: 'Desculpe, não consegui responder agora. Verifique a configuração da chave de IA no backend.' })
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  return (
+    <div style={s.floatingBarContainer}>
+      {aberto && resposta && (
+        <div style={s.floatingRespostaCard}>
+          <div style={s.floatingRespostaHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: 'var(--primary)' }}>✦</span>
+              <strong style={{ fontSize: 13, color: 'var(--text-pure)' }}>{resposta.pergunta}</strong>
+            </div>
+            <button onClick={() => setAberto(false)} style={s.fecharBtn}>✕</button>
+          </div>
+          <div style={s.floatingRespostaTexto}>
+            <ReactMarkdown components={{
+              p: ({ children }) => <p style={{ margin: '0 0 6px' }}>{children}</p>,
+              strong: ({ children }) => <strong style={{ color: 'var(--primary)' }}>{children}</strong>,
+            }}>
+              {resposta.texto}
+            </ReactMarkdown>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleEnviar} style={s.floatingBar}>
+        <span style={s.floatingAttachIcon} title="Assistente IA">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+          </svg>
+        </span>
+        <input
+          type="text"
+          value={pergunta}
+          onChange={e => setPergunta(e.target.value)}
+          placeholder="Pergunte sobre seus gastos, peça dicas para economizar..."
+          style={s.floatingInput}
+          disabled={carregando}
+        />
+        <button type="submit" disabled={carregando || !pergunta.trim()} style={s.floatingSendBtn}>
+          {carregando ? (
+            <span style={{ fontSize: 12 }}>...</span>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0F0D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" fill="#0A0F0D" />
+            </svg>
+          )}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// ── Linha de Transação (Tabelas / Listas Modernas) ───────────────────────────
 function CampoEditavel({ onAtivar, style, title, children }) {
   return (
     <span
@@ -330,7 +385,6 @@ function CampoEditavel({ onAtivar, style, title, children }) {
       }}
       style={style}
       title={title}
-      aria-label={title}
     >
       {children}
     </span>
@@ -344,46 +398,18 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
   const [novaDesc, setNovaDesc]           = useState(t.descricao)
   const [editandoCat, setEditandoCat]     = useState(false)
   const [novaCat, setNovaCat]             = useState(t.categoria || '')
-  const [editandoSub, setEditandoSub]     = useState(false)
-  const [novaSub, setNovaSub]             = useState(t.subcategoria || '')
-  const [editandoDia, setEditandoDia]     = useState(false)
-  const [novoDia, setNovoDia]             = useState(String(t.dia_pagamento))
-  const [editandoDataCompra, setEditandoDataCompra] = useState(false)
-  const [novaDataCompra, setNovaDataCompra]         = useState(t.data_compra || '')
-  const [editandoTipo, setEditandoTipo]   = useState(false)
-  const [novoTipo, setNovoTipo]           = useState(t.tipo)
   const [salvando, setSalvando]           = useState(false)
-  const tipoEsperadoRef                   = useRef(null)
 
-  const isMobile       = useIsMobile()
-  const hoje           = new Date()
-  const mesAtualISO    = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
-  const vencida        = t.status === 'pendente' && t.mes_referencia === mesAtualISO && t.dia_pagamento < hoje.getDate()
-  const iconBtnMobile  = isMobile ? { minWidth: 44, minHeight: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}
-
-  const valorNum       = Number(t.valor)
-  const podeEditarTipo = !t.total_parcelas && !t.recorrente
-
-  // Reset salvando only after the parent re-delivers the updated t.tipo prop,
-  // preventing a second click in the gap between API resolve and re-render.
-  useEffect(() => {
-    if (tipoEsperadoRef.current !== null && t.tipo === tipoEsperadoRef.current) {
-      tipoEsperadoRef.current = null
-      setSalvando(false)
-    }
-  }, [t.tipo])
+  const isMobile    = useIsMobile()
+  const hoje        = new Date()
+  const mesAtualISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+  const vencida     = t.status === 'pendente' && t.mes_referencia === mesAtualISO && t.dia_pagamento < hoje.getDate()
+  const valorNum    = Number(t.valor)
 
   async function toggleStatus() {
     if (salvando) return
     setSalvando(true)
     try { await onAtualizar({ status: t.status === 'pago' ? 'pendente' : 'pago' }) }
-    finally { setSalvando(false) }
-  }
-
-  async function toggleRecorrente() {
-    if (salvando) return
-    setSalvando(true)
-    try { await onAtualizar({ recorrente: !t.recorrente }) }
     finally { setSalvando(false) }
   }
 
@@ -410,275 +436,102 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
     finally { setSalvando(false); setEditandoCat(false) }
   }
 
-  async function salvarSub() {
-    const v = novaSub.trim().toLowerCase()
-    setSalvando(true)
-    try { await onAtualizar({ subcategoria: v || null }) }
-    finally { setSalvando(false); setEditandoSub(false) }
-  }
-
-  async function salvarDia() {
-    const v = parseInt(novoDia, 10)
-    if (isNaN(v) || v < 1 || v > 31) { setNovoDia(String(t.dia_pagamento)); setEditandoDia(false); return }
-    setSalvando(true)
-    try { await onAtualizar({ dia_pagamento: v }) }
-    finally { setSalvando(false); setEditandoDia(false) }
-  }
-
-  async function salvarDataCompra() {
-    if (!novaDataCompra || novaDataCompra === t.data_compra) { setEditandoDataCompra(false); return }
-    setSalvando(true)
-    try { await onAtualizar({ data_compra: novaDataCompra }) }
-    finally { setSalvando(false); setEditandoDataCompra(false) }
-  }
-
-  async function salvarTipo() {
-    setEditandoTipo(false)
-    if (novoTipo === t.tipo) return
-    setSalvando(true)
-    try { await onAtualizar({ tipo: novoTipo }) }
-    finally { setSalvando(false) }
-  }
-
-  function handleCancelarParcelas() {
-    const hoje = new Date()
-    const mesAtualISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
-    const estaNoFuturo = t.mes_referencia > mesAtualISO
-    const primeira = estaNoFuturo ? t.parcela_atual : t.parcela_atual + 1
-    if (primeira > t.total_parcelas) { alert('Não há parcelas futuras para cancelar.'); return }
-    if (!confirm(`Isso vai cancelar as parcelas ${primeira}/${t.total_parcelas} até ${t.total_parcelas}/${t.total_parcelas} (as futuras). As já pagas e do mês atual serão mantidas. Confirma?`)) return
-    onCancelarParcelas(t.grupo_parcela_id)
-  }
-
-  async function moverTipo() {
-    if (salvando) return
-    const destino   = t.tipo === 'despesa_fixa' ? 'despesa_variavel' : 'despesa_fixa'
-    const labelDest = destino === 'despesa_fixa' ? 'Despesas Fixas' : 'Despesas Variáveis'
-    tipoEsperadoRef.current = destino
-    setSalvando(true)
-    try {
-      const ok = await onAtualizar({ tipo: destino })
-      if (ok) {
-        onMoverTipo?.(`Movido para ${labelDest}`)
-        // salvando stays true until useEffect detects t.tipo === destino
-      } else {
-        tipoEsperadoRef.current = null
-        setSalvando(false)
-      }
-    } catch {
-      tipoEsperadoRef.current = null
-      setSalvando(false)
-    }
-  }
-
   return (
     <div style={{
-      ...s.linha,
-      ...(isMobile ? s.linhaMobile : {}),
+      ...s.itemLinha,
       opacity: salvando ? 0.45 : 1,
-      ...(vencida ? { background: '#fff1f1' } : {}),
+      background: vencida ? 'rgba(252, 124, 120, 0.08)' : 'transparent',
     }}>
-      <div style={s.linhaEsq}>
-        {editandoDia ? (
-          <input
-            autoFocus
-            aria-label="Dia do vencimento"
-            type="number"
-            min="1"
-            max="31"
-            value={novoDia}
-            onChange={ev => setNovoDia(ev.target.value)}
-            onBlur={salvarDia}
-            onKeyDown={ev => {
-              if (ev.key === 'Enter') salvarDia()
-              if (ev.key === 'Escape') { setNovoDia(String(t.dia_pagamento)); setEditandoDia(false) }
-            }}
-            style={s.inputDia}
-          />
-        ) : (
-          <CampoEditavel
-            style={{ ...s.diaTag, borderColor: cor, color: cor, cursor: 'pointer', ...(isMobile ? { minWidth: 36, minHeight: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
-            onAtivar={() => { setNovoDia(String(t.dia_pagamento)); setEditandoDia(true) }}
-            title="Editar o dia"
-          >
-            {t.dia_pagamento}
-          </CampoEditavel>
-        )}
-        <div style={s.linhaTexto}>
-          <div style={s.linhaDescRow}>
+      <div style={s.itemLinhaEsq}>
+        <span style={s.itemDiaTag}>{t.dia_pagamento}</span>
+        <div style={s.itemLinhaTextos}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {editandoDesc ? (
               <input
                 autoFocus
-                aria-label="Descrição do lançamento"
                 value={novaDesc}
-                onChange={ev => setNovaDesc(ev.target.value)}
+                onChange={e => setNovaDesc(e.target.value)}
                 onBlur={salvarDesc}
-                onKeyDown={ev => {
-                  if (ev.key === 'Enter') salvarDesc()
-                  if (ev.key === 'Escape') { setNovaDesc(t.descricao); setEditandoDesc(false) }
-                }}
-                style={s.inputDesc}
+                onKeyDown={e => e.key === 'Enter' && salvarDesc()}
+                style={s.inputInline}
               />
             ) : (
               <CampoEditavel
-                onAtivar={() => { setNovaDesc(t.descricao); setEditandoDesc(true) }}
-                style={s.linhaDesc}
-                title={`Editar descrição: ${t.descricao}`}
+                onAtivar={() => setEditandoDesc(true)}
+                style={s.itemDesc}
+                title="Clique para editar descrição"
               >
                 {t.descricao}
-                {mostrarRecorrente && t.recorrente && (
-                  <span style={{ color: cor, marginLeft: 5, fontSize: 11 }} aria-hidden="true">↺</span>
-                )}
               </CampoEditavel>
             )}
-            {!editandoDesc && t.total_parcelas && (
-              <span style={s.parcelaTag}>{t.parcela_atual}/{t.total_parcelas}</span>
+            {t.recorrente && (
+              <span
+                style={{
+                  fontSize: 13,
+                  color: '#A78BFA',
+                  fontWeight: 800,
+                  marginLeft: 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+                title="Despesa recorrente mensal"
+              >
+                ↺
+              </span>
+            )}
+            {t.total_parcelas && (
+              <span style={s.parcelaBadge}>{t.parcela_atual}/{t.total_parcelas}</span>
             )}
           </div>
-
-          {editandoCat ? (
-            <input
-              autoFocus
-              aria-label="Categoria do lançamento"
-              value={novaCat}
-              onChange={ev => setNovaCat(ev.target.value)}
-              onBlur={salvarCat}
-              onKeyDown={ev => {
-                if (ev.key === 'Enter') salvarCat()
-                if (ev.key === 'Escape') { setNovaCat(t.categoria || ''); setEditandoCat(false) }
-              }}
-              style={s.inputCat}
-            />
-          ) : (
-            <div style={s.linhaCatRow}>
+          <div style={s.itemCatRow}>
+            {editandoCat ? (
+              <input
+                autoFocus
+                value={novaCat}
+                onChange={e => setNovaCat(e.target.value)}
+                onBlur={salvarCat}
+                onKeyDown={e => e.key === 'Enter' && salvarCat()}
+                style={s.inputInlineSmall}
+              />
+            ) : (
               <CampoEditavel
-                onAtivar={() => { setNovaCat(t.categoria || ''); setEditandoCat(true) }}
-                style={s.linhaCat}
-                title={`Editar categoria: ${t.categoria}`}
+                onAtivar={() => setEditandoCat(true)}
+                style={s.itemCat}
+                title="Clique para editar categoria"
               >
-                {t.categoria}
+                {t.categoria || 'Geral'}
               </CampoEditavel>
-              {editandoSub ? (
-                <>
-                  <span style={s.catSep}>·</span>
-                  <input
-                    autoFocus
-                    aria-label="Subcategoria do lançamento"
-                    value={novaSub}
-                    onChange={ev => setNovaSub(ev.target.value)}
-                    onBlur={salvarSub}
-                    onKeyDown={ev => {
-                      if (ev.key === 'Enter') salvarSub()
-                      if (ev.key === 'Escape') { setNovaSub(t.subcategoria || ''); setEditandoSub(false) }
-                    }}
-                    style={s.inputSub}
-                  />
-                </>
-              ) : t.subcategoria?.trim() ? (
-                <>
-                  <span style={s.catSep}>·</span>
-                  <CampoEditavel
-                    onAtivar={() => { setNovaSub(t.subcategoria.trim()); setEditandoSub(true) }}
-                    style={s.linhaSub}
-                    title={`Editar subcategoria: ${t.subcategoria.trim()}`}
-                  >
-                    {t.subcategoria.trim()}
-                  </CampoEditavel>
-                </>
-              ) : (
-                <CampoEditavel
-                  onAtivar={() => { setNovaSub(''); setEditandoSub(true) }}
-                  style={s.addSub}
-                  title="Adicionar subcategoria"
-                >+</CampoEditavel>
-              )}
-              {podeEditarTipo && (
-                <>
-                  <span style={s.catSep}>·</span>
-                  {editandoTipo ? (
-                    <select
-                      autoFocus
-                      value={novoTipo}
-                      onChange={ev => setNovoTipo(ev.target.value)}
-                      onBlur={salvarTipo}
-                      onKeyDown={ev => {
-                        if (ev.key === 'Enter') salvarTipo()
-                        if (ev.key === 'Escape') { setNovoTipo(t.tipo); setEditandoTipo(false) }
-                      }}
-                      style={s.selectTipo}
-                    >
-                      <option value="despesa_fixa">Fixa</option>
-                      <option value="despesa_variavel">Variável</option>
-                      <option value="credito">Crédito</option>
-                      <option value="aplicacao">Aplicação</option>
-                    </select>
-                  ) : (
-                    <CampoEditavel
-                      onAtivar={() => { setNovoTipo(t.tipo); setEditandoTipo(true) }}
-                      style={s.tipoTag}
-                      title={`Mudar o tipo: ${TIPO_SHORT[t.tipo]}`}
-                    >
-                      {TIPO_SHORT[t.tipo]}
-                    </CampoEditavel>
-                  )}
-                </>
-              )}
-              {t.cartao_id && cartoesById?.[t.cartao_id] && (
-                <>
-                  <span style={s.catSep}>·</span>
-                  <span style={{ ...s.cartaoBadge, color: cartoesById[t.cartao_id].cor || '#64748b' }} title="Compra no cartão">
-                    ▤ {cartoesById[t.cartao_id].nome}
-                  </span>
-                  <span style={s.catSep}>·</span>
-                  {editandoDataCompra ? (
-                    <input
-                      autoFocus
-                      aria-label="Data da compra"
-                      type="date"
-                      value={novaDataCompra}
-                      onChange={ev => setNovaDataCompra(ev.target.value)}
-                      onBlur={salvarDataCompra}
-                      onKeyDown={ev => {
-                        if (ev.key === 'Enter') salvarDataCompra()
-                        if (ev.key === 'Escape') { setNovaDataCompra(t.data_compra || ''); setEditandoDataCompra(false) }
-                      }}
-                      style={s.inputDataCompra}
-                    />
-                  ) : (
-                    <CampoEditavel
-                      onAtivar={() => { setNovaDataCompra(t.data_compra || ''); setEditandoDataCompra(true) }}
-                      style={s.linhaSub}
-                      title={`Corrigir a data da compra (recalcula o vencimento): ${formatarDataCompra(t.data_compra)}`}
-                    >
-                      compra {formatarDataCompra(t.data_compra)}
-                    </CampoEditavel>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+            )}
+            {t.cartao_id && cartoesById?.[t.cartao_id] && (
+              <>
+                <span style={s.itemSep}>·</span>
+                <span style={{ ...s.cartaoBadge, color: cartoesById[t.cartao_id].cor || '#2DD4BF' }}>
+                  💳 {cartoesById[t.cartao_id].nome}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <div style={{ ...s.linhaDir, ...(isMobile ? { gap: 2, justifyContent: 'flex-end', width: '100%' } : {}) }}>
+      <div style={s.itemLinhaDir}>
         {editandoValor ? (
           <input
             autoFocus
-            aria-label="Valor do lançamento"
             value={novoValor}
-            onChange={ev => setNovoValor(ev.target.value)}
+            onChange={e => setNovoValor(e.target.value)}
             onBlur={salvarValor}
-            onKeyDown={ev => {
-              if (ev.key === 'Enter') salvarValor()
-              if (ev.key === 'Escape') { setNovoValor(String(t.valor)); setEditandoValor(false) }
-            }}
-            style={s.inputValor}
+            onKeyDown={e => e.key === 'Enter' && salvarValor()}
+            style={s.inputInlineValor}
           />
         ) : (
           <CampoEditavel
-            onAtivar={() => { setNovoValor(String(t.valor)); setEditandoValor(true) }}
-            style={{ ...s.linhaValor, color: valorNum < 0 ? '#dc2626' : '#1e293b' }}
-            title={`Editar valor: ${fmtSaldo(valorNum)}`}
+            onAtivar={() => setEditandoValor(true)}
+            style={{
+              ...s.itemValor,
+              color: t.tipo === 'credito' ? 'var(--primary)' : 'var(--text-pure)',
+            }}
+            title="Clique para editar valor"
           >
             {fmtSaldo(valorNum)}
           </CampoEditavel>
@@ -687,428 +540,749 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
         {mostrarStatus && (
           <button
             onClick={toggleStatus}
-            disabled={salvando}
             style={{
-              ...s.statusBtn,
-              background: t.status === 'pago' ? '#dcfce7' : vencida ? '#fee2e2' : '#fef9c3',
-              color:      t.status === 'pago' ? '#15803d' : vencida ? '#b91c1c' : '#5c2400',
-              ...(vencida ? { border: '1px solid #fca5a5', fontWeight: 700 } : {}),
-              ...(isMobile ? { minHeight: 40, padding: '0 12px', display: 'flex', alignItems: 'center' } : {}),
+              ...s.statusPill,
+              background: t.tipo === 'aplicacao'
+                ? (t.status === 'pago' ? 'rgba(167, 139, 250, 0.16)' : 'var(--status-pendente-bg)')
+                : (t.status === 'pago' ? 'var(--status-pago-bg)' : vencida ? 'var(--status-vencida-bg)' : 'var(--status-pendente-bg)'),
+              color: t.tipo === 'aplicacao'
+                ? (t.status === 'pago' ? '#C4B5FD' : 'var(--status-pendente-fg)')
+                : (t.status === 'pago' ? 'var(--status-pago-fg)' : vencida ? 'var(--status-vencida-fg)' : 'var(--status-pendente-fg)'),
+              border: `1px solid ${
+                t.tipo === 'aplicacao'
+                  ? (t.status === 'pago' ? 'rgba(167, 139, 250, 0.4)' : 'rgba(245,158,11,0.3)')
+                  : (t.status === 'pago' ? 'rgba(16,185,129,0.3)' : vencida ? 'rgba(252,124,120,0.3)' : 'rgba(245,158,11,0.3)')
+              }`,
             }}
           >
-            {t.status === 'pago' ? 'Pago' : vencida ? '⚠ Vencida' : 'Pendente'}
+            {t.tipo === 'aplicacao'
+              ? (t.status === 'pago' ? 'Aplicado' : 'Pendente')
+              : (t.status === 'pago' ? 'Pago' : vencida ? 'Vencida' : 'Pendente')}
           </button>
         )}
 
-        {mostrarRecorrente && !t.total_parcelas && (
+        {/* Botão de Recorrência — Clique para alternar */}
+        {mostrarRecorrente && (
           <button
-            onClick={toggleRecorrente}
-            disabled={salvando}
-            style={{ ...s.iconBtn, color: t.recorrente ? cor : '#9ca3af', ...iconBtnMobile }}
-            title={t.recorrente ? 'Remover recorrência' : 'Tornar recorrente'}
-            aria-label={t.recorrente ? 'Remover recorrência' : 'Tornar recorrente'}
-          >↺</button>
-        )}
-
-        <button
-          onClick={onDuplicar}
-          disabled={salvando}
-          style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 14, ...iconBtnMobile }}
-          title="Duplicar lançamento"
-          aria-label="Duplicar lançamento"
-        >⧉</button>
-
-        {(t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && podeEditarTipo && (
-          <button
-            onClick={moverTipo}
-            disabled={salvando}
-            style={{ ...s.iconBtn, color: '#9ca3af', fontSize: 15, ...iconBtnMobile }}
-            title={t.tipo === 'despesa_fixa' ? 'Mover para Despesas Variáveis' : 'Mover para Despesas Fixas'}
-            aria-label={t.tipo === 'despesa_fixa' ? 'Mover para Despesas Variáveis' : 'Mover para Despesas Fixas'}
-          >⇄</button>
-        )}
-
-        {t.grupo_parcela_id && (
-          <button
-            onClick={handleCancelarParcelas}
-            disabled={salvando}
-            style={{ ...s.iconBtn, color: '#f97316', fontSize: 14, ...iconBtnMobile }}
-            title="Cancelar parcelas futuras"
-            aria-label="Cancelar parcelas futuras"
-          >⊗</button>
-        )}
-
-        <button
-          onClick={onRemover}
-          disabled={removendo}
-          style={{ ...s.iconBtn, color: '#9ca3af', ...iconBtnMobile }}
-          title="Remover"
-          aria-label="Remover lançamento"
-        >×</button>
-      </div>
-    </div>
-  )
-}
-
-// ── Análise inteligente do mês ────────────────────────────────────────────────
-
-const PONTOS_ANALISE = [
-  { chave: 'alerta',               icone: '⚠',  titulo: 'Atenção',                cor: '#dc2626' },
-  { chave: 'saldo',                icone: '⇄',  titulo: 'Saldo real vs projetado', cor: '#2563eb' },
-  { chave: 'pendencias_vencidas',  icone: '●',  titulo: 'Contas vencidas',         cor: '#dc2626' },
-  { chave: 'creditos_pendentes',   icone: '◷',  titulo: 'A receber',              cor: '#7c3aed' },
-  { chave: 'dependencia_creditos', icone: '⏳',  titulo: 'Dependência de crédito', cor: '#d97706' },
-  { chave: 'concentracao',         icone: '▣',  titulo: 'Maior concentração',     cor: '#0891b2' },
-  { chave: 'top_gastos',           icone: '★',  titulo: 'Maiores gastos',          cor: '#475569' },
-]
-
-export function BlocoAnalise({ usuarioId, mesSelecionado }) {
-  const [analise, setAnalise]       = useState(null)
-  const [carregando, setCarregando] = useState(false)
-  const [erro, setErro]             = useState(null)
-
-  useEffect(() => {
-    setAnalise(null)
-    setErro(null)
-  }, [mesSelecionado])
-
-  async function handleGerar() {
-    setCarregando(true)
-    setErro(null)
-    try {
-      const resultado = await gerarAnaliseMes(usuarioId, mesSelecionado)
-      setAnalise(resultado)
-    } catch (err) {
-      setErro(err.message)
-    } finally {
-      setCarregando(false)
-    }
-  }
-
-  const pontosVisiveis = PONTOS_ANALISE.filter(p => analise?.[p.chave])
-
-  return (
-    <div style={s.analiseBloco}>
-      <div style={s.analiseTopo}>
-        <span style={s.analiseTitulo}>Análise do mês</span>
-        <button onClick={handleGerar} disabled={carregando} style={s.analiseBotao}>
-          {carregando ? 'Analisando...' : analise ? 'Atualizar análise' : 'Gerar análise'}
-        </button>
-      </div>
-
-      {!analise && !carregando && !erro && (
-        <p style={s.analiseDica}>
-          Clique em <strong>Gerar análise</strong> para obter uma avaliação inteligente dos dados deste mês.
-        </p>
-      )}
-
-      {carregando && <p style={s.analiseDica}>Consultando IA... isso leva alguns segundos.</p>}
-
-      {erro && <p style={{ ...s.analiseDica, color: 'var(--status-vencida-fg)' }}>{erro}</p>}
-
-      {analise && (
-        <div style={s.analiseConteudo}>
-          {analise.resumo && (
-            <div style={s.analiseResumo}>
-              <span style={{ marginRight: 5 }}>✦</span>
-              <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span>, strong: ({ children }) => <strong style={{ fontWeight: 700 }}>{children}</strong> }}>
-                {analise.resumo}
-              </ReactMarkdown>
-            </div>
-          )}
-          {pontosVisiveis.length > 0 && <div style={s.analiseSeparador} />}
-          {pontosVisiveis.map(p => (
-            <div key={p.chave} style={s.analisePonto}>
-              <div style={s.analisePontoHeader}>
-                <span style={{ color: p.cor, fontSize: 13, lineHeight: 1 }}>{p.icone}</span>
-                <span style={{ ...s.analisePontoTitulo, color: p.cor }}>{p.titulo}</span>
-              </div>
-              <div style={s.analisePontoTexto}>
-                <ReactMarkdown
-                  components={{
-                    p:      ({ children }) => <p style={{ margin: '0 0 4px' }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: 'var(--text)' }}>{children}</strong>,
-                    ul:     ({ children }) => <ul style={{ margin: '4px 0', paddingLeft: 16 }}>{children}</ul>,
-                    li:     ({ children }) => <li style={{ marginBottom: 1 }}>{children}</li>,
-                  }}
-                >
-                  {analise[p.chave]}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Perguntas sobre finanças ──────────────────────────────────────────────────
-
-export function BlocoPerguntas({ usuarioId }) {
-  const [pergunta, setPergunta]     = useState('')
-  const [carregando, setCarregando] = useState(false)
-  const [historico, setHistorico]   = useState([])
-  const [erro, setErro]             = useState(null)
-
-  async function handlePerguntar() {
-    if (!pergunta.trim() || carregando) return
-    const q = pergunta.trim()
-    setPergunta('')
-    setCarregando(true)
-    setErro(null)
-    try {
-      const resposta = await perguntarSobreFinancas(usuarioId, q)
-      setHistorico(prev => [{ pergunta: q, resposta }, ...prev].slice(0, 3))
-    } catch (err) {
-      setErro(err.message)
-    } finally {
-      setCarregando(false)
-    }
-  }
-
-  return (
-    <div style={s.perguntaBloco}>
-      <div style={s.perguntaTopo}>
-        <span style={s.perguntaTituloLabel}>Pergunte sobre suas finanças</span>
-        {historico.length > 0 && (
-          <button onClick={() => setHistorico([])} style={s.perguntaLimparBtn}>
-            Limpar histórico
-          </button>
-        )}
-      </div>
-
-      <div style={s.perguntaForm}>
-        <input
-          aria-label="Pergunte sobre suas finanças"
-          value={pergunta}
-          onChange={ev => setPergunta(ev.target.value)}
-          onKeyDown={ev => ev.key === 'Enter' && handlePerguntar()}
-          placeholder="Ex: quanto gastei com alimentação?"
-          style={s.perguntaInput}
-          disabled={carregando}
-        />
-        <button
-          onClick={handlePerguntar}
-          disabled={carregando || !pergunta.trim()}
-          style={s.perguntaBotao}
-        >
-          {carregando ? 'Pensando...' : 'Perguntar'}
-        </button>
-      </div>
-
-      {carregando && <p style={s.perguntaDica}>Consultando seus dados...</p>}
-      {erro && <p style={{ ...s.perguntaDica, color: 'var(--status-vencida-fg)' }}>{erro}</p>}
-
-      {historico.length > 0 && (
-        <div style={s.perguntaHistorico}>
-          {historico.map((item, i) => (
-            <div
-              key={i}
-              style={i > 0
-                ? { ...s.perguntaItem, borderTop: '1px solid var(--border)', paddingTop: 14 }
-                : s.perguntaItem
+            onClick={async () => {
+              if (salvando) return
+              setSalvando(true)
+              try {
+                await onAtualizar({ recorrente: !t.recorrente })
+              } finally {
+                setSalvando(false)
               }
-            >
-              <p style={s.perguntaQ}>✦ {item.pergunta}</p>
-              <div style={s.perguntaR}>
-                <ReactMarkdown
-                  components={{
-                    p:      ({ children }) => <p style={{ margin: '0 0 6px' }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ fontWeight: 700, color: 'var(--text)' }}>{children}</strong>,
-                    ul:     ({ children }) => <ul style={{ margin: '4px 0 6px', paddingLeft: 18 }}>{children}</ul>,
-                    li:     ({ children }) => <li style={{ marginBottom: 2, fontSize: 13 }}>{children}</li>,
-                  }}
-                >
-                  {item.resposta}
-                </ReactMarkdown>
-              </div>
+            }}
+            style={{
+              ...s.actionBtn,
+              color: t.recorrente ? '#A78BFA' : 'var(--text-dim)',
+              fontSize: 14,
+              fontWeight: t.recorrente ? 800 : 500,
+            }}
+            title={t.recorrente ? 'Despesa recorrente ativada (clique para desativar)' : 'Clique para marcar como despesa recorrente mensal'}
+          >
+            ↺
+          </button>
+        )}
+
+        {/* Botão Duplicar */}
+        {onDuplicar && (
+          <button
+            onClick={onDuplicar}
+            style={s.actionBtn}
+            title="Duplicar este lançamento"
+          >
+            ⧉
+          </button>
+        )}
+
+        {/* Botão Cancelar Parcelas Futuras */}
+        {t.grupo_parcela_id && onCancelarParcelas && (
+          <button
+            onClick={() => onCancelarParcelas(t.grupo_parcela_id)}
+            style={{ ...s.actionBtn, color: 'var(--tertiary)' }}
+            title="Cancelar parcelas futuras deste parcelamento"
+          >
+            ⊘
+          </button>
+        )}
+
+        {/* Botão Remover */}
+        <button onClick={onRemover} disabled={removendo} style={s.actionBtn} title="Remover lançamento">
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Bloco Tipo Genérico (Despesas / Receitas / Aplicações) ───────────────────
+export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, cartoesById }) {
+  const cfg = TIPO[tipo]
+  const total = soma(transacoes)
+  const isAplicacao = tipo === 'aplicacao'
+
+  const itensAcumulados = (isAplicacao && acumulados)
+    ? Object.entries(acumulados).map(([chave, val]) => {
+        const valorNum = (typeof val === 'object' && val !== null) ? Number(val.total || 0) : Number(val || 0)
+        const label = (typeof val === 'object' && val !== null && val.label) ? val.label : chave
+        return { chave, label, total: valorNum }
+      })
+    : []
+
+  const totalAcumulado = itensAcumulados.length > 0
+    ? itensAcumulados.reduce((acc, item) => acc + item.total, 0)
+    : total
+
+  return (
+    <div style={s.blocoCard}>
+      <div style={s.blocoCardHeader}>
+        <div>
+          <span style={{ ...s.blocoCardTitulo, color: cfg.cor }}>{cfg.label}</span>
+          
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          {isAplicacao ? (
+            <div>
+              <span style={s.labelPatrimonioTotal}>PATRIMÔNIO TOTAL</span>
+              <span style={{ ...s.blocoCardTotal, color: 'var(--text-pure)', display: 'block' }}>{fmtSaldo(totalAcumulado)}</span>
             </div>
-          ))}
+          ) : (
+            <span style={s.blocoCardTotal}>{fmtSaldo(total)}</span>
+          )}
+        </div>
+      </div>
+
+      {isAplicacao && (
+        <div style={s.secaoSeparador}>
+          <span style={s.secaoTituloTag}>LANÇAMENTOS DESTE MÊS</span>
+        </div>
+      )}
+
+      <div style={s.blocoCardLista}>
+        {transacoes.length === 0 ? (
+          <p style={s.textoVazio}>Nenhum registro para este mês.</p>
+        ) : (
+          transacoes.map(t => (
+            <ItemLinha
+              key={t.id}
+              transacao={t}
+              cor={cfg.cor}
+              mostrarStatus
+              mostrarRecorrente
+              removendo={removendo === t.id}
+              onRemover={() => onRemover(t.id)}
+              onAtualizar={campos => onAtualizar(t.id, campos)}
+              onDuplicar={() => onDuplicar(t.id)}
+              onCancelarParcelas={onCancelarParcelas}
+              cartoesById={cartoesById}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Seção de Patrimônio Acumulado para Aplicações */}
+      {isAplicacao && itensAcumulados.length > 0 && (
+        <div style={s.secaoPatrimonioAcumulado}>
+          <div style={s.secaoSeparador}>
+            <span style={s.secaoTituloTag}>PATRIMÔNIO ACUMULADO</span>
+          </div>
+          <div style={s.listaPatrimonioAcumulado}>
+            {itensAcumulados.map((item) => (
+              <div key={item.chave} style={s.itemPatrimonio}>
+                <span style={s.itemPatrimonioNome}>{item.label}</span>
+                <span style={s.itemPatrimonioValor}>{fmtSaldo(item.total)}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-// ── Estilos ───────────────────────────────────────────────────────────────────
-
+// ── Estilos Centralizados (Stitch Tokens) ─────────────────────────────────────
 const s = {
-  // Card-herói (saldo projetado)
-  cardHero: {
-    position: 'relative', overflow: 'hidden', borderRadius: 14,
-    padding: '26px 28px', boxShadow: '0 4px 18px rgba(0,0,0,0.35)',
+  // Card Balanço
+  cardBalanco: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: '24px 28px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
   },
-  cardHeroConteudo: { position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 4 },
-  cardHeroLabel: {
-    fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
-    textTransform: 'uppercase', letterSpacing: '0.07em',
+  cardBalancoTopo: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  cardHeroValor: {
-    fontSize: 42, fontWeight: 700, lineHeight: 1.1,
-    fontFamily: 'Georgia, "Times New Roman", serif', fontVariantNumeric: 'tabular-nums',
+  cardLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
   },
-  cardHeroSub: { fontSize: 13.5, fontWeight: 500, color: 'var(--text-muted)', marginTop: 4 },
+  cardIconeBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    background: 'rgba(16, 185, 129, 0.1)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardBalancoValor: {
+    fontFamily: 'var(--font-headline)',
+    fontSize: 38,
+    fontWeight: 800,
+    letterSpacing: '-0.02em',
+    lineHeight: 1.1,
+    marginTop: 2,
+  },
+  cardBalancoLinhas: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 28,
+    marginTop: 14,
+    paddingTop: 14,
+    borderTop: '1px solid var(--border)',
+    flexWrap: 'wrap',
+  },
+  balancoSubItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+  setaVerde: { color: 'var(--primary)', fontWeight: 800, fontSize: 16 },
+  setaVermelha: { color: 'var(--tertiary)', fontWeight: 800, fontSize: 16 },
+  balancoSubLabel: { fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 },
+  balancoSubValorVerde: { fontSize: 14, fontWeight: 700, color: 'var(--primary)' },
+  balancoSubValorVermelho: { fontSize: 14, fontWeight: 700, color: 'var(--tertiary)' },
 
-  // Cards de saldo
-  card: {
-    background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.24)',
-    display: 'flex', flexDirection: 'column', gap: 4,
+  // Card Histórico
+  cardHistorico: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: '24px 28px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
   },
-  cardLabel: { fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' },
-  cardValor: { fontSize: 26, fontWeight: 800, lineHeight: 1.15, fontVariantNumeric: 'tabular-nums' },
-  cardSub:   { fontSize: 12, color: 'var(--text-muted)', marginTop: 2 },
-
-  // Seção de categorias
-  barraItem:   { display: 'flex', flexDirection: 'column', gap: 5 },
-  barraHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' },
-  barraNome:   { fontSize: 13, fontWeight: 500, color: 'var(--text)', textTransform: 'capitalize' },
-  barraInfo:   { fontSize: 13, color: 'var(--text-muted)' },
-  barraPct:    { color: 'var(--text-muted)', fontSize: 12, marginLeft: 4 },
-  barraTrilho: { height: 7, background: 'var(--surface)', borderRadius: 99, overflow: 'hidden' },
-  barraFill:   { height: '100%', borderRadius: 99, transition: 'width 0.5s ease' },
-
-  // Blocos de transações
-  bloco:           { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
-  blocoTopo:       { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
-  blocoTitulo:     { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', paddingTop: 2 },
-  blocoTotalValor: { fontSize: 20, fontWeight: 800, color: '#1e293b', fontVariantNumeric: 'tabular-nums' },
-  patrimonioLabel: { fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'right', marginBottom: 2 },
-  blocoResumo:     { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
-  pill:            { padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 600 },
-  separador:       { height: 1, background: 'var(--surface-line)', margin: '10px -20px' },
-  blocoVazio:      { margin: '2px 0 0', fontSize: 13, color: '#cbd5e1', fontStyle: 'italic' },
-  avisoNegativo:   { display: 'block', fontSize: 10, color: '#dc2626', marginTop: 1, fontStyle: 'italic' },
-  aplicSec:        { display: 'flex', flexDirection: 'column', gap: 0 },
-  aplicSecTitulo:  { margin: '0 0 8px', fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' },
-
-  // Linhas
-  linha:           { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid var(--surface-line)', gap: 8 },
-  // No mobile, empilha o bloco esquerdo (dia/nome/categoria) e o direito (valor/status/ícones)
-  // em vez de espremer os dois lado a lado — evita sobreposição quando há muitos ícones de ação
-  linhaMobile:     { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6 },
-  linhaPatrimonio: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid var(--surface-line)' },
-  linhaPatrimonioEsq: { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
-  linhaEsq:        { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
-  diaTag: {
-    fontSize: 10, fontWeight: 700, border: '1.5px solid',
-    borderRadius: 4, padding: '1px 4px', minWidth: 22,
-    textAlign: 'center', flexShrink: 0,
+  cardHistoricoIcone: {
+    marginBottom: 10,
   },
-  linhaTexto:  { minWidth: 0, flex: 1 },
-  linhaDescRow: { display: 'flex', alignItems: 'flex-start', gap: 6 },
-  parcelaTag:  { fontSize: 10, fontWeight: 700, color: '#6366f1', background: '#ede9fe', padding: '2px 5px', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0, marginTop: 2 },
-  linhaDesc:   { flex: 1, minWidth: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 14, fontWeight: 600, color: '#1e293b', lineHeight: 1.35, cursor: 'pointer' },
-  linhaCatRow: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 2 },
-  linhaCat:    { fontSize: 11, color: '#94a3b8', textTransform: 'capitalize', cursor: 'pointer', overflowWrap: 'anywhere' },
-  catSep:      { fontSize: 10, color: '#9ca3af', flexShrink: 0 },
-  linhaSub:    { fontSize: 11, color: '#94a3b8', cursor: 'pointer', overflowWrap: 'anywhere' },
-  addSub:      { fontSize: 10, color: '#9ca3af', cursor: 'pointer', lineHeight: 1, padding: '0 1px' },
-  tipoTag:     { fontSize: 11, color: '#a78bfa', cursor: 'pointer', fontStyle: 'italic' },
-  cartaoBadge: { fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' },
-  selectTipo:  { fontSize: 11, border: '1.5px solid #3b82f6', borderRadius: 4, outline: 'none', background: '#f8fafc', cursor: 'pointer', padding: '1px 2px', fontFamily: 'inherit' },
-  linhaDir:    { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
-  linhaValor:  { fontSize: 14, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
-
-  // Inputs de edição
-  inputDia: {
-    width: 40, padding: '2px 4px', borderRadius: 4, textAlign: 'center',
-    border: '1.5px solid #3b82f6', fontSize: 10, fontWeight: 700,
-    outline: 'none', flexShrink: 0,
+  cardHistoricoTitulo: {
+    margin: '0 0 6px',
+    fontSize: 18,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    fontFamily: 'var(--font-headline)',
   },
-  inputValor: {
-    width: 80, padding: '2px 6px', borderRadius: 5,
-    border: '1.5px solid #3b82f6', fontSize: 13, fontWeight: 700,
-    textAlign: 'right', outline: 'none',
-  },
-  inputDesc: {
-    display: 'block', width: '100%', boxSizing: 'border-box',
-    padding: '1px 5px', borderRadius: 4,
-    border: '1.5px solid #3b82f6', fontSize: 13, fontWeight: 600,
-    outline: 'none', background: '#f8fafc',
-  },
-  inputCat: {
-    display: 'block', width: 120, marginTop: 2,
-    padding: '1px 5px', borderRadius: 4,
-    border: '1.5px solid #3b82f6', fontSize: 11,
-    outline: 'none', background: '#f8fafc',
-  },
-  inputSub: {
-    width: 110, padding: '1px 5px', borderRadius: 4,
-    border: '1.5px solid #3b82f6', fontSize: 11,
-    outline: 'none', background: '#f8fafc', fontFamily: 'inherit',
-  },
-  inputDataCompra: {
-    width: 128, padding: '1px 5px', borderRadius: 4,
-    border: '1.5px solid #3b82f6', fontSize: 11,
-    outline: 'none', background: '#f8fafc', fontFamily: 'inherit',
+  cardHistoricoSub: {
+    margin: 0,
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    maxWidth: 260,
+    lineHeight: 1.5,
   },
 
-  statusBtn: {
-    padding: '2px 8px', borderRadius: 20, border: 'none',
-    fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+  // Bloco Análise IA (Destaque)
+  blocoAnaliseDestaque: {
+    background: '#101915',
+    border: '1.5px solid rgba(16, 185, 129, 0.45)',
+    borderRadius: 18,
+    padding: '24px 28px',
+    boxShadow: '0 0 30px rgba(16, 185, 129, 0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
   },
-  iconBtn: {
-    background: 'none', border: 'none', fontSize: 16,
-    cursor: 'pointer', padding: '6px 8px', lineHeight: 1,
+  blocoAnaliseHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  blocoAnaliseHeaderLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  botIconeBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: 'rgba(16, 185, 129, 0.18)',
+    border: '1px solid var(--primary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  blocoAnaliseTitulo: {
+    margin: 0,
+    fontSize: 20,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    fontFamily: 'var(--font-headline)',
+  },
+  blocoAnaliseCorpo: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: 24,
+    alignItems: 'stretch',
+  },
+  analiseColEsq: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 14,
+  },
+  analiseSecTitulo: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
+  },
+  barrasLista: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  analiseColDir: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  analiseCardInsight: {
+    flex: 1,
+    background: 'rgba(10, 20, 16, 0.75)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    borderRadius: 14,
+    padding: '20px 22px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  insightTexto: {
+    fontSize: 14,
+    color: 'var(--text)',
+    lineHeight: 1.6,
+  },
+  insightCarregando: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    color: 'var(--text-muted)',
+    fontSize: 13,
+  },
+  pulsoIcone: {
+    color: 'var(--primary)',
+    fontSize: 18,
+    animation: 'pulso 1.5s infinite',
+  },
+  btnGerarAnalise: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '8px 16px',
+    borderRadius: 8,
+    border: '1px solid rgba(16, 185, 129, 0.4)',
+    background: 'rgba(16, 185, 129, 0.12)',
+    color: 'var(--primary)',
+    fontSize: 13,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  btnGerarAnaliseInline: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '8px 18px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontSize: 13,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    cursor: 'pointer',
+    boxShadow: '0 0 14px rgba(16, 185, 129, 0.25)',
+  },
+  insightPlaceholder: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  insightPlaceholderTexto: {
+    margin: 0,
+    fontSize: 13.5,
+    color: 'var(--text-muted)',
+    lineHeight: 1.6,
+  },
+  btnTentarNovamente: {
+    background: 'none',
+    border: 'none',
+    color: 'var(--primary)',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: 0,
+    textAlign: 'left',
+    textDecoration: 'underline',
   },
 
-  // Bloco de análise
-  analiseBloco: {
-    background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.24)',
+  // Barras de Progresso
+  barraItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
   },
-  analiseTopo: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10,
+  barraHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  analiseTitulo: {
-    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
-    textTransform: 'uppercase', letterSpacing: '0.07em',
+  barraNomeWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
   },
-  analiseBotao: {
-    padding: '6px 14px', borderRadius: 6, border: 'none',
-    background: 'var(--emerald)', color: 'var(--bg-deep)',
-    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  barraIcone: { fontSize: 14 },
+  barraNome: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--text)',
+    textTransform: 'capitalize',
   },
-  analiseDica:       { margin: 0, fontSize: 13, color: 'var(--text-muted)' },
-  analiseConteudo:   { display: 'flex', flexDirection: 'column', gap: 12 },
-  analiseResumo:     { margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--text)', lineHeight: 1.55 },
-  analiseSeparador:  { height: 1, background: 'var(--border)' },
-  analisePonto:      { display: 'flex', flexDirection: 'column', gap: 3 },
-  analisePontoHeader: { display: 'flex', alignItems: 'center', gap: 6 },
-  analisePontoTitulo: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' },
-  analisePontoTexto:  { margin: 0, fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.55, paddingLeft: 19 },
+  barraValorWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+  barraInfo: {
+    fontSize: 13,
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+  },
+  barraBadge: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--primary)',
+    background: 'rgba(16, 185, 129, 0.12)',
+    padding: '1px 6px',
+    borderRadius: 4,
+  },
+  barraTrilho: {
+    height: 6,
+    background: 'var(--surface-active)',
+    borderRadius: 99,
+    overflow: 'hidden',
+  },
+  barraFill: {
+    height: '100%',
+    borderRadius: 99,
+    transition: 'width 0.4s ease',
+  },
 
-  // Bloco de perguntas
-  perguntaBloco: {
-    background: 'var(--surface-raised)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.24)',
+  // Floating AI Prompt Bar
+  floatingBarContainer: {
+    position: 'sticky',
+    bottom: 20,
+    zIndex: 90,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    marginTop: 16,
   },
-  perguntaTopo: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  perguntaLimparBtn: {
-    background: 'none', border: 'none', fontSize: 11, color: 'var(--text-muted)',
-    cursor: 'pointer', padding: 0, textDecoration: 'underline',
+  floatingBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    background: 'var(--surface)',
+    border: '1.5px solid var(--border)',
+    borderRadius: 99,
+    padding: '6px 8px 6px 18px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    backdropFilter: 'blur(10px)',
   },
-  perguntaTituloLabel: {
-    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
-    textTransform: 'uppercase', letterSpacing: '0.07em',
+  floatingAttachIcon: {
+    color: 'var(--text-muted)',
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
   },
-  perguntaForm:  { display: 'flex', flexDirection: 'column', gap: 8 },
-  perguntaInput: {
-    padding: '9px 12px', borderRadius: 6, border: '1.5px solid var(--border)',
-    background: 'var(--surface)', color: 'var(--text)',
-    fontSize: 13, fontFamily: 'inherit', outline: 'none',
+  floatingInput: {
+    flex: 1,
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    color: 'var(--text-pure)',
+    fontSize: 14,
+    fontFamily: 'var(--font-body)',
   },
-  perguntaBotao: {
-    alignSelf: 'flex-end',
-    padding: '7px 16px', borderRadius: 6, border: 'none',
-    background: 'var(--emerald)', color: 'var(--bg-deep)',
-    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  floatingSendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    background: 'var(--primary)',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    flexShrink: 0,
+    transition: 'transform 0.15s ease',
   },
-  perguntaDica:     { margin: '10px 0 0', fontSize: 13, color: 'var(--text-muted)' },
-  perguntaHistorico: { marginTop: 14, display: 'flex', flexDirection: 'column', gap: 0 },
-  perguntaItem:     { paddingBottom: 14 },
-  perguntaQ:        { margin: '0 0 6px', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' },
-  perguntaR:        { margin: 0, fontSize: 13, color: 'var(--text)', lineHeight: 1.65 },
+  floatingRespostaCard: {
+    background: 'var(--surface-raised)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '16px 20px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+  },
+  floatingRespostaHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  floatingRespostaTexto: {
+    fontSize: 13,
+    color: 'var(--text)',
+    lineHeight: 1.6,
+  },
+  fecharBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    fontSize: 14,
+  },
+
+  // Linhas e Blocos
+  blocoCard: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '20px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 14,
+  },
+  blocoCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  blocoCardTitulo: {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+  },
+  blocoCardTotal: {
+    fontSize: 18,
+    fontWeight: 800,
+    color: 'var(--text-pure)',
+  },
+  blocoCardLista: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  itemLinha: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 0',
+    borderBottom: '1px solid var(--border-subtle)',
+    gap: 12,
+  },
+  itemLinhaEsq: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 0,
+  },
+  itemDiaTag: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    background: 'var(--surface-hover)',
+    padding: '2px 6px',
+    borderRadius: 4,
+    minWidth: 22,
+    textAlign: 'center',
+  },
+  itemLinhaTextos: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    minWidth: 0,
+  },
+  itemDesc: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: 'var(--text-pure)',
+    cursor: 'pointer',
+  },
+  itemCatRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 12,
+    color: 'var(--text-muted)',
+  },
+  itemCat: {
+    textTransform: 'capitalize',
+    cursor: 'pointer',
+  },
+  itemSep: {
+    color: 'var(--text-dim)',
+  },
+  cartaoBadge: {
+    fontWeight: 500,
+  },
+  parcelaBadge: {
+    fontSize: 10,
+    fontWeight: 700,
+    background: 'rgba(15, 118, 110, 0.3)',
+    color: 'var(--primary)',
+    padding: '1px 5px',
+    borderRadius: 4,
+  },
+  itemLinhaDir: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 0,
+  },
+  itemValor: {
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: 'pointer',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  statusPill: {
+    padding: '2px 8px',
+    borderRadius: 99,
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+    border: 'none',
+  },
+  actionBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-dim)',
+    cursor: 'pointer',
+    padding: 4,
+    fontSize: 13,
+  },
+  inputInline: {
+    background: 'var(--surface-hover)',
+    border: '1px solid var(--primary)',
+    borderRadius: 4,
+    color: 'var(--text-pure)',
+    padding: '2px 6px',
+    fontSize: 13,
+    outline: 'none',
+  },
+  inputInlineSmall: {
+    background: 'var(--surface-hover)',
+    border: '1px solid var(--primary)',
+    borderRadius: 4,
+    color: 'var(--text-pure)',
+    padding: '1px 4px',
+    fontSize: 11,
+    outline: 'none',
+  },
+  inputInlineValor: {
+    background: 'var(--surface-hover)',
+    border: '1px solid var(--primary)',
+    borderRadius: 4,
+    color: 'var(--text-pure)',
+    padding: '2px 6px',
+    fontSize: 13,
+    fontWeight: 700,
+    textAlign: 'right',
+    width: 80,
+    outline: 'none',
+  },
+  textoVazio: {
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    margin: '12px 0',
+    fontStyle: 'italic',
+  },
+  subPillAportes: {
+    display: 'inline-block',
+    marginTop: 6,
+    padding: '3px 10px',
+    borderRadius: 99,
+    background: 'rgba(15, 118, 110, 0.25)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    color: 'var(--primary)',
+    fontSize: 12,
+    fontWeight: 500,
+  },
+  labelPatrimonioTotal: {
+    display: 'block',
+    fontSize: 10.5,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
+    marginBottom: 2,
+  },
+  secaoSeparador: {
+    padding: '12px 0 6px',
+    borderBottom: '1px solid var(--border-subtle)',
+    marginBottom: 6,
+  },
+  secaoTituloTag: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+  },
+  secaoPatrimonioAcumulado: {
+    marginTop: 20,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  listaPatrimonioAcumulado: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    paddingTop: 6,
+  },
+  itemPatrimonio: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '8px 0',
+    borderBottom: '1px solid var(--border-subtle)',
+  },
+  itemPatrimonioNome: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: 'var(--text-pure)',
+  },
+  itemPatrimonioValor: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    fontVariantNumeric: 'tabular-nums',
+  },
 }
