@@ -1,87 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../services/supabase'
-import LogoMarca from '../components/LogoMarca'
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function useIsMobile() {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 720)
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
   useEffect(() => {
-    const fn = () => setMobile(window.innerWidth < 720)
+    const fn = () => setMobile(window.innerWidth < 768)
     window.addEventListener('resize', fn)
     return () => window.removeEventListener('resize', fn)
   }, [])
   return mobile
 }
 
-// Acompanha o progresso de rolagem da página (0 a 1) para alimentar a
-// animação de assinatura do sol. Fica parado em 1 (sol pleno, sem
-// transição) para quem pediu menos movimento no sistema.
-function useScrollIntensity() {
-  const [intensidade, setIntensidade] = useState(0.18)
-  const reduzMovimento = useRef(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    reduzMovimento.current = mq.matches
-    if (mq.matches) {
-      setIntensidade(1)
-      return
-    }
-
-    let ticking = false
-    function calcular() {
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      const proporcao = max > 0 ? window.scrollY / max : 0
-      setIntensidade(0.18 + Math.min(1, Math.max(0, proporcao)) * 0.82)
-      ticking = false
-    }
-    function onScroll() {
-      if (!ticking) {
-        window.requestAnimationFrame(calcular)
-        ticking = true
-      }
-    }
-    calcular()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  return intensidade
-}
-
-function SolAssinatura({ size = 320, intensidade = 0.5, style = {} }) {
-  const cx = size / 2, cy = size / 2
-  const r      = size * 0.215
-  const rayIn  = size * 0.285
-  const rayOut = size * 0.435
-  const sw     = size * 0.018
-  const rays   = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
-    const rad = (deg * Math.PI) / 180
-    return {
-      x1: cx + rayIn  * Math.sin(rad), y1: cy - rayIn  * Math.cos(rad),
-      x2: cx + (rayIn + (rayOut - rayIn) * (0.45 + intensidade * 0.55)) * Math.sin(rad),
-      y2: cy - (rayIn + (rayOut - rayIn) * (0.45 + intensidade * 0.55)) * Math.cos(rad),
-    }
-  })
-  return (
-    <svg
-      width={size} height={size} viewBox={`0 0 ${size} ${size}`}
-      xmlns="http://www.w3.org/2000/svg" style={style}
-      aria-hidden="true"
-    >
-      <circle cx={cx} cy={cy} r={r} fill="#E3A008" opacity={0.55 + intensidade * 0.45} />
-      <g stroke="#E3A008" strokeWidth={sw} strokeLinecap="round" opacity={0.25 + intensidade * 0.75}>
-        {rays.map((ray, i) => (
-          <line key={i} x1={ray.x1} y1={ray.y1} x2={ray.x2} y2={ray.y2} />
-        ))}
-      </g>
-    </svg>
-  )
-}
-
-function FormularioListaEspera({ variante = 'hero' }) {
+function FormularioListaEspera() {
   const [email, setEmail]         = useState('')
   const [enviando, setEnviando]   = useState(false)
   const [enviado, setEnviado]     = useState(false)
@@ -107,13 +40,11 @@ function FormularioListaEspera({ variante = 'hero' }) {
 
   if (enviado) {
     return (
-      <div style={{ ...s.sucessoBox, ...(variante === 'cta' ? s.sucessoBoxClaro : {}) }}>
+      <div style={s.sucessoBox}>
         <span>✓</span> Você está na lista! Avisaremos assim que abrirmos o acesso.
       </div>
     )
   }
-
-  const escuro = variante === 'hero'
 
   return (
     <form onSubmit={handleSubmit} style={s.formEspera} noValidate>
@@ -127,7 +58,7 @@ function FormularioListaEspera({ variante = 'hero' }) {
           value={email}
           onChange={e => setEmail(e.target.value)}
           disabled={enviando}
-          style={{ ...s.inputEspera, ...(escuro ? {} : s.inputEsperaClaro) }}
+          style={s.inputEspera}
           aria-label="Seu e-mail"
         />
         <button type="submit" disabled={enviando} style={s.botaoEspera}>
@@ -140,9 +71,8 @@ function FormularioListaEspera({ variante = 'hero' }) {
 }
 
 export default function PaginaLanding() {
-  const isMobile     = useIsMobile()
-  const intensidade = useScrollIntensity()
-  const ctaFinalRef  = useRef(null)
+  const isMobile = useIsMobile()
+  const ctaFinalRef = useRef(null)
 
   function scrollAteFormulario() {
     ctaFinalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -151,11 +81,19 @@ export default function PaginaLanding() {
   return (
     <div style={s.pagina}>
       {/* MENU TOPO */}
-      <header style={{ ...s.nav, padding: isMobile ? '14px 18px' : '18px 40px' }}>
+      <header style={{ ...s.nav, padding: isMobile ? '14px 20px' : '18px 48px' }}>
         <div style={s.navLogo}>
-          <LogoMarca size={isMobile ? 22 : 26} rayColor="rgba(31,93,69,0.75)" />
-          <span style={s.navLogoTexto}>Contas Claras</span>
+          <div style={s.logoAvatar}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={s.navLogoTexto}>Contas Claras</span>
+            <span style={s.navLogoSub}>Inteligência Financeira</span>
+          </div>
         </div>
+
         <div style={s.navAcoes}>
           <Link to="/login" style={s.navLinkEntrar}>Entrar</Link>
           {!isMobile && (
@@ -167,24 +105,19 @@ export default function PaginaLanding() {
       </header>
 
       {/* HERO */}
-      <section style={{ ...s.hero, padding: isMobile ? '48px 20px 56px' : '76px 40px 96px' }}>
-        <SolAssinatura
-          size={isMobile ? 220 : 420}
-          intensidade={intensidade}
-          style={{
-            position: 'absolute',
-            top: isMobile ? -50 : -90,
-            right: isMobile ? -50 : -70,
-            pointerEvents: 'none',
-          }}
-        />
+      <section style={{ ...s.hero, padding: isMobile ? '56px 20px 64px' : '88px 48px 104px' }}>
+        <div style={s.heroGlow} />
         <div style={s.heroConteudo}>
-          <h1 style={{ ...s.heroTitulo, fontSize: isMobile ? 34 : 58 }}>
-            A Clareza<br />começa aqui.
+          <div style={s.heroBadge}>
+            <span style={s.heroBadgeIcone}>✦</span>
+            <span>Inteligência Financeira em Tempo Real</span>
+          </div>
+          <h1 style={{ ...s.heroTitulo, fontSize: isMobile ? 36 : 60 }}>
+            A Clareza<br /><span style={s.heroTituloDestaque}>começa aqui.</span>
           </h1>
           <p style={{ ...s.heroSub, fontSize: isMobile ? 16 : 19 }}>
             Chega de descobrir só no fim do mês que gastou mais do que podia.
-            Chega de somar na mão a fatura do cartão pra não duplicar no orçamento.
+            Chega de somar na mão a fatura do cartão para não duplicar no orçamento.
             O Contas Claras junta despesas, receitas, cartões e metas num só lugar —
             e te avisa antes do aperto, não depois.
           </p>
@@ -200,7 +133,7 @@ export default function PaginaLanding() {
       </section>
 
       {/* NÚMEROS REAIS */}
-      <section style={{ ...s.secao, padding: isMobile ? '40px 20px' : '56px 40px' }}>
+      <section style={{ ...s.secao, padding: isMobile ? '40px 20px' : '64px 48px' }}>
         <p style={s.eyebrow}>Onde estamos hoje</p>
         <div style={{ ...s.statsGrid, gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)' }}>
           <div style={s.statCard}>
@@ -227,26 +160,28 @@ export default function PaginaLanding() {
       </section>
 
       {/* FUNCIONALIDADES */}
-      <section style={{ ...s.secaoEscura, padding: isMobile ? '48px 20px' : '72px 40px' }}>
-        <p style={{ ...s.eyebrow, ...s.eyebrowClaro }}>O que já funciona</p>
-        <h2 style={{ ...s.tituloSecao, ...s.tituloClaro, fontSize: isMobile ? 24 : 32 }}>
-          Seis módulos, um único lugar
-        </h2>
-        <div style={{ ...s.featuresGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
-          {FUNCIONALIDADES.map(f => (
-            <div key={f.titulo} style={s.featureCard}>
-              <span style={s.featureIcone}>{f.icone}</span>
-              <h3 style={s.featureTitulo}>{f.titulo}</h3>
-              <p style={s.featureTexto}>{f.texto}</p>
-            </div>
-          ))}
+      <section style={{ ...s.secaoEscura, padding: isMobile ? '56px 20px' : '80px 48px' }}>
+        <div style={s.secaoContainer}>
+          <p style={s.eyebrow}>O que já funciona</p>
+          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 26 : 36 }}>
+            Seis módulos, um único ecossistema
+          </h2>
+          <div style={{ ...s.featuresGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
+            {FUNCIONALIDADES.map(f => (
+              <div key={f.titulo} style={s.featureCard}>
+                <div style={s.featureIconeBox}>{f.icone}</div>
+                <h3 style={s.featureTitulo}>{f.titulo}</h3>
+                <p style={s.featureTexto}>{f.texto}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* PREÇOS */}
-      <section style={{ ...s.secao, padding: isMobile ? '48px 20px' : '72px 40px' }}>
+      <section style={{ ...s.secao, padding: isMobile ? '56px 20px' : '80px 48px' }}>
         <p style={s.eyebrow}>Investimento</p>
-        <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 32 }}>
+        <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 26 : 36 }}>
           Comece de graça, evolua quando quiser
         </h2>
         <div style={{ ...s.precosGrid, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
@@ -255,197 +190,527 @@ export default function PaginaLanding() {
             <p style={s.planoPreco}>R$ 0</p>
             <p style={s.planoDescricao}>Controle manual completo — todas as funcionalidades, exceto IA.</p>
             <ul style={s.planoLista}>
-              <li>Despesas, receitas e cartões</li>
-              <li>Meus Sonhos e metas</li>
-              <li>Dashboard com saldo real x projetado</li>
-              <li>Parcelamento e recorrências</li>
+              <li><span style={s.checkVerde}>✓</span> Despesas, receitas e cartões de crédito</li>
+              <li><span style={s.checkVerde}>✓</span> Meus Sonhos e metas financeiras com cálculo de prazos</li>
+              <li><span style={s.checkVerde}>✓</span> Dashboard completo com saldo do mês</li>
+              <li><span style={s.checkVerde}>✓</span> Gestão de parcelamentos e despesas recorrentes</li>
             </ul>
           </div>
+
           <div style={{ ...s.planoCard, ...s.planoCardPro }}>
             <span style={s.planoSelo}>Lançamento em breve</span>
-            <h3 style={s.planoNome}>Pro</h3>
+            <h3 style={{ ...s.planoNome, color: 'var(--primary)' }}>Pro com IA</h3>
             <p style={s.planoPreco}>~R$ 20–25<span style={s.planoPrecoPeriodo}>/mês</span></p>
-            <p style={s.planoDescricao}>Tudo do Grátis, mais o que a IA resolve por você.</p>
+            <p style={s.planoDescricao}>Tudo do Grátis, mais o poder da IA resolvendo tudo por você.</p>
             <ul style={s.planoLista}>
-              <li>Categorização automática por IA</li>
-              <li>Análise do mês em linguagem natural</li>
-              <li>Perguntas livres sobre suas finanças</li>
+              <li><span style={s.checkVerde}>✓</span> Categorização automática e lançamentos por voz</li>
+              <li><span style={s.checkVerde}>✓</span> Análise do mês em linguagem natural sob demanda</li>
+              <li><span style={s.checkVerde}>✓</span> Assistente financeiro para perguntas sobre seus gastos</li>
+              <li><span style={s.checkVerde}>✓</span> Dicas inteligentes personalizadas de economia</li>
             </ul>
-            <p style={s.planoAviso}>Cobrança ainda não está disponível. Entre na lista de espera para ser avisado no lançamento.</p>
+            <p style={s.planoAviso}>Cobrança ainda não disponível. Entre na lista de espera para ter condições especiais.</p>
           </div>
         </div>
       </section>
 
       {/* CTA FINAL */}
-      <section ref={ctaFinalRef} style={{ ...s.ctaFinal, padding: isMobile ? '56px 20px' : '88px 40px' }}>
-        <SolAssinatura
-          size={isMobile ? 180 : 280}
-          intensidade={Math.max(intensidade, 0.85)}
-          style={{ margin: '0 auto 24px', display: 'block' }}
-        />
-        <h2 style={{ ...s.ctaTitulo, fontSize: isMobile ? 26 : 38 }}>
-          Ainda em construção. Já funcionando de verdade.
-        </h2>
-        <p style={s.ctaSub}>
-          Entre na lista de espera e seja avisado assim que abrirmos novas vagas de acesso antecipado.
-        </p>
-        <div style={s.ctaFormWrap}>
-          <FormularioListaEspera variante="cta" />
+      <section ref={ctaFinalRef} style={{ ...s.ctaFinal, padding: isMobile ? '64px 20px' : '96px 48px' }}>
+        <div style={s.ctaContainer}>
+          <div style={s.ctaIconeDestaque}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <h2 style={{ ...s.ctaTitulo, fontSize: isMobile ? 28 : 42 }}>
+            Ainda em construção.<br />Já funcionando de verdade.
+          </h2>
+          <p style={s.ctaSub}>
+            Entre na lista de espera e seja avisado assim que abrirmos novas vagas de acesso antecipado.
+          </p>
+          <div style={s.ctaFormWrap}>
+            <FormularioListaEspera />
+          </div>
         </div>
       </section>
 
       {/* RODAPÉ */}
-      <footer style={{ ...s.rodape, padding: isMobile ? '24px 20px' : '28px 40px' }}>
+      <footer style={{ ...s.rodape, padding: isMobile ? '24px 20px' : '28px 48px' }}>
         <div style={s.navLogo}>
-          <LogoMarca size={18} rayColor="rgba(245,240,228,0.75)" />
+          <div style={{ ...s.logoAvatar, width: 28, height: 28 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
           <span style={s.rodapeLogoTexto}>Contas Claras</span>
         </div>
-        <Link to="/login" style={s.rodapeLink}>Entrar</Link>
-        <span style={s.rodapeAno}>© {new Date().getFullYear()}</span>
+        <Link to="/login" style={s.rodapeLink}>Acessar Conta</Link>
+        <span style={s.rodapeAno}>© {new Date().getFullYear()} Contas Claras · Todos os direitos reservados</span>
       </footer>
     </div>
   )
 }
 
 const FUNCIONALIDADES = [
-  { icone: '💬', titulo: 'Lançamento por texto livre', texto: 'Digite "gastei 50 no mercado hoje" e a IA categoriza sozinha.' },
-  { icone: '💳', titulo: 'Gestão de Cartões', texto: 'Compras no crédito sem duplicar no orçamento do mês.' },
-  { icone: '★',  titulo: 'Meus Sonhos', texto: 'Metas com prazo — o app calcula quanto guardar por mês.' },
-  { icone: '⊡',  titulo: 'Dashboard do mês', texto: 'Saldo real x saldo projetado, sempre atualizado.' },
-  { icone: '✦',  titulo: 'Análise por IA', texto: 'Resumo do mês e perguntas em linguagem natural.' },
-  { icone: '↻',  titulo: 'Parcelamento e recorrências', texto: 'Despesas fixas e parceladas geradas automaticamente todo mês.' },
+  { icone: '💬', titulo: 'Lançamento por texto ou voz', texto: 'Digite ou fale "gastei 50 no mercado hoje" e a IA categoriza tudo sozinha.' },
+  { icone: '💳', titulo: 'Gestão de Cartões', texto: 'Compras no crédito organizadas com suas faturas sem duplicar no orçamento.' },
+  { icone: '★',  titulo: 'Meus Sonhos', texto: 'Metas com prazo e cálculo automático de quanto guardar a cada mês.' },
+  { icone: '⊡',  titulo: 'Dashboard do Mês', texto: 'Balanço em tempo real de receitas, despesas e comparativos históricos.' },
+  { icone: '✦',  titulo: 'Análise por IA Sob Demanda', texto: 'Insights instantâneos e assistente de perguntas financeiras.' },
+  { icone: '↻',  titulo: 'Parcelamentos e Recorrências', texto: 'Despesas fixas e compras parceladas geradas automaticamente.' },
 ]
 
 const s = {
   pagina: {
-    minHeight: '100vh', width: '100%', overflowX: 'hidden',
-    background: '#F5F0E4', color: '#1a1a2e',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    minHeight: '100vh',
+    width: '100%',
+    overflowX: 'hidden',
+    background: 'var(--bg-deep)',
+    color: 'var(--text)',
+    fontFamily: 'var(--font-body)',
   },
 
   nav: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    background: '#F5F0E4', position: 'sticky', top: 0, zIndex: 20,
-    borderBottom: '1px solid #EDE7DA', boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    background: 'rgba(10, 15, 13, 0.85)',
+    backdropFilter: 'blur(16px)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 40,
+    borderBottom: '1px solid var(--border)',
+    boxSizing: 'border-box',
   },
-  navLogo: { display: 'flex', alignItems: 'center', gap: 8 },
-  navLogoTexto: { fontSize: 16, fontWeight: 800, color: '#1F5D45', letterSpacing: '-0.02em' },
-  navAcoes: { display: 'flex', alignItems: 'center', gap: 10 },
+  navLogo: { display: 'flex', alignItems: 'center', gap: 12 },
+  logoAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: '50%',
+    background: 'radial-gradient(circle at 30% 30%, #153E32, #0A1E17)',
+    border: '1.5px solid rgba(16, 185, 129, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 0 14px rgba(16, 185, 129, 0.2)',
+  },
+  navLogoTexto: {
+    fontSize: 16,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+    letterSpacing: '-0.01em',
+    lineHeight: 1.2,
+  },
+  navLogoSub: {
+    fontSize: 11,
+    color: 'var(--text-muted)',
+    fontWeight: 500,
+  },
+  navAcoes: { display: 'flex', alignItems: 'center', gap: 14 },
   navLinkEntrar: {
-    background: 'none', border: 'none', color: '#1F5D45', textDecoration: 'none',
-    fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: '8px 4px',
+    background: 'none',
+    border: 'none',
+    color: 'var(--text)',
+    textDecoration: 'none',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: '8px 12px',
+    transition: 'color 0.15s ease',
   },
   navBotaoDestaque: {
-    background: '#1F5D45', color: '#F5F0E4', border: 'none',
-    borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    border: 'none',
+    borderRadius: 10,
+    padding: '10px 18px',
+    fontSize: 13.5,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    cursor: 'pointer',
+    boxShadow: '0 0 16px rgba(16, 185, 129, 0.25)',
   },
 
   hero: {
-    position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
-    background: '#1F5D45', color: '#F5F0E4',
+    position: 'relative',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    borderBottom: '1px solid var(--border)',
+    background: 'radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.12), transparent 70%), #0A0F0D',
   },
-  heroConteudo: { position: 'relative', zIndex: 1, maxWidth: 640 },
+  heroGlow: {
+    position: 'absolute',
+    top: '-20%',
+    right: '10%',
+    width: 400,
+    height: 400,
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  heroConteudo: {
+    position: 'relative',
+    zIndex: 1,
+    maxWidth: 720,
+    margin: '0 auto',
+    textAlign: 'center',
+  },
+  heroBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '6px 14px',
+    borderRadius: 99,
+    background: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    color: 'var(--primary)',
+    fontSize: 12.5,
+    fontWeight: 600,
+    marginBottom: 20,
+  },
+  heroBadgeIcone: {
+    fontSize: 13,
+  },
   heroTitulo: {
-    margin: '0 0 20px', fontFamily: 'Georgia, "Times New Roman", serif',
-    fontWeight: 700, lineHeight: 1.12, letterSpacing: '-0.01em', color: '#F5F0E4',
+    margin: '0 0 20px',
+    fontFamily: 'var(--font-headline)',
+    fontWeight: 800,
+    lineHeight: 1.15,
+    letterSpacing: '-0.02em',
+    color: 'var(--text-pure)',
+  },
+  heroTituloDestaque: {
+    background: 'linear-gradient(135deg, #10B981, #2DD4BF)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
   },
   heroSub: {
-    margin: '0 0 32px', lineHeight: 1.65, color: 'rgba(245,240,228,0.82)', maxWidth: 560,
+    margin: '0 auto 36px',
+    lineHeight: 1.65,
+    color: 'var(--text-muted)',
+    maxWidth: 620,
+    fontSize: 17,
   },
-  heroBotoes: { display: 'flex', gap: 12, flexWrap: 'wrap' },
+  heroBotoes: {
+    display: 'flex',
+    gap: 14,
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+  },
   botaoPrimario: {
-    background: '#E3A008', color: '#1a1a2e', border: 'none',
-    borderRadius: 8, padding: '14px 24px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    border: 'none',
+    borderRadius: 10,
+    padding: '14px 28px',
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    cursor: 'pointer',
+    boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
   },
   botaoSecundario: {
-    background: 'transparent', color: '#F5F0E4', border: '1.5px solid rgba(245,240,228,0.5)',
-    borderRadius: 8, padding: '14px 24px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
-    textDecoration: 'none', display: 'inline-block', boxSizing: 'border-box',
+    background: 'var(--surface)',
+    color: 'var(--text-pure)',
+    border: '1px solid var(--border)',
+    borderRadius: 10,
+    padding: '14px 28px',
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-block',
+    boxSizing: 'border-box',
   },
 
-  secao: { maxWidth: 1080, margin: '0 auto', boxSizing: 'border-box', width: '100%' },
+  secao: {
+    maxWidth: 1120,
+    margin: '0 auto',
+    boxSizing: 'border-box',
+    width: '100%',
+  },
+  secaoContainer: {
+    maxWidth: 1120,
+    margin: '0 auto',
+  },
   secaoEscura: {
-    background: '#1F5D45', color: '#F5F0E4', boxSizing: 'border-box',
+    background: 'var(--surface)',
+    borderTop: '1px solid var(--border)',
+    borderBottom: '1px solid var(--border)',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   eyebrow: {
-    margin: '0 0 8px', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em',
-    textTransform: 'uppercase', color: '#2D7A5C',
+    margin: '0 0 8px',
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: 'var(--primary)',
   },
-  eyebrowClaro: { color: '#E3A008', maxWidth: 1080, marginLeft: 'auto', marginRight: 'auto' },
-  tituloSecao: { margin: '0 0 28px', fontWeight: 700, fontFamily: 'Georgia, "Times New Roman", serif', letterSpacing: '-0.01em' },
-  tituloClaro: { color: '#F5F0E4', maxWidth: 1080, marginLeft: 'auto', marginRight: 'auto' },
+  tituloSecao: {
+    margin: '0 0 32px',
+    fontWeight: 800,
+    fontFamily: 'var(--font-headline)',
+    letterSpacing: '-0.02em',
+    color: 'var(--text-pure)',
+  },
 
   statsGrid: { display: 'grid', gap: 16 },
   statCard: {
-    background: '#fff', borderRadius: 12, padding: '22px 18px',
-    boxShadow: '0 1px 6px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: 4,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '24px 20px',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
   },
-  statNumero: { fontSize: 24, fontWeight: 800, color: '#1F5D45', fontFamily: 'Georgia, serif' },
-  statLabel: { fontSize: 13, color: '#64748b', lineHeight: 1.4 },
-  statsRodape: { margin: '20px 0 0', fontSize: 13, color: '#64748b', maxWidth: 640 },
+  statNumero: {
+    fontSize: 26,
+    fontWeight: 800,
+    color: 'var(--primary)',
+    fontFamily: 'var(--font-headline)',
+  },
+  statLabel: {
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    lineHeight: 1.4,
+  },
+  statsRodape: {
+    margin: '20px 0 0',
+    fontSize: 13,
+    color: 'var(--text-dim)',
+    maxWidth: 640,
+  },
 
-  featuresGrid: { display: 'grid', gap: 20, maxWidth: 1080, margin: '0 auto' },
+  featuresGrid: { display: 'grid', gap: 20 },
   featureCard: {
-    background: 'rgba(245,240,228,0.06)', border: '1px solid rgba(245,240,228,0.14)',
-    borderRadius: 14, padding: '22px 20px',
+    background: 'var(--surface-raised)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: '24px 22px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
   },
-  featureIcone: { fontSize: 22, display: 'block', marginBottom: 10 },
-  featureTitulo: { margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#F5F0E4' },
-  featureTexto: { margin: 0, fontSize: 14, lineHeight: 1.55, color: 'rgba(245,240,228,0.72)' },
+  featureIconeBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    background: 'rgba(16, 185, 129, 0.14)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 20,
+    marginBottom: 6,
+  },
+  featureTitulo: {
+    margin: 0,
+    fontSize: 16,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+  },
+  featureTexto: {
+    margin: 0,
+    fontSize: 13.5,
+    lineHeight: 1.6,
+    color: 'var(--text-muted)',
+  },
 
-  precosGrid: { display: 'grid', gap: 20 },
+  precosGrid: { display: 'grid', gap: 24 },
   planoCard: {
-    background: '#fff', borderRadius: 16, padding: '28px 26px',
-    boxShadow: '0 1px 8px rgba(0,0,0,0.07)', position: 'relative', boxSizing: 'border-box',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 18,
+    padding: '32px 28px',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+    position: 'relative',
+    boxSizing: 'border-box',
   },
-  planoCardPro: { border: '2px solid #E3A008' },
+  planoCardPro: {
+    border: '1.5px solid var(--primary)',
+    background: 'radial-gradient(ellipse at top right, rgba(16, 185, 129, 0.08), transparent 70%), var(--surface)',
+    boxShadow: '0 0 30px rgba(16, 185, 129, 0.15)',
+  },
   planoSelo: {
-    position: 'absolute', top: -12, right: 20, background: '#E3A008', color: '#1a1a2e',
-    fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20, letterSpacing: '0.02em',
+    position: 'absolute',
+    top: -12,
+    right: 24,
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontSize: 11,
+    fontWeight: 800,
+    padding: '4px 12px',
+    borderRadius: 99,
+    fontFamily: 'var(--font-headline)',
   },
-  planoNome: { margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: '#1F5D45' },
-  planoPreco: { margin: '0 0 14px', fontSize: 30, fontWeight: 800, fontFamily: 'Georgia, serif', color: '#1a1a2e' },
-  planoPrecoPeriodo: { fontSize: 14, fontWeight: 500, color: '#94a3b8' },
-  planoDescricao: { margin: '0 0 16px', fontSize: 14, color: '#64748b', lineHeight: 1.5 },
-  planoLista: { margin: 0, padding: '0 0 0 18px', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 14, color: '#334155' },
-  planoAviso: { margin: '18px 0 0', fontSize: 12.5, color: '#94a3b8', lineHeight: 1.5 },
+  planoNome: {
+    margin: '0 0 6px',
+    fontSize: 20,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+  },
+  planoPreco: {
+    margin: '0 0 14px',
+    fontSize: 34,
+    fontWeight: 800,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+  },
+  planoPrecoPeriodo: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+  },
+  planoDescricao: {
+    margin: '0 0 20px',
+    fontSize: 14,
+    color: 'var(--text-muted)',
+    lineHeight: 1.5,
+  },
+  planoLista: {
+    margin: 0,
+    padding: 0,
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    fontSize: 14,
+    color: 'var(--text)',
+  },
+  checkVerde: {
+    color: 'var(--primary)',
+    fontWeight: 800,
+    marginRight: 8,
+  },
+  planoAviso: {
+    margin: '22px 0 0',
+    fontSize: 12.5,
+    color: 'var(--text-dim)',
+    lineHeight: 1.5,
+    borderTop: '1px solid var(--border-subtle)',
+    paddingTop: 14,
+  },
 
   ctaFinal: {
-    background: '#1F5D45', color: '#F5F0E4', textAlign: 'center', boxSizing: 'border-box',
+    background: '#070C0A',
+    borderTop: '1px solid var(--border)',
+    textAlign: 'center',
+    boxSizing: 'border-box',
   },
-  ctaTitulo: { margin: '0 0 14px', fontFamily: 'Georgia, serif', fontWeight: 700, color: '#F5F0E4' },
-  ctaSub: { margin: '0 auto 32px', maxWidth: 480, fontSize: 16, lineHeight: 1.6, color: 'rgba(245,240,228,0.78)' },
-  ctaFormWrap: { maxWidth: 420, margin: '0 auto' },
+  ctaContainer: {
+    maxWidth: 600,
+    margin: '0 auto',
+  },
+  ctaIconeDestaque: {
+    width: 56,
+    height: 56,
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.15)',
+    border: '1.5px solid var(--primary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 20px',
+    boxShadow: '0 0 20px rgba(16, 185, 129, 0.25)',
+  },
+  ctaTitulo: {
+    margin: '0 0 14px',
+    fontFamily: 'var(--font-headline)',
+    fontWeight: 800,
+    color: 'var(--text-pure)',
+    letterSpacing: '-0.02em',
+  },
+  ctaSub: {
+    margin: '0 auto 32px',
+    maxWidth: 480,
+    fontSize: 16,
+    lineHeight: 1.6,
+    color: 'var(--text-muted)',
+  },
+  ctaFormWrap: {
+    maxWidth: 420,
+    margin: '0 auto',
+  },
 
   formEspera: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' },
   formEsperaCampo: { display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' },
   inputEspera: {
-    flex: '1 1 200px', minWidth: 0, padding: '13px 16px', borderRadius: 8,
-    border: '1.5px solid rgba(245,240,228,0.4)', background: 'rgba(255,255,255,0.08)',
-    color: '#F5F0E4', fontSize: 15, outline: 'none', boxSizing: 'border-box',
+    flex: '1 1 200px',
+    minWidth: 0,
+    padding: '13px 16px',
+    borderRadius: 10,
+    border: '1.5px solid var(--border)',
+    background: 'var(--surface-raised)',
+    color: 'var(--text-pure)',
+    fontSize: 14,
+    outline: 'none',
+    boxSizing: 'border-box',
+    fontFamily: 'var(--font-body)',
   },
-  inputEsperaClaro: { background: 'rgba(255,255,255,0.1)' },
   botaoEspera: {
-    flex: '0 0 auto', background: '#E3A008', color: '#1a1a2e', border: 'none',
-    borderRadius: 8, padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+    flex: '0 0 auto',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    border: 'none',
+    borderRadius: 10,
+    padding: '13px 22px',
+    fontSize: 14,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    cursor: 'pointer',
     whiteSpace: 'nowrap',
+    boxShadow: '0 0 16px rgba(16, 185, 129, 0.25)',
   },
-  erroEspera: { margin: 0, fontSize: 13, color: '#FCA5A5', textAlign: 'left' },
+  erroEspera: { margin: 0, fontSize: 13, color: 'var(--tertiary)', textAlign: 'left' },
   sucessoBox: {
-    background: 'rgba(45,122,92,0.18)', border: '1px solid rgba(245,240,228,0.3)',
-    borderRadius: 10, padding: '14px 18px', fontSize: 14, fontWeight: 600,
-    color: '#F5F0E4', display: 'flex', alignItems: 'center', gap: 8,
+    background: 'rgba(16, 185, 129, 0.16)',
+    border: '1px solid rgba(16, 185, 129, 0.35)',
+    borderRadius: 10,
+    padding: '14px 18px',
+    fontSize: 14,
+    fontWeight: 600,
+    color: 'var(--primary)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
   },
-  sucessoBoxClaro: {},
 
   rodape: {
-    background: '#164536', display: 'flex', alignItems: 'center', gap: 20,
-    flexWrap: 'wrap', boxSizing: 'border-box',
+    background: '#050807',
+    borderTop: '1px solid var(--border)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 20,
+    flexWrap: 'wrap',
+    boxSizing: 'border-box',
   },
-  rodapeLogoTexto: { fontSize: 13, fontWeight: 700, color: 'rgba(245,240,228,0.85)' },
+  rodapeLogoTexto: {
+    fontSize: 13,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+  },
   rodapeLink: {
-    background: 'none', border: 'none', color: 'rgba(245,240,228,0.75)', textDecoration: 'none',
-    fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0,
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-muted)',
+    textDecoration: 'none',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: 0,
   },
-  rodapeAno: { marginLeft: 'auto', fontSize: 12, color: 'rgba(245,240,228,0.5)' },
+  rodapeAno: {
+    marginLeft: 'auto',
+    fontSize: 12,
+    color: 'var(--text-dim)',
+  },
 }

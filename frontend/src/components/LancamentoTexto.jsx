@@ -2,19 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { lancarTexto, atualizarTransacao } from '../services/api'
 import { fmtBRL } from '../utils/fmt'
 
-const temSuporteVoz = typeof window !== 'undefined' &&
-  ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
-
 function hojeISO() {
   const hoje = new Date()
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
-}
-
-if (typeof document !== 'undefined' && !document.getElementById('pulso-style')) {
-  const s = document.createElement('style')
-  s.id = 'pulso-style'
-  s.textContent = '@keyframes pulso { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }'
-  document.head.appendChild(s)
 }
 
 export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [] }) {
@@ -30,44 +20,85 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   const recognitionRef = useRef(null)
 
   useEffect(() => {
-    return () => { recognitionRef.current?.abort() }
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort() } catch (_) {}
+      }
+    }
   }, [])
 
-  function iniciarVoz() {
-    if (!temSuporteVoz) return
-    if (ouvindo) {
-      recognitionRef.current?.stop()
+  function alternarGravacaoVoz() {
+    setErro('')
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+
+    if (!SpeechRecognition) {
+      setErro('O reconhecimento de voz nativo não é suportado por este navegador. Use o Google Chrome, Edge ou Safari.')
       return
     }
 
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    const rec = new SR()
-    rec.lang = 'pt-BR'
-    rec.interimResults = false
-    rec.maxAlternatives = 1
-
-    rec.onstart  = () => setOuvindo(true)
-    rec.onend    = () => setOuvindo(false)
-    rec.onerror  = (e) => {
-      setOuvindo(false)
-      if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-        setErro('Acesso ao microfone negado. Permita o microfone nas configurações do navegador.')
-      } else if (e.error !== 'no-speech') {
-        setErro('Erro ao capturar áudio: ' + e.error)
+    if (ouvindo) {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop() } catch (_) {}
       }
-    }
-    rec.onresult = (e) => {
-      const transcrito = e.results[0][0].transcript
-      setTexto((prev) => prev ? prev + ' ' + transcrito : transcrito)
+      setOuvindo(false)
+      return
     }
 
-    recognitionRef.current = rec
-    rec.start()
+    try {
+      const rec = new SpeechRecognition()
+      rec.lang = 'pt-BR'
+      rec.continuous = true
+      rec.interimResults = true
+      rec.maxAlternatives = 1
+
+      rec.onstart = () => {
+        setOuvindo(true)
+        setErro('')
+      }
+
+      rec.onresult = (event) => {
+        let textoTotal = ''
+        for (let i = 0; i < event.results.length; i++) {
+          textoTotal += event.results[i][0].transcript
+        }
+        if (textoTotal) {
+          setTexto(textoTotal)
+        }
+      }
+
+      rec.onerror = (e) => {
+        setOuvindo(false)
+        if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+          setErro('Acesso ao microfone negado. Clique no ícone de permissões ao lado da URL e permita o microfone.')
+        } else if (e.error === 'no-speech') {
+          // Não silencia ou não considera erro fatal se ainda estiver gravando
+        } else if (e.error === 'network') {
+          setErro('Erro de conexão com o serviço de voz do navegador.')
+        } else if (e.error !== 'aborted') {
+          setErro(`Erro no microfone: ${e.error}`)
+        }
+      }
+
+      rec.onend = () => {
+        setOuvindo(false)
+      }
+
+      recognitionRef.current = rec
+      rec.start()
+    } catch (err) {
+      setOuvindo(false)
+      setErro('Não foi possível iniciar o microfone: ' + err.message)
+    }
   }
 
   async function handleSubmit(e) {
-    e.preventDefault()
+    e?.preventDefault()
     if (!texto.trim()) return
+
+    if (ouvindo && recognitionRef.current) {
+      try { recognitionRef.current.stop() } catch (_) {}
+      setOuvindo(false)
+    }
 
     setCarregando(true)
     setErro('')
@@ -93,120 +124,117 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
         setPerguntaRecorrente(true)
       }
     } catch (err) {
-      setErro(err.message)
+      setErro(err.message || 'Falha ao salvar lançamento.')
     } finally {
       setCarregando(false)
     }
   }
 
-  async function handleTornarRecorrente() {
+  async function marcarRecorrente(recorrente) {
     if (!transacaoCriada) return
     try {
-      const atualizada = await atualizarTransacao(transacaoCriada.id, usuarioId, { recorrente: true })
-      onAtualizouTransacao(transacaoCriada.id, atualizada)
+      await atualizarTransacao(transacaoCriada.id, { recorrente })
+      onAtualizouTransacao?.(transacaoCriada.id, { recorrente })
       setPerguntaRecorrente(false)
-      setFeedback((prev) => ({ ...prev, recorrente: true }))
     } catch (err) {
-      alert('Erro ao atualizar: ' + err.message)
-    }
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e)
+      setErro(err.message)
     }
   }
 
   return (
-    <div style={estilos.container}>
-      <h2 style={estilos.titulo}>Novo lançamento</h2>
-      <p style={estilos.dica}>
-        Digite em linguagem natural. Ex: <em>"gastei 80 no mercado hoje"</em> ou <em>"recebi 3500 de salário"</em>
-      </p>
-
-      <form onSubmit={handleSubmit} style={estilos.form}>
-        <div style={estilos.textareaWrap}>
-          <textarea
-            aria-label="Descreva o lançamento"
+    <div style={s.card}>
+      <form onSubmit={handleSubmit}>
+        <div style={s.inputRow}>
+          <input
+            type="text"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="O que aconteceu? Ex: paguei 150 de conta de luz, vence dia 10..."
-            style={estilos.textarea}
-            rows={3}
+            placeholder={ouvindo ? "🎙️ Ouvindo... fale seu lançamento agora..." : "Ex: Aluguel 1500 dia 10, Mercado 250, Salário 5000..."}
             disabled={carregando}
+            style={{
+              ...s.input,
+              borderColor: ouvindo ? '#FC7C78' : 'var(--border)',
+            }}
           />
-          {temSuporteVoz && (
-            <button
-              type="button"
-              onClick={iniciarVoz}
-              disabled={carregando}
-              title={ouvindo ? 'Parar gravação' : 'Falar lançamento'}
-              aria-label={ouvindo ? 'Parar gravação' : 'Falar lançamento'}
-              style={{ ...estilos.micBtn, ...(ouvindo ? estilos.micBtnOuvindo : {}) }}
-            >
-              🎙
-            </button>
-          )}
+          
+          <button
+            type="button"
+            onClick={alternarGravacaoVoz}
+            className={ouvindo ? 'mic-ativo-pulsando' : ''}
+            style={{
+              ...s.micBtn,
+              background: ouvindo ? 'rgba(252, 124, 120, 0.22)' : 'var(--surface-hover)',
+              borderColor: ouvindo ? '#FC7C78' : 'var(--border)',
+              color: ouvindo ? '#FC7C78' : 'var(--text-muted)',
+            }}
+            title={ouvindo ? 'Clique para parar a gravação' : 'Lançar por voz (Microfone)'}
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill={ouvindo ? "#FC7C78" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" x2="12" y1="19" y2="22" />
+            </svg>
+          </button>
+
+          <button
+            type="submit"
+            disabled={carregando || !texto.trim()}
+            style={{
+              ...s.btnEnviar,
+              opacity: (carregando || !texto.trim()) ? 0.6 : 1,
+            }}
+          >
+            {carregando ? 'Salvando...' : 'Lançar'}
+          </button>
         </div>
 
         {ouvindo && (
-          <div style={estilos.ouvindoBadge}>
-            <span style={estilos.pulsoDot} />
-            Ouvindo... fale seu lançamento
+          <div style={s.ouvindoStatus}>
+            <span style={s.pulsoVermelho} />
+            <span style={s.ouvindoTexto}>
+              Microfone gravando em tempo real — Fale agora e clique em <strong>Lançar</strong> quando terminar.
+            </span>
           </div>
         )}
 
         {cartoes.length > 0 && (
-          <div style={estilos.cartaoRow}>
+          <div style={s.cartaoRow}>
+            <label style={s.cartaoLabel}>Foi no cartão?</label>
             <select
-              aria-label="Cartão da compra"
               value={cartaoId}
-              onChange={(e) => setCartaoId(e.target.value)}
-              disabled={carregando}
-              style={estilos.cartaoSelect}
+              onChange={e => setCartaoId(e.target.value)}
+              style={s.cartaoSelect}
             >
-              <option value="">Sem cartão</option>
-              {cartoes.map((c) => (
-                <option key={c.id} value={c.id}>{c.nome}</option>
+              <option value="">Não (Dinheiro / Pix / Débito)</option>
+              {cartoes.map(c => (
+                <option key={c.id} value={c.id}>💳 {c.nome}</option>
               ))}
             </select>
-            {cartaoId && (
-              <input
-                type="date"
-                aria-label="Data da compra"
-                value={dataCompra}
-                onChange={(e) => setDataCompra(e.target.value)}
-                disabled={carregando}
-                style={estilos.cartaoData}
-                title="Data da compra"
-              />
-            )}
           </div>
         )}
-
-        <button type="submit" style={estilos.botao} disabled={carregando || !texto.trim() || (cartaoId && !dataCompra)}>
-          {carregando ? '⏳ Analisando com IA...' : '✦ Lançar'}
-        </button>
       </form>
 
-      {erro && <div style={estilos.erroBox}>{erro}</div>}
+      {erro && (
+        <div style={s.erroBox}>
+          <span>⚠ {erro}</span>
+        </div>
+      )}
 
-      {feedback && <FeedbackIA dados={feedback} />}
+      {feedback && (
+        <div style={s.feedback}>
+          <span style={s.check}>✓</span>
+          <span>
+            <strong>{feedback.descricao}</strong> — {fmtBRL(feedback.valor)} ({feedback.tipo.replace('_', ' ')})
+          </span>
+        </div>
+      )}
 
       {perguntaRecorrente && (
-        <div style={estilos.perguntaBox}>
-          <p style={estilos.perguntaTexto}>
-            Esta é uma despesa fixa. Deseja que ela se repita automaticamente todo mês?
-          </p>
-          <div style={estilos.perguntaBotoes}>
-            <button onClick={handleTornarRecorrente} style={estilos.botaoSim}>
-              Sim, repetir todo mês
-            </button>
-            <button onClick={() => setPerguntaRecorrente(false)} style={estilos.botaoNao}>
-              Não, apenas este mês
-            </button>
+        <div style={s.recorrenteBox}>
+          <p style={s.recorrenteTexto}>Essa despesa é recorrente todo mês?</p>
+          <div style={s.recorrenteBotoes}>
+            <button onClick={() => marcarRecorrente(true)} style={s.btnRecSim}>Sim</button>
+            <button onClick={() => marcarRecorrente(false)} style={s.btnRecNao}>Não</button>
           </div>
         </div>
       )}
@@ -214,200 +242,157 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   )
 }
 
-function FeedbackIA({ dados }) {
-  const tipoLabel = {
-    despesa_fixa: 'Despesa Fixa',
-    despesa_variavel: 'Despesa Variável',
-    credito: 'Crédito',
-    aplicacao: 'Aplicação',
-  }
-
-  const tipoColor = {
-    despesa_fixa: '#7c3aed',
-    despesa_variavel: '#dc2626',
-    credito: '#16a34a',
-    aplicacao: '#2563eb',
-  }
-
-  return (
-    <div style={estilos.feedbackBox}>
-      <p style={estilos.feedbackTitulo}>✓ Lançado com sucesso</p>
-      <div style={estilos.chips}>
-        <Chip label={tipoLabel[dados.tipo] || dados.tipo} color={tipoColor[dados.tipo]} />
-        <Chip label={dados.categoria} color="#64748b" />
-        <Chip label={dados.status === 'pago' ? 'Pago' : 'Pendente'} color={dados.status === 'pago' ? '#16a34a' : '#d97706'} />
-        {dados.recorrente && <Chip label="Recorrente" color="#9333ea" />}
-        {dados.parcelado && <Chip label={`${dados.total_geradas}x criadas`} color="#6366f1" />}
-      </div>
-      <div style={estilos.feedbackDetalhes}>
-        <span style={estilos.feedbackDesc}>{dados.descricao}</span>
-        <span style={estilos.feedbackValor}>{fmtBRL(dados.valor)}</span>
-      </div>
-      <p style={estilos.feedbackDia}>Dia {dados.dia_pagamento} · {formatarMes(dados.mes_referencia)}</p>
-    </div>
-  )
-}
-
-function Chip({ label, color }) {
-  return (
-    <span style={{ ...estilos.chip, background: color }}>
-      {label}
-    </span>
-  )
-}
-
-function formatarMes(mesRef) {
-  if (!mesRef) return ''
-  const [ano, mes] = mesRef.split('-')
-  const nomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-  return `${nomes[parseInt(mes) - 1]}/${ano}`
-}
-
-const estilos = {
-  container: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '24px 28px',
-    boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
-    marginBottom: 24,
+const s = {
+  card: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '16px 20px',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
   },
-  titulo: { margin: '0 0 4px', fontSize: 18, fontWeight: 700, color: '#1a1a2e' },
-  dica: { margin: '0 0 16px', color: '#666', fontSize: 13 },
-  form: { display: 'flex', flexDirection: 'column', gap: 10 },
-  textareaWrap: { position: 'relative' },
-  textarea: {
-    width: '100%',
-    boxSizing: 'border-box',
-    padding: '12px 44px 12px 14px',
-    borderRadius: 8,
-    border: '1px solid #ddd',
-    fontSize: 15,
-    resize: 'vertical',
-    fontFamily: 'inherit',
+  inputRow: {
+    display: 'flex',
+    gap: 10,
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    padding: '12px 16px',
+    borderRadius: 10,
+    border: '1.5px solid var(--border)',
+    background: 'var(--surface-raised)',
+    color: 'var(--text-pure)',
+    fontSize: 14,
+    fontFamily: 'var(--font-body)',
     outline: 'none',
+    transition: 'border-color 0.2s ease',
   },
   micBtn: {
-    position: 'absolute',
-    right: 8,
-    top: 8,
-    width: 32,
-    height: 32,
-    border: 'none',
-    borderRadius: 6,
-    background: '#f1f5f9',
+    padding: '11px 14px',
+    borderRadius: 10,
+    border: '1px solid var(--border)',
     cursor: 'pointer',
-    fontSize: 16,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    transition: 'background 0.2s',
+    transition: 'all 0.2s ease',
   },
-  micBtnOuvindo: {
-    background: '#fef2f2',
-    outline: '2px solid #ef4444',
+  btnEnviar: {
+    padding: '12px 22px',
+    borderRadius: 10,
+    border: 'none',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontWeight: 700,
+    fontSize: 14,
+    fontFamily: 'var(--font-headline)',
+    cursor: 'pointer',
+    transition: 'opacity 0.15s ease',
   },
-  ouvindoBadge: {
+  ouvindoStatus: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
-    fontSize: 13,
-    color: '#dc2626',
+    gap: 10,
+    marginTop: 12,
+    padding: '8px 14px',
+    borderRadius: 8,
+    background: 'rgba(252, 124, 120, 0.1)',
+    border: '1px solid rgba(252, 124, 120, 0.3)',
+  },
+  pulsoVermelho: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    background: '#FC7C78',
+    boxShadow: '0 0 8px #FC7C78',
+    flexShrink: 0,
+  },
+  ouvindoTexto: {
+    fontSize: 12.5,
+    color: '#FC7C78',
     fontWeight: 500,
   },
-  pulsoDot: {
-    width: 10,
-    height: 10,
-    borderRadius: '50%',
-    background: '#ef4444',
-    display: 'inline-block',
-    animation: 'pulso 1s ease-in-out infinite',
+  cartaoRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTop: '1px solid var(--border-subtle)',
   },
-  cartaoRow: { display: 'flex', gap: 8 },
+  cartaoLabel: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+    fontWeight: 500,
+  },
   cartaoSelect: {
-    flex: 1,
-    padding: '9px 10px',
-    borderRadius: 8,
-    border: '1px solid #ddd',
-    fontSize: 13,
-    fontFamily: 'inherit',
+    padding: '6px 10px',
+    borderRadius: 6,
+    border: '1px solid var(--border)',
+    background: 'var(--surface-raised)',
+    color: 'var(--text)',
+    fontSize: 12,
     outline: 'none',
-    background: '#fff',
-  },
-  cartaoData: {
-    padding: '9px 10px',
-    borderRadius: 8,
-    border: '1px solid #ddd',
-    fontSize: 13,
-    fontFamily: 'inherit',
-    outline: 'none',
-  },
-  botao: {
-    padding: '12px',
-    borderRadius: 8,
-    border: 'none',
-    background: '#2563eb',
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
-    alignSelf: 'flex-end',
-    minWidth: 160,
   },
   erroBox: {
     marginTop: 12,
     padding: '10px 14px',
     borderRadius: 8,
-    background: '#fef2f2',
-    color: '#dc2626',
-    fontSize: 14,
-    border: '1px solid #fecaca',
+    background: 'rgba(252, 124, 120, 0.12)',
+    border: '1px solid rgba(252, 124, 120, 0.3)',
+    color: 'var(--tertiary)',
+    fontSize: 13,
+    lineHeight: 1.5,
   },
-  feedbackBox: {
-    marginTop: 14,
-    padding: '14px 16px',
+  feedback: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    padding: '8px 12px',
     borderRadius: 8,
-    background: '#f0fdf4',
-    border: '1px solid #bbf7d0',
+    background: 'var(--status-pago-bg)',
+    color: 'var(--primary)',
+    fontSize: 13,
   },
-  feedbackTitulo: { margin: '0 0 8px', fontWeight: 600, color: '#16a34a', fontSize: 14 },
-  chips: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
-  chip: {
-    padding: '2px 10px',
-    borderRadius: 20,
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 600,
+  check: {
+    fontWeight: 800,
   },
-  feedbackDetalhes: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  feedbackDesc: { fontSize: 15, fontWeight: 600, color: '#1a1a2e' },
-  feedbackValor: { fontSize: 18, fontWeight: 700, color: '#1a1a2e' },
-  feedbackDia: { margin: '4px 0 0', fontSize: 13, color: '#666' },
-  perguntaBox: {
-    marginTop: 10,
-    padding: '14px 16px',
+  recorrenteBox: {
+    marginTop: 12,
+    padding: '10px 14px',
+    background: 'var(--surface-hover)',
     borderRadius: 8,
-    background: '#faf5ff',
-    border: '1px solid #e9d5ff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  perguntaTexto: { margin: '0 0 12px', fontSize: 14, color: '#6b21a8', fontWeight: 500 },
-  perguntaBotoes: { display: 'flex', gap: 8 },
-  botaoSim: {
-    padding: '8px 16px',
+  recorrenteTexto: {
+    margin: 0,
+    fontSize: 13,
+    color: 'var(--text)',
+  },
+  recorrenteBotoes: {
+    display: 'flex',
+    gap: 8,
+  },
+  btnRecSim: {
+    padding: '4px 12px',
     borderRadius: 6,
     border: 'none',
-    background: '#7c3aed',
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 600,
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontWeight: 700,
+    fontSize: 12,
     cursor: 'pointer',
   },
-  botaoNao: {
-    padding: '8px 16px',
+  btnRecNao: {
+    padding: '4px 12px',
     borderRadius: 6,
-    border: '1px solid #ddd',
-    background: '#fff',
-    color: '#666',
-    fontSize: 13,
+    border: '1px solid var(--border)',
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 12,
     cursor: 'pointer',
   },
 }

@@ -3,6 +3,7 @@ import { criarCartao, atualizarCartao, contarComprasCartao, removerCartao } from
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { ItemLinha, soma, fmtSaldo } from '../components/Dashboard'
 import CabecalhoPagina from '../components/CabecalhoPagina'
+import { IconCartoes } from '../components/Icones'
 
 export default function PaginaCartoes({
   cartoes, transacoes, usuarioId, mesSelecionado,
@@ -27,7 +28,7 @@ export default function PaginaCartoes({
 
   return (
     <div style={c.root}>
-      <CabecalhoPagina icone="💳" titulo="Cartões" subtitulo="Compras no crédito sem duplicar no orçamento do mês." />
+      <CabecalhoPagina icone={<IconCartoes size={20} />} titulo="Cartões de Crédito" subtitulo="Compras no crédito organizadas com suas faturas." />
       {expandido ? (
         <FormCartao
           titulo="Novo cartão"
@@ -41,14 +42,14 @@ export default function PaginaCartoes({
         />
       ) : (
         <button onClick={() => setExpandido(true)} style={c.botaoNovo}>
-          + Novo cartão
+          + Adicionar novo cartão
         </button>
       )}
 
       {cartoes.length === 0 ? (
         <div style={c.placeholder}>
-          <p style={{ ...c.placeholderTexto, fontWeight: 600, color: '#334155' }}>Nenhum cartão cadastrado.</p>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#94a3b8' }}>Use o botão acima para cadastrar seu primeiro cartão.</p>
+          <p style={{ ...c.placeholderTexto, fontWeight: 600, color: 'var(--text-pure)' }}>Nenhum cartão cadastrado.</p>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>Use o botão acima para cadastrar seu primeiro cartão.</p>
         </div>
       ) : (
         cartoes.map(cartao => (
@@ -78,18 +79,14 @@ function BlocoCartao({
   const [editando, setEditando]   = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const total = soma(compras)
-  const corCartao = cartao.cor || 'var(--verde-profundo)'
-  const comprasOrdenadas = [...compras].sort((a, b) => {
-    const d = (a.dia_pagamento || 0) - (b.dia_pagamento || 0)
-    return d !== 0 ? d : (a.criado_em || '') < (b.criado_em || '') ? -1 : 1
-  })
+  const corCartao = cartao.cor || 'var(--primary)'
 
   async function handleExcluir() {
     setExcluindo(true)
     try {
       const totalCompras = await contarComprasCartao(cartao.id)
       const msg = totalCompras > 0
-        ? `Este cartão tem ${totalCompras} compra${totalCompras === 1 ? '' : 's'} registrada${totalCompras === 1 ? '' : 's'}. Excluir o cartão vai desvincular essas compras (elas continuam em Despesas, mas sem cartão associado). Deseja continuar?`
+        ? `Este cartão tem ${totalCompras} compras registradas. Excluir o cartão vai desvincular essas compras. Deseja continuar?`
         : 'Tem certeza que deseja excluir este cartão?'
       if (!confirm(msg)) return
       await removerCartao(cartao.id)
@@ -101,84 +98,90 @@ function BlocoCartao({
     }
   }
 
-  if (editando) {
-    return (
-      <FormCartao
-        inicial={cartao}
-        titulo={`Editar ${cartao.nome}`}
-        textoSalvar="Salvar alterações"
-        onSalvar={async (dados) => {
-          const atualizado = await atualizarCartao(cartao.id, dados)
-          onAtualizarCartao(cartao.id, atualizado)
-          setEditando(false)
-        }}
-        onCancelar={() => setEditando(false)}
-      />
-    )
-  }
-
   return (
-    <div style={{ ...c.bloco, borderLeft: `4px solid ${corCartao}` }}>
+    <div style={c.bloco}>
       <div style={c.blocoTopo}>
-        <div>
-          <div style={c.blocoNomeRow}>
-            <span style={{ ...c.blocoTitulo, color: corCartao }}>{cartao.nome}</span>
-            <button onClick={() => setEditando(true)} style={c.iconBtn} title="Editar cartão" aria-label={`Editar cartão: ${cartao.nome}`}>✎</button>
-            <button onClick={handleExcluir} disabled={excluindo} style={c.iconBtn} title="Excluir cartão" aria-label={`Excluir cartão: ${cartao.nome}`}>×</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ ...c.corDot, background: corCartao }} />
+          <div>
+            <h3 style={c.cartaoNome}>{cartao.nome}</h3>
+            <span style={c.cartaoInfo}>
+              Fecha dia {cartao.dia_fechamento} · Vence dia {cartao.dia_vencimento}
+            </span>
           </div>
-          <p style={c.blocoSub}>Fecha dia {cartao.dia_fechamento} · Vence dia {cartao.dia_vencimento}</p>
         </div>
-        <span style={c.blocoTotalValor}>{fmtSaldo(total)}</span>
+        <div style={{ textAlign: 'right' }}>
+          <span style={c.totalLabel}>Fatura do mês</span>
+          <span style={c.totalValor}>{fmtSaldo(total)}</span>
+        </div>
       </div>
 
-      <div style={c.separador} />
-
-      {comprasOrdenadas.length === 0 ? (
-        <p style={c.blocoVazio}>Nenhuma compra nesta fatura</p>
+      {editando ? (
+        <FormCartao
+          titulo={`Editar ${cartao.nome}`}
+          dadosIniciais={cartao}
+          textoSalvar="Salvar alterações"
+          onSalvar={async (dados) => {
+            const atualizado = await atualizarCartao(cartao.id, dados)
+            onAtualizarCartao(cartao.id, atualizado)
+            setEditando(false)
+          }}
+          onCancelar={() => setEditando(false)}
+        />
       ) : (
-        <div>
-          {comprasOrdenadas.map(t => (
-            <ItemLinha
-              key={t.id}
-              transacao={t}
-              cor={corCartao}
-              mostrarStatus
-              mostrarRecorrente={false}
-              removendo={removendo === t.id}
-              onRemover={() => onRemover(t.id)}
-              onAtualizar={campos => onAtualizar(t.id, campos)}
-              onDuplicar={() => onDuplicar(t.id)}
-              onCancelarParcelas={onCancelarParcelas}
-              cartoesById={cartoesById}
-            />
-          ))}
+        <div style={c.comprasLista}>
+          {compras.length === 0 ? (
+            <p style={c.textoVazio}>Nenhuma compra neste cartão para o mês selecionado.</p>
+          ) : (
+            compras.map(t => (
+              <ItemLinha
+                key={t.id}
+                transacao={t}
+                cor={corCartao}
+                mostrarStatus
+                removendo={removendo === t.id}
+                onRemover={() => onRemover(t.id)}
+                onAtualizar={campos => onAtualizar(t.id, campos)}
+                onDuplicar={() => onDuplicar(t.id)}
+                onCancelarParcelas={onCancelarParcelas}
+                cartoesById={cartoesById}
+              />
+            ))
+          )}
         </div>
       )}
+
+      <div style={c.blocoAcoes}>
+        <button onClick={() => setEditando(!editando)} style={c.btnAcao}>
+          {editando ? 'Fechar edição' : 'Editar cartão'}
+        </button>
+        <button onClick={handleExcluir} disabled={excluindo} style={{ ...c.btnAcao, color: 'var(--tertiary)' }}>
+          Excluir
+        </button>
+      </div>
     </div>
   )
 }
 
-function FormCartao({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
-  const [nome, setNome]                 = useState(inicial?.nome || '')
-  const [diaFechamento, setDiaFechamento] = useState(inicial ? String(inicial.dia_fechamento) : '')
-  const [diaVencimento, setDiaVencimento] = useState(inicial ? String(inicial.dia_vencimento) : '')
-  const [cor, setCor]                   = useState(inicial?.cor || '#1F5D45')
-  const [salvando, setSalvando]         = useState(false)
-  const [erro, setErro]                 = useState('')
+function FormCartao({ titulo, dadosIniciais = {}, textoSalvar, onSalvar, onCancelar }) {
+  const [nome, setNome]                     = useState(dadosIniciais.nome || '')
+  const [diaFechamento, setDiaFechamento]   = useState(dadosIniciais.dia_fechamento || '')
+  const [diaVencimento, setDiaVencimento]   = useState(dadosIniciais.dia_vencimento || '')
+  const [cor, setCor]                       = useState(dadosIniciais.cor || '#10B981')
+  const [salvando, setSalvando]             = useState(false)
+  const [erro, setErro]                     = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErro('')
-
-    const fech = parseInt(diaFechamento, 10)
-    const venc = parseInt(diaVencimento, 10)
-    if (!nome.trim()) { setErro('Informe o nome do cartão'); return }
-    if (isNaN(fech) || fech < 1 || fech > 31) { setErro('Dia de fechamento deve ser entre 1 e 31'); return }
-    if (isNaN(venc) || venc < 1 || venc > 31) { setErro('Dia de vencimento deve ser entre 1 e 31'); return }
-
     setSalvando(true)
     try {
-      await onSalvar({ nome: nome.trim(), dia_fechamento: fech, dia_vencimento: venc, cor })
+      await onSalvar({
+        nome: nome.trim(),
+        dia_fechamento: parseInt(diaFechamento, 10),
+        dia_vencimento: parseInt(diaVencimento, 10),
+        cor,
+      })
     } catch (err) {
       setErro(err.message)
     } finally {
@@ -187,122 +190,214 @@ function FormCartao({ inicial, titulo, textoSalvar, onSalvar, onCancelar }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={c.form}>
-      <h2 style={c.formTitulo}>{titulo}</h2>
+    <div style={c.formCard}>
+      <h4 style={c.formTitulo}>{titulo}</h4>
+      <form onSubmit={handleSubmit} style={c.form}>
+        <div style={c.inputGrid}>
+          <div style={c.campo}>
+            <label style={c.label}>Nome do Cartão</label>
+            <input
+              required
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              placeholder="Ex: Nubank, Inter..."
+              style={c.input}
+            />
+          </div>
+          <div style={c.campo}>
+            <label style={c.label}>Dia Fechamento</label>
+            <input
+              required
+              type="number"
+              min="1"
+              max="31"
+              value={diaFechamento}
+              onChange={e => setDiaFechamento(e.target.value)}
+              placeholder="Ex: 10"
+              style={c.input}
+            />
+          </div>
+          <div style={c.campo}>
+            <label style={c.label}>Dia Vencimento</label>
+            <input
+              required
+              type="number"
+              min="1"
+              max="31"
+              value={diaVencimento}
+              onChange={e => setDiaVencimento(e.target.value)}
+              placeholder="Ex: 17"
+              style={c.input}
+            />
+          </div>
+        </div>
 
-      <input
-        aria-label="Nome do cartão"
-        placeholder="Nome do cartão (ex: Cartão Master)"
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        style={c.input}
-        disabled={salvando}
-      />
+        {erro && <p style={c.erro}>{erro}</p>}
 
-      <div style={c.formRow}>
-        <label style={c.label}>
-          Dia de fechamento
-          <input
-            type="number" min="1" max="31"
-            value={diaFechamento}
-            onChange={(e) => setDiaFechamento(e.target.value)}
-            style={c.inputPequeno}
-            disabled={salvando}
-          />
-        </label>
-        <label style={c.label}>
-          Dia de vencimento
-          <input
-            type="number" min="1" max="31"
-            value={diaVencimento}
-            onChange={(e) => setDiaVencimento(e.target.value)}
-            style={c.inputPequeno}
-            disabled={salvando}
-          />
-        </label>
-        <label style={c.label}>
-          Cor
-          <input
-            type="color"
-            value={cor}
-            onChange={(e) => setCor(e.target.value)}
-            style={c.inputCor}
-            disabled={salvando}
-          />
-        </label>
-      </div>
-
-      {erro && <div style={c.erroBox}>{erro}</div>}
-
-      <div style={c.formBotoes}>
-        <button type="submit" style={c.botaoSalvar} disabled={salvando}>
-          {salvando ? 'Salvando...' : textoSalvar}
-        </button>
-        <button type="button" style={c.botaoCancelar} onClick={onCancelar} disabled={salvando}>
-          Cancelar
-        </button>
-      </div>
-    </form>
+        <div style={c.formBotoes}>
+          <button type="submit" disabled={salvando} style={c.btnSalvar}>
+            {salvando ? 'Salvando...' : textoSalvar}
+          </button>
+          <button type="button" onClick={onCancelar} style={c.btnCancelar}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
   )
 }
 
 const c = {
   root: { display: 'flex', flexDirection: 'column', gap: 20 },
-  placeholder:      { background: '#fff', borderRadius: 12, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' },
-  placeholderTexto: { margin: 0, color: '#64748b' },
+  placeholder: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '48px 24px',
+    textAlign: 'center',
+  },
+  placeholderTexto: { margin: 0, color: 'var(--text-muted)' },
   botaoNovo: {
     display: 'block', width: '100%', padding: '16px',
-    borderRadius: 12, border: '2px dashed #BDD5CC',
-    background: '#fff', color: 'var(--verde-profundo)',
-    fontSize: 15, fontWeight: 600, cursor: 'pointer',
-    textAlign: 'center', boxSizing: 'border-box',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-  },
-
-  form: {
-    background: '#fff', borderRadius: 12, padding: '24px 28px',
-    boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
-    display: 'flex', flexDirection: 'column', gap: 12,
-  },
-  formTitulo: { margin: 0, fontSize: 18, fontWeight: 700, color: '#1a1a2e' },
-  formRow: { display: 'flex', gap: 16, flexWrap: 'wrap' },
-  input: {
-    width: '100%', boxSizing: 'border-box',
-    padding: '10px 12px', borderRadius: 8,
-    border: '1px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none',
-  },
-  label: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#64748b', fontWeight: 600 },
-  inputPequeno: {
-    width: 80, padding: '8px 10px', borderRadius: 8,
-    border: '1px solid #ddd', fontSize: 14, fontFamily: 'inherit', outline: 'none',
-  },
-  inputCor: { width: 60, height: 36, padding: 2, borderRadius: 8, border: '1px solid #ddd', cursor: 'pointer' },
-  erroBox: {
-    padding: '10px 14px', borderRadius: 8,
-    background: '#fef2f2', color: '#dc2626',
-    fontSize: 14, border: '1px solid #fecaca',
-  },
-  formBotoes: { display: 'flex', gap: 8 },
-  botaoSalvar: {
-    padding: '10px 18px', borderRadius: 8, border: 'none',
-    background: 'var(--verde-profundo)', color: 'var(--creme-header)',
+    borderRadius: 12, border: '1.5px dashed var(--border)',
+    background: 'var(--surface)', color: 'var(--primary)',
     fontSize: 14, fontWeight: 600, cursor: 'pointer',
+    textAlign: 'center', boxSizing: 'border-box',
+    fontFamily: 'var(--font-headline)',
   },
-  botaoCancelar: {
-    padding: '10px 18px', borderRadius: 8, border: '1px solid #ddd',
-    background: '#fff', color: '#64748b', fontSize: 14, cursor: 'pointer',
+  bloco: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: '20px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
   },
-
-  bloco:           { background: '#fff', borderRadius: 10, padding: '16px 20px', boxShadow: '0 1px 6px rgba(0,0,0,0.07)' },
-  blocoTopo:       { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
-  blocoNomeRow:    { display: 'flex', alignItems: 'center', gap: 2 },
-  blocoTitulo:     { fontSize: 16, fontWeight: 700 },
-  blocoSub:        { margin: '2px 0 0', fontSize: 12, color: '#94a3b8' },
-  blocoTotalValor: { fontSize: 20, fontWeight: 800, color: '#1e293b' },
-  separador:       { height: 1, background: 'var(--surface-line)', margin: '14px -20px' },
-  blocoVazio:      { margin: '2px 0 0', fontSize: 13, color: '#cbd5e1', fontStyle: 'italic' },
-  iconBtn: {
-    background: 'none', border: 'none', fontSize: 14,
-    color: '#9ca3af', cursor: 'pointer', padding: '4px 6px', lineHeight: 1,
+  blocoTopo: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+    borderBottom: '1px solid var(--border-subtle)',
+  },
+  corDot: {
+    width: 14,
+    height: 14,
+    borderRadius: '50%',
+  },
+  cartaoNome: {
+    margin: 0,
+    fontSize: 16,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+  },
+  cartaoInfo: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+  },
+  totalLabel: {
+    display: 'block',
+    fontSize: 11,
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+  },
+  totalValor: {
+    fontSize: 18,
+    fontWeight: 800,
+    color: 'var(--text-pure)',
+  },
+  comprasLista: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  textoVazio: {
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    fontStyle: 'italic',
+  },
+  blocoAcoes: {
+    display: 'flex',
+    gap: 12,
+    paddingTop: 8,
+    borderTop: '1px solid var(--border-subtle)',
+  },
+  btnAcao: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: 0,
+  },
+  formCard: {
+    background: 'var(--surface-raised)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '20px',
+  },
+  formTitulo: {
+    margin: '0 0 16px',
+    fontSize: 15,
+    color: 'var(--text-pure)',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+  },
+  inputGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: 12,
+  },
+  campo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'var(--text-muted)',
+  },
+  input: {
+    padding: '10px 12px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--text-pure)',
+    fontSize: 13,
+    outline: 'none',
+  },
+  formBotoes: {
+    display: 'flex',
+    gap: 10,
+  },
+  btnSalvar: {
+    padding: '10px 20px',
+    borderRadius: 8,
+    border: 'none',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontWeight: 700,
+    fontSize: 13,
+    cursor: 'pointer',
+  },
+  btnCancelar: {
+    padding: '10px 16px',
+    borderRadius: 8,
+    border: '1px solid var(--border)',
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 13,
+    cursor: 'pointer',
+  },
+  erro: {
+    color: 'var(--tertiary)',
+    fontSize: 13,
+    margin: 0,
   },
 }
