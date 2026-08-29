@@ -172,7 +172,10 @@ export default function App() {
 
         <div style={estilos.conteudo}>
           {/* Header Superior — Conforme solicitado pelo usuário */}
-          <header style={estilos.header}>
+          <header style={{
+            ...estilos.header,
+            padding: isMobileNav ? '16px 16px 6px' : '24px 36px 12px',
+          }}>
             <div style={estilos.headerLeft}>
               <div style={estilos.mesNavegacao}>
                 <button
@@ -182,7 +185,10 @@ export default function App() {
                 >
                   ‹
                 </button>
-                <h1 style={estilos.tituloMes}>
+                <h1 style={{
+                  ...estilos.tituloMes,
+                  fontSize: isMobileNav ? 23 : 28,
+                }}>
                   {formatarMesHeader(mesSelecionado)}
                 </h1>
                 <button
@@ -193,10 +199,15 @@ export default function App() {
                   ›
                 </button>
               </div>
-              <span style={estilos.subtituloHeader}>Visão geral financeira</span>
+              <span style={{
+                ...estilos.subtituloHeader,
+                fontSize: isMobileNav ? 14 : 14.5,
+              }}>
+                Visão geral financeira
+              </span>
             </div>
 
-            {/* Menu suspenso: avatar + email abrem Configurações e Sair */}
+            {/* Menu suspenso: avatar na extremidade direita */}
             <div style={estilos.headerRight}>
               <MenuUsuario email={usuario.email} onLogout={handleLogout} />
             </div>
@@ -250,18 +261,20 @@ const estilos = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
-    flexWrap: 'wrap',
+    gap: 12,
+    flexWrap: 'nowrap',
   },
   headerLeft: {
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
+    minWidth: 0,
+    flex: 1,
   },
   mesNavegacao: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   tituloMes: {
     margin: 0,
@@ -272,9 +285,10 @@ const estilos = {
     letterSpacing: '-0.02em',
   },
   subtituloHeader: {
-    fontSize: 13,
+    fontSize: 14.5,
     color: 'var(--text-muted)',
-    fontWeight: 500,
+    fontWeight: 700,
+    letterSpacing: '-0.01em',
   },
   botaoSetaMes: {
     background: 'transparent',
@@ -291,6 +305,8 @@ const estilos = {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
   main: {
     maxWidth: 1200,

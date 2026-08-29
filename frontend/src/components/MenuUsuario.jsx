@@ -2,13 +2,16 @@ import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { IconConfiguracoes, IconLogout, IconSol, IconLua } from './Icones'
 import { useTheme } from '../hooks/useTheme'
+import { useIsNavMobile } from '../hooks/useIsNavMobile'
 
-// Menu suspenso do usuário — avatar + email no header abrem um dropdown
-// com alternador de Modo Claro/Escuro, Configurações e Sair.
+// Menu suspenso do usuário — avatar no header abre um dropdown
+// Na versão mobile: apenas o ícone circular do avatar é exibido no header (extremidade direita),
+// e o email do usuário é apresentado dentro do próprio menu suspenso.
 export default function MenuUsuario({ email, onLogout }) {
   const [aberto, setAberto] = useState(false)
   const rootRef = useRef(null)
   const { isDark, toggleTheme } = useTheme()
+  const isMobile = useIsNavMobile()
   const letraInicial = email ? email[0].toUpperCase() : 'U'
 
   useEffect(() => {
@@ -34,20 +37,51 @@ export default function MenuUsuario({ email, onLogout }) {
       <button
         type="button"
         onClick={() => setAberto(v => !v)}
-        style={m.trigger}
+        style={{
+          ...m.trigger,
+          ...(isMobile ? m.triggerMobile : {}),
+        }}
         aria-haspopup="menu"
         aria-expanded={aberto}
         title={email}
       >
         <div style={m.avatar}>{letraInicial}</div>
-        <span style={m.email}>{email}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', marginLeft: 2, transform: aberto ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }}>
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        {!isMobile && <span style={m.email}>{email}</span>}
+        {!isMobile && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              color: 'var(--text-muted)',
+              marginLeft: 2,
+              transform: aberto ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.15s ease',
+            }}
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        )}
       </button>
 
       {aberto && (
-        <div style={m.menu} role="menu">
+        <div style={{ ...m.menu, ...(isMobile ? m.menuMobile : {}) }} role="menu">
+          {/* Cabeçalho do usuário dentro do menu suspenso */}
+          <div style={m.usuarioInfoBox}>
+            <div style={m.avatarGrande}>{letraInicial}</div>
+            <div style={m.usuarioTextos}>
+              <span style={m.usuarioEmail} title={email}>{email}</span>
+              <span style={m.usuarioBadge}>Conta ativa</span>
+            </div>
+          </div>
+
+          <div style={m.divisor} />
+
           {/* Alternador de Tema (Light / Dark) */}
           <button
             type="button"
@@ -111,27 +145,35 @@ const m = {
     gap: 10,
     background: 'var(--surface)',
     border: '1px solid var(--border)',
-    padding: '6px 12px 6px 8px',
+    padding: '5px 12px 5px 6px',
     borderRadius: 99,
     maxWidth: 270,
     cursor: 'pointer',
     boxShadow: 'var(--card-shadow-sm)',
-    transition: 'border-color 0.15s ease, background-color 0.15s ease',
+    transition: 'border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease',
+  },
+  triggerMobile: {
+    padding: 0,
+    background: 'transparent',
+    border: 'none',
+    boxShadow: 'none',
+    borderRadius: '50%',
   },
   avatar: {
-    width: 28,
-    height: 28,
+    width: 34,
+    height: 34,
     borderRadius: '50%',
     background: 'rgba(16, 185, 129, 0.18)',
-    border: '1px solid rgba(16, 185, 129, 0.4)',
+    border: '1.5px solid rgba(16, 185, 129, 0.45)',
     color: 'var(--primary)',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 700,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
     fontFamily: 'var(--font-headline)',
+    boxShadow: '0 0 10px var(--primary-glow)',
   },
   email: {
     fontSize: 13,
@@ -146,17 +188,63 @@ const m = {
     position: 'absolute',
     top: 'calc(100% + 8px)',
     right: 0,
-    minWidth: 220,
+    minWidth: 230,
     background: 'var(--surface-raised)',
     border: '1px solid var(--border)',
     borderRadius: 14,
-    padding: 6,
+    padding: 8,
     boxShadow: 'var(--dropdown-shadow)',
-    zIndex: 50,
+    zIndex: 1000,
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
-    backdropFilter: 'blur(8px)',
+    backdropFilter: 'blur(10px)',
+  },
+  menuMobile: {
+    right: 0,
+    minWidth: 220,
+    maxWidth: 'calc(100vw - 32px)',
+  },
+  usuarioInfoBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '8px 10px 10px',
+  },
+  avatarGrande: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.18)',
+    border: '1px solid rgba(16, 185, 129, 0.4)',
+    color: 'var(--primary)',
+    fontSize: 13,
+    fontWeight: 700,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    fontFamily: 'var(--font-headline)',
+  },
+  usuarioTextos: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    minWidth: 0,
+    flex: 1,
+  },
+  usuarioEmail: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--text-pure)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  usuarioBadge: {
+    fontSize: 11,
+    color: 'var(--primary)',
+    fontWeight: 500,
   },
   item: {
     display: 'flex',
@@ -208,7 +296,7 @@ const m = {
   divisor: {
     height: 1,
     background: 'var(--border-subtle)',
-    margin: '4px 6px',
+    margin: '4px 4px',
   },
   itemSair: {
     color: 'var(--tertiary)',
