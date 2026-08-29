@@ -3,6 +3,7 @@ import { buscarSonhos, criarSonho, atualizarSonho, guardarValorSonho, removerSon
 import { fmtBRL } from '../utils/fmt'
 import CabecalhoPagina from '../components/CabecalhoPagina'
 import { IconSonhos } from '../components/Icones'
+import { useConfirm } from '../components/ModalConfirmacao'
 
 function calcularTempoRestante(dataAlvoISO) {
   const hoje = new Date()
@@ -139,9 +140,17 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
   // inflada (ex.: R$ 2.000/mês em vez de ~R$ 1.961/mês).
   const restante = Math.max(0, total - guardado)
   const valorMensal = diasTotais > 0 ? Math.ceil(restante / (diasTotais / 30)) : restante
+  const confirmar = useConfirm()
 
   async function handleExcluir() {
-    if (!confirm(`Tem certeza que deseja excluir o sonho "${sonho.nome}"?`)) return
+    const ok = await confirmar({
+      titulo: 'Excluir Sonho',
+      mensagem: `Tem certeza que deseja excluir o sonho "${sonho.nome}"? Esta ação não pode ser desfeita.`,
+      textoConfirmar: 'Excluir Sonho',
+      variante: 'danger',
+    })
+    if (!ok) return
+
     setExcluindo(true)
     try {
       await removerSonho(sonho.id)

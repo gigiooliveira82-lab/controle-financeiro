@@ -16,6 +16,7 @@ import PaginaSonhos from './pages/PaginaSonhos'
 import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 import MenuUsuario from './components/MenuUsuario'
+import { ConfirmProvider } from './components/ModalConfirmacao'
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -169,69 +170,71 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div style={estilos.layout}>
-        <NavLateral qtdVencidas={qtdVencidas} />
+      <ConfirmProvider>
+        <div style={estilos.layout}>
+          <NavLateral qtdVencidas={qtdVencidas} />
 
-        <div style={estilos.conteudo}>
-          {/* Header Superior — Conforme solicitado pelo usuário */}
-          <header style={{
-            ...estilos.header,
-            padding: isMobileNav ? '16px 16px 6px' : '24px 36px 12px',
-          }}>
-            <div style={estilos.headerLeft}>
-              <div style={estilos.mesNavegacao}>
-                <button
-                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
-                  style={estilos.botaoSetaMes}
-                  aria-label="Mês anterior"
-                >
-                  ‹
-                </button>
-                <h1 style={{
-                  ...estilos.tituloMes,
-                  fontSize: isMobileNav ? 23 : 28,
+          <div style={estilos.conteudo}>
+            {/* Header Superior — Conforme solicitado pelo usuário */}
+            <header style={{
+              ...estilos.header,
+              padding: isMobileNav ? '16px 16px 6px' : '24px 36px 12px',
+            }}>
+              <div style={estilos.headerLeft}>
+                <div style={estilos.mesNavegacao}>
+                  <button
+                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
+                    style={estilos.botaoSetaMes}
+                    aria-label="Mês anterior"
+                  >
+                    ‹
+                  </button>
+                  <h1 style={{
+                    ...estilos.tituloMes,
+                    fontSize: isMobileNav ? 23 : 28,
+                  }}>
+                    {formatarMesHeader(mesSelecionado)}
+                  </h1>
+                  <button
+                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
+                    style={estilos.botaoSetaMes}
+                    aria-label="Próximo mês"
+                  >
+                    ›
+                  </button>
+                </div>
+                <span style={{
+                  ...estilos.subtituloHeader,
+                  fontSize: isMobileNav ? 14 : 14.5,
                 }}>
-                  {formatarMesHeader(mesSelecionado)}
-                </h1>
-                <button
-                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
-                  style={estilos.botaoSetaMes}
-                  aria-label="Próximo mês"
-                >
-                  ›
-                </button>
+                  Visão geral financeira
+                </span>
               </div>
-              <span style={{
-                ...estilos.subtituloHeader,
-                fontSize: isMobileNav ? 14 : 14.5,
-              }}>
-                Visão geral financeira
-              </span>
-            </div>
 
-            {/* Menu suspenso: avatar na extremidade direita */}
-            <div style={estilos.headerRight}>
-              <MenuUsuario email={usuario.email} onLogout={handleLogout} />
-            </div>
-          </header>
+              {/* Menu suspenso: avatar na extremidade direita */}
+              <div style={estilos.headerRight}>
+                <MenuUsuario email={usuario.email} onLogout={handleLogout} />
+              </div>
+            </header>
 
-          <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
-            <Routes>
-              <Route path="/"              element={<Navigate to="/dashboard" replace />} />
-              <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
-              <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
-              <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
-              <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
-              <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
-              <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
-              <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
-              <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
-              <Route path="*"              element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </main>
+            <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
+              <Routes>
+                <Route path="/"              element={<Navigate to="/dashboard" replace />} />
+                <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
+                <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
+                <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
+                <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
+                <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
+                <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
+                <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
+                <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
+                <Route path="*"              element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </main>
+          </div>
         </div>
-      </div>
+      </ConfirmProvider>
     </BrowserRouter>
   )
 }

@@ -4,6 +4,7 @@ import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { ItemLinha, soma, fmtSaldo } from '../components/Dashboard'
 import CabecalhoPagina from '../components/CabecalhoPagina'
 import { IconCartoes } from '../components/Icones'
+import { useConfirm } from '../components/ModalConfirmacao'
 
 export default function PaginaCartoes({
   cartoes, transacoes, usuarioId, mesSelecionado,
@@ -80,15 +81,24 @@ function BlocoCartao({
   const [excluindo, setExcluindo] = useState(false)
   const total = soma(compras)
   const corCartao = cartao.cor || 'var(--primary)'
+  const confirmar = useConfirm()
 
   async function handleExcluir() {
     setExcluindo(true)
     try {
       const totalCompras = await contarComprasCartao(cartao.id)
       const msg = totalCompras > 0
-        ? `Este cartão tem ${totalCompras} compras registradas. Excluir o cartão vai desvincular essas compras. Deseja continuar?`
-        : 'Tem certeza que deseja excluir este cartão?'
-      if (!confirm(msg)) return
+        ? `Este cartão possui ${totalCompras} compra(s) vinculada(s). Excluir o cartão vai desvincular essas compras. Deseja continuar?`
+        : `Tem certeza que deseja excluir o cartão "${cartao.nome}"? Esta ação não pode ser desfeita.`
+
+      const ok = await confirmar({
+        titulo: 'Excluir Cartão',
+        mensagem: msg,
+        textoConfirmar: 'Excluir Cartão',
+        variante: 'danger',
+      })
+      if (!ok) return
+
       await removerCartao(cartao.id)
       onRemoverCartao(cartao.id)
     } catch (err) {

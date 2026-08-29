@@ -3,6 +3,7 @@ import { buscarContas, criarConta, atualizarConta, removerConta } from '../servi
 import { fmtBRL } from '../utils/fmt'
 import CabecalhoPagina from '../components/CabecalhoPagina'
 import { IconContas } from '../components/Icones'
+import { useConfirm } from '../components/ModalConfirmacao'
 
 function formatarData(iso) {
   if (!iso) return '—'
@@ -117,9 +118,17 @@ function CardConta({ conta, onAtualizou, onRemoveu }) {
 
   const corConta = conta.cor || 'var(--primary)'
   const defasada = diasDesde(conta.atualizado_em) > 7
+  const confirmar = useConfirm()
 
   async function handleExcluir() {
-    if (!confirm(`Tem certeza que deseja excluir a conta "${conta.nome}"?`)) return
+    const ok = await confirmar({
+      titulo: 'Excluir Conta',
+      mensagem: `Tem certeza que deseja excluir a conta "${conta.nome}"? Esta ação não pode ser desfeita.`,
+      textoConfirmar: 'Excluir Conta',
+      variante: 'danger',
+    })
+    if (!ok) return
+
     setExcluindo(true)
     try {
       await removerConta(conta.id)

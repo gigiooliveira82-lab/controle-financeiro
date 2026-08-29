@@ -1,11 +1,21 @@
 import { useState } from 'react'
 import { removerTransacao, atualizarTransacao, duplicarTransacao, cancelarParcelasGrupo } from '../services/api'
+import { useConfirm } from '../components/ModalConfirmacao'
 
 export function useTransacaoHandlers({ usuarioId, mesSelecionado, transacoes, onRemoveu, onAtualizou, onNova }) {
   const [removendo, setRemovendo] = useState(null)
+  const confirmar = useConfirm()
 
   async function handleRemover(id) {
-    if (!confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.')) return
+    const ok = await confirmar({
+      titulo: 'Excluir Lançamento',
+      mensagem: 'Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.',
+      textoConfirmar: 'Excluir',
+      textoCancelar: 'Cancelar',
+      variante: 'danger',
+    })
+    if (!ok) return
+
     setRemovendo(id)
     try {
       await removerTransacao(id, usuarioId)
@@ -38,6 +48,15 @@ export function useTransacaoHandlers({ usuarioId, mesSelecionado, transacoes, on
   }
 
   async function handleCancelarGrupoParcelas(grupoId) {
+    const ok = await confirmar({
+      titulo: 'Cancelar Parcelas Futuras',
+      mensagem: 'Deseja cancelar todas as parcelas futuras vinculadas a este parcelamento?',
+      textoConfirmar: 'Cancelar Parcelas',
+      textoCancelar: 'Manter',
+      variante: 'danger',
+    })
+    if (!ok) return
+
     try {
       await cancelarParcelasGrupo(grupoId, usuarioId)
       const hoje = new Date()
