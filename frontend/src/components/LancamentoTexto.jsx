@@ -7,7 +7,7 @@ function hojeISO() {
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
 }
 
-export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [] }) {
+export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [], transacoes = [] }) {
   const [texto, setTexto] = useState('')
   const [carregando, setCarregando] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -17,6 +17,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   const [ouvindo, setOuvindo] = useState(false)
   const [cartaoId, setCartaoId] = useState('')
   const [dataCompra, setDataCompra] = useState(hojeISO)
+  const [avisoFatura, setAvisoFatura] = useState(null)
   const recognitionRef = useRef(null)
 
   useEffect(() => {
@@ -105,6 +106,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
     setFeedback(null)
     setPerguntaRecorrente(false)
     setTransacaoCriada(null)
+    setAvisoFatura(null)
 
     try {
       const cartaoInfo = cartaoId ? { cartao_id: cartaoId, data_compra: dataCompra } : undefined
@@ -119,6 +121,26 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
       setCartaoId('')
       setDataCompra(hojeISO())
       onNovaTransacao(resultado.transacao)
+
+      // Detecta possível duplicidade: uma despesa vinculada a um cartão cujo
+      // valor bate perto do total que a fatura desse cartão/mês já soma —
+      // sinal de que a fatura inteira foi lançada como se fosse uma compra
+      // avulsa, duplicando o que as compras individuais já cobrem.
+      const nova = resultado.transacao
+      if (nova?.cartao_id) {
+        const totalFaturaAntes = transacoes
+          .filter(t => t.cartao_id === nova.cartao_id && t.mes_referencia === nova.mes_referencia && t.id !== nova.id)
+          .reduce((acc, t) => acc + Number(t.valor), 0)
+        if (totalFaturaAntes > 0) {
+          const diferenca = Math.abs(Number(nova.valor) - totalFaturaAntes) / totalFaturaAntes
+          if (diferenca <= 0.08) {
+            const cartaoNome = cartoes.find(c => c.id === nova.cartao_id)?.nome || 'este cartão'
+            setAvisoFatura(
+              `Isso parece ser a fatura inteira, não uma compra — o valor lançado (${fmtBRL(Number(nova.valor))}) está muito próximo do que as demais compras de ${cartaoNome} já somam neste mês (${fmtBRL(totalFaturaAntes)}). Nada foi apagado automaticamente: revise os lançamentos deste cartão e ajuste ou exclua o que for duplicado.`
+            )
+          }
+        }
+      }
 
       if (resultado.interpretado.tipo === 'despesa_fixa' && !resultado.interpretado.recorrente && !resultado.parcelado) {
         setPerguntaRecorrente(true)
@@ -226,6 +248,12 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
           <span>
             <strong>{feedback.descricao}</strong> — {fmtBRL(feedback.valor)} ({feedback.tipo.replace('_', ' ')})
           </span>
+        </div>
+      )}
+
+      {avisoFatura && (
+        <div style={s.avisoFaturaBox}>
+          <span>⚠ {avisoFatura}</span>
         </div>
       )}
 
@@ -357,6 +385,16 @@ const s = {
   },
   check: {
     fontWeight: 800,
+  },
+  avisoFaturaBox: {
+    marginTop: 12,
+    padding: '10px 14px',
+    borderRadius: 8,
+    background: 'var(--status-pendente-bg)',
+    border: '1px solid var(--status-pendente-fg)',
+    color: 'var(--status-pendente-fg)',
+    fontSize: 13,
+    lineHeight: 1.5,
   },
   recorrenteBox: {
     marginTop: 12,

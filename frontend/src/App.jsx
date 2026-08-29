@@ -13,8 +13,9 @@ import PaginaReceitas from './pages/PaginaReceitas'
 import PaginaCartoes from './pages/PaginaCartoes'
 import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaSonhos from './pages/PaginaSonhos'
+import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
-import { IconLogout } from './components/Icones'
+import MenuUsuario from './components/MenuUsuario'
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -164,8 +165,6 @@ export default function App() {
     carregando:       carregandoDados,
   }
 
-  const letraInicial = usuario.email ? usuario.email[0].toUpperCase() : 'U'
-
   return (
     <BrowserRouter>
       <div style={estilos.layout}>
@@ -197,21 +196,9 @@ export default function App() {
               <span style={estilos.subtituloHeader}>Visão geral financeira</span>
             </div>
 
-            {/* Identificação do Usuário + Botão Sair ao lado */}
+            {/* Menu suspenso: avatar + email abrem Configurações e Sair */}
             <div style={estilos.headerRight}>
-              <div style={estilos.usuarioBadge} title={usuario.email}>
-                <div style={estilos.usuarioAvatar}>{letraInicial}</div>
-                <span style={estilos.usuarioEmail}>{usuario.email}</span>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                style={estilos.botaoLogout}
-                title="Encerrar sessão"
-              >
-                <IconLogout size={16} />
-                <span>Sair</span>
-              </button>
+              <MenuUsuario email={usuario.email} onLogout={handleLogout} />
             </div>
           </header>
 
@@ -222,6 +209,7 @@ export default function App() {
               <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
               <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
               <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
+              <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
               <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
               <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
               <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
@@ -293,34 +281,6 @@ const estilos = {
     border: 'none',
     color: 'var(--text-muted)',
     fontSize: 22,
-    background: 'var(--surface)',
-    color: 'var(--text)',
-    padding: '14px 28px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottom: '1px solid var(--border)',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
-  },
-  navMes: { display: 'flex', alignItems: 'center', gap: 8 },
-  usuarioArea: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 },
-  usuarioEmail: {
-    fontSize: 12,
-    color: 'var(--text-muted)',
-    minWidth: 0,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  headerMes: { fontSize: 16, fontWeight: 700, color: 'var(--text)', textTransform: 'capitalize', minWidth: 140, textAlign: 'center', letterSpacing: '0.01em' },
-  botaoNav: {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--mint)',
-    fontSize: 24,
     cursor: 'pointer',
     padding: '0 4px',
     lineHeight: 1,
@@ -331,60 +291,6 @@ const estilos = {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-  },
-  usuarioBadge: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
-    padding: '6px 14px 6px 8px',
-    borderRadius: 99,
-    maxWidth: 260,
-  },
-  usuarioAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: '50%',
-    background: 'rgba(16, 185, 129, 0.18)',
-    border: '1px solid rgba(16, 185, 129, 0.4)',
-    color: 'var(--primary)',
-    fontSize: 12,
-    fontWeight: 700,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    fontFamily: 'var(--font-headline)',
-  },
-  usuarioEmail: {
-    fontSize: 13,
-    color: 'var(--text)',
-    fontWeight: 500,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    maxWidth: 180,
-  },
-  botaoLogout: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '8px 14px',
-    borderRadius: 8,
-    border: '1px solid var(--border)',
-    background: 'var(--surface)',
-    color: 'var(--text-muted)',
-    background: 'transparent',
-    border: '1px solid var(--border)',
-    color: 'var(--text)',
-    padding: '6px 14px',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
   },
   main: {
     maxWidth: 1200,

@@ -133,10 +133,12 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
   const vencido    = prazoVencido(sonho.data_alvo)
   const corSonho   = sonho.cor || 'var(--primary)'
 
-  // Cálculo da sugestão de economia mensal
+  // Cálculo da sugestão de economia mensal — usa os dias reais restantes
+  // (÷ 30), não os meses de calendário arredondados: um prazo de "5 meses e
+  // 6 dias" precisa considerar os 6 dias extras, senão a sugestão fica
+  // inflada (ex.: R$ 2.000/mês em vez de ~R$ 1.961/mês).
   const restante = Math.max(0, total - guardado)
-  const mesesCalculo = meses > 0 ? (meses + (diasExtra >= 15 ? 1 : 0)) : (diasTotais > 0 ? 1 : 0)
-  const valorMensal = mesesCalculo > 0 ? Math.ceil(restante / mesesCalculo) : restante
+  const valorMensal = diasTotais > 0 ? Math.ceil(restante / (diasTotais / 30)) : restante
 
   async function handleExcluir() {
     if (!confirm(`Tem certeza que deseja excluir o sonho "${sonho.nome}"?`)) return

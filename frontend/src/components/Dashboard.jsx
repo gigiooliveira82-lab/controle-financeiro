@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { fmtBRL, fmtNum } from '../utils/fmt'
-import { gerarAnaliseMes, perguntarSobreFinancas } from '../services/api'
+import { gerarAnaliseMes, perguntarSobreFinancas, buscarContas } from '../services/api'
 
 export const TIPO = {
   despesa_fixa:     { label: 'Despesas Fixas',     cor: '#A78BFA' },
@@ -126,9 +127,100 @@ export function CardHistoricoMes({ comparativo, parcial, mesSelecionado }) {
           </h3>
           <p style={s.cardHistoricoSub}>
             {comparativo.percentualVariacao > 0 ? 'Despesas maiores' : 'Economia em relação'} ao mês anterior.
+            {parcial ? ' (mês em andamento — comparação parcial)' : ''}
           </p>
         </>
       )}
+    </div>
+  )
+}
+
+// ── Cards de métrica secundária: Saldo Real, Saldo Projetado, A Pagar ───────
+export function CardMetricaSecundaria({ label, valor, sub, tom = 'neutro' }) {
+  const cores = {
+    positivo: 'var(--primary)',
+    negativo: 'var(--tertiary)',
+    pendente: 'var(--status-pendente-fg)',
+    neutro:   'var(--text-pure)',
+  }
+  return (
+    <div style={s.cardMetrica}>
+      <span style={s.cardMetricaLabel}>{label}</span>
+      <span style={{ ...s.cardMetricaValor, color: cores[tom] }}>{fmtSaldo(valor)}</span>
+      {sub && <span style={s.cardMetricaSub}>{sub}</span>}
+    </div>
+  )
+}
+
+// ── Saldo em Conta (hoje) — independente do mês navegado ────────────────────
+// Soma dos saldo_atual de Contas Correntes. Diferente de Saldo Real/Projetado
+// e Balanço do Mês (que são recortes do mês selecionado), este card mostra o
+// saldo bancário do momento presente e não reage ao seletor de mês — busca
+// os dados uma única vez por usuário, não por mês.
+export function CardSaldoContas({ usuarioId }) {
+  const [contas, setContas]         = useState(null)
+  const [carregando, setCarregando] = useState(true)
+
+  useEffect(() => {
+    if (!usuarioId) return
+    setCarregando(true)
+    buscarContas(usuarioId)
+      .then(setContas)
+      .catch(() => setContas([]))
+      .finally(() => setCarregando(false))
+  }, [usuarioId])
+
+  if (carregando) return null
+
+  const lista = contas || []
+  const total = lista.reduce((acc, c) => acc + Number(c.saldo_atual), 0)
+  const maisAntiga = lista.length > 0
+    ? lista.reduce((antiga, c) => new Date(c.atualizado_em) < new Date(antiga.atualizado_em) ? c : antiga, lista[0])
+    : null
+  const dias = maisAntiga ? Math.floor((new Date() - new Date(maisAntiga.atualizado_em)) / 86400000) : null
+  const defasado = dias !== null && dias > 7
+
+  return (
+    <div style={s.cardSaldoContas}>
+      <span style={s.cardLabel}>SALDO EM CONTA (HOJE)</span>
+      <span style={s.cardSaldoContasValor}>{fmtSaldo(total)}</span>
+      {lista.length === 0 ? (
+        <Link to="/contas" style={s.linkCadastrarContas}>Cadastre suas contas</Link>
+      ) : (
+        <span style={{ ...s.cardSaldoContasSub, ...(defasado ? s.cardSaldoContasSubAlerta : {}) }}>
+          Atualizado em {maisAntiga.atualizado_em ? new Date(maisAntiga.atualizado_em).toLocaleDateString('pt-BR') : '—'}
+          {defasado ? ' · Pode estar desatualizado' : ''}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ── Bloco de Próximos Vencimentos ────────────────────────────────────────────
+export function BlocoProximosVencimentos({ items, diaHoje }) {
+  return (
+    <div style={s.proximoBloco}>
+      <span style={s.cardLabel}>PRÓXIMOS VENCIMENTOS</span>
+      <div style={s.proximoLista}>
+        {items.map(t => {
+          const vencida = t.dia_pagamento < diaHoje
+          return (
+            <div key={t.id} style={{ ...s.proximoLinha, ...(vencida ? { background: 'var(--status-vencida-bg)' } : {}) }}>
+              <span style={s.proximoDia}>{t.dia_pagamento}</span>
+              <span style={s.proximoDesc}>{t.descricao}</span>
+              <span style={{
+                ...s.proximoStatus,
+                background: vencida ? 'var(--status-vencida-bg)' : 'var(--status-pendente-bg)',
+                color:      vencida ? 'var(--status-vencida-fg)' : 'var(--status-pendente-fg)',
+                border: `1px solid ${vencida ? 'var(--status-vencida-fg)' : 'var(--status-pendente-fg)'}`,
+              }}>
+                {vencida ? '⚠ Vencida' : 'Pendente'}
+              </span>
+              <span style={s.proximoValor}>{fmtSaldo(Math.abs(t.valor))}</span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -439,10 +531,11 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
   return (
     <div style={{
       ...s.itemLinha,
+      ...(isMobile ? s.itemLinhaMobile : {}),
       opacity: salvando ? 0.45 : 1,
       background: vencida ? 'rgba(252, 124, 120, 0.08)' : 'transparent',
     }}>
-      <div style={s.itemLinhaEsq}>
+      <div style={{ ...s.itemLinhaEsq, ...(isMobile ? { width: '100%' } : {}) }}>
         <span style={s.itemDiaTag}>{t.dia_pagamento}</span>
         <div style={s.itemLinhaTextos}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -502,10 +595,16 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
                 {t.categoria || 'Geral'}
               </CampoEditavel>
             )}
+            {t.subcategoria?.trim() && (
+              <>
+                <span style={s.itemSep}>·</span>
+                <span style={s.itemSubcategoria}>{t.subcategoria.trim()}</span>
+              </>
+            )}
             {t.cartao_id && cartoesById?.[t.cartao_id] && (
               <>
                 <span style={s.itemSep}>·</span>
-                <span style={{ ...s.cartaoBadge, color: cartoesById[t.cartao_id].cor || '#2DD4BF' }}>
+                <span style={s.cartaoBadge}>
                   💳 {cartoesById[t.cartao_id].nome}
                 </span>
               </>
@@ -514,7 +613,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
         </div>
       </div>
 
-      <div style={s.itemLinhaDir}>
+      <div style={{ ...s.itemLinhaDir, ...(isMobile ? s.itemLinhaDirMobile : {}) }}>
         {editandoValor ? (
           <input
             autoFocus
@@ -794,6 +893,98 @@ const s = {
     maxWidth: 260,
     lineHeight: 1.5,
   },
+
+  // Cards de métrica secundária (Saldo Real, Saldo Projetado, A Pagar)
+  cardMetrica: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '16px 18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  cardMetricaLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    letterSpacing: '0.07em',
+    textTransform: 'uppercase',
+  },
+  cardMetricaValor: {
+    fontFamily: 'var(--font-headline)',
+    fontSize: 22,
+    fontWeight: 800,
+    letterSpacing: '-0.01em',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  cardMetricaSub: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+  },
+
+  // Saldo em Conta (hoje)
+  cardSaldoContas: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '16px 18px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  cardSaldoContasValor: {
+    fontFamily: 'var(--font-headline)',
+    fontSize: 22,
+    fontWeight: 800,
+    letterSpacing: '-0.01em',
+    color: 'var(--text-pure)',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  cardSaldoContasSub: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+  },
+  cardSaldoContasSubAlerta: {
+    color: 'var(--status-pendente-fg)',
+    fontWeight: 600,
+  },
+  linkCadastrarContas: {
+    fontSize: 12,
+    color: 'var(--primary)',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+
+  // Bloco de Próximos Vencimentos
+  proximoBloco: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 16,
+    padding: '18px 20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  proximoLista: { display: 'flex', flexDirection: 'column', gap: 4 },
+  proximoLinha: {
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '8px 10px', borderRadius: 8,
+  },
+  proximoDia: {
+    fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
+    background: 'var(--surface-raised)', borderRadius: 4, padding: '2px 6px',
+    minWidth: 28, textAlign: 'center', flexShrink: 0,
+  },
+  proximoDesc: {
+    flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-pure)',
+    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+  },
+  proximoStatus: {
+    padding: '2px 8px', borderRadius: 20,
+    fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+  },
+  proximoValor: { fontSize: 13, fontWeight: 800, color: 'var(--text-pure)', whiteSpace: 'nowrap', flexShrink: 0, fontVariantNumeric: 'tabular-nums' },
 
   // Bloco Análise IA (Destaque)
   blocoAnaliseDestaque: {
@@ -1107,10 +1298,23 @@ const s = {
     borderBottom: '1px solid var(--border-subtle)',
     gap: 12,
   },
+  // Em telas estreitas, o bloco de ações (valor + status + ícones) não cabe
+  // ao lado da descrição/categoria — empilha em vez de espremer e sobrepor.
+  itemLinhaMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  itemLinhaDirMobile: {
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    width: '100%',
+  },
   itemLinhaEsq: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
     minWidth: 0,
   },
   itemDiaTag: {
@@ -1130,10 +1334,14 @@ const s = {
     minWidth: 0,
   },
   itemDesc: {
+    display: 'block',
     fontSize: 14,
     fontWeight: 600,
     color: 'var(--text-pure)',
     cursor: 'pointer',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   itemCatRow: {
     display: 'flex',
@@ -1141,6 +1349,7 @@ const s = {
     gap: 4,
     fontSize: 12,
     color: 'var(--text-muted)',
+    flexWrap: 'wrap',
   },
   itemCat: {
     textTransform: 'capitalize',
@@ -1149,8 +1358,12 @@ const s = {
   itemSep: {
     color: 'var(--text-dim)',
   },
+  itemSubcategoria: {
+    color: 'var(--text-muted)',
+  },
   cartaoBadge: {
     fontWeight: 500,
+    color: 'var(--text-muted)',
   },
   parcelaBadge: {
     fontSize: 10,

@@ -213,6 +213,47 @@ export async function removerSonho(id) {
   return json
 }
 
+export async function buscarContas(usuarioId) {
+  const res = await fetch(`${BASE_URL}/contas/${usuarioId}`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar contas')
+  return json.contas
+}
+
+export async function criarConta(dados) {
+  const res = await fetch(`${BASE_URL}/contas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao criar conta')
+  return json.conta
+}
+
+export async function atualizarConta(id, dados) {
+  const res = await fetch(`${BASE_URL}/contas/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao atualizar conta')
+  return json.conta
+}
+
+export async function removerConta(id) {
+  const res = await fetch(`${BASE_URL}/contas/${id}`, {
+    method: 'DELETE',
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao excluir conta')
+  return json
+}
+
 export async function removerTransacao(id, usuarioId) {
   const res = await fetch(`${BASE_URL}/transacoes/${id}`, {
     method: 'DELETE',

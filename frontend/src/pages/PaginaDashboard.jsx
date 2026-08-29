@@ -4,6 +4,9 @@ import LancamentoTexto from '../components/LancamentoTexto'
 import {
   CardBalancoMes,
   CardHistoricoMes,
+  CardMetricaSecundaria,
+  CardSaldoContas,
+  BlocoProximosVencimentos,
   BlocoAnaliseIA,
   FloatingAIPromptBar,
   soma,
@@ -47,6 +50,20 @@ export default function PaginaDashboard({
   const totalDespesas = soma(despesas)
   const saldoBalanco  = totalReceitas - totalDespesas
 
+  // Saldo Real / Projetado / A Pagar — mecanismo de alerta antecipado:
+  // Real considera só o que já foi pago/recebido; Projetado inclui também
+  // o que ainda está pendente no mês.
+  const pagos      = (arr) => arr.filter(t => t.status === 'pago')
+  const pendentes  = (arr) => arr.filter(t => t.status === 'pendente')
+  const cPago      = soma(pagos(creditos))
+  const cPend      = soma(pendentes(creditos))
+  const dPago      = soma(pagos(despesas))
+  const dPend      = soma(pendentes(despesas))
+  const saldoReal      = cPago - dPago
+  const saldoProjetado = (cPago + cPend) - (dPago + dPend)
+  const totalAPagar     = dPend
+  const qtdPendente     = pendentes(despesas).length
+
   // Categorias de gastos
   const gastosCat = {}
   despesas.forEach(t => {
@@ -54,6 +71,16 @@ export default function PaginaDashboard({
     gastosCat[c] = (gastosCat[c] || 0) + Number(t.valor)
   })
   const catOrdenadas = Object.entries(gastosCat).sort((a, b) => b[1] - a[1])
+
+  // Próximos vencimentos — só para o mês real atual
+  const hoje       = new Date()
+  const diaHoje    = hoje.getDate()
+  const mesHojeISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+  const mesEmAndamento = mesSelecionado === mesHojeISO
+  const proximosVencimentos = despesas
+    .filter(t => t.status === 'pendente' && t.mes_referencia === mesHojeISO)
+    .sort((a, b) => (a.dia_pagamento || 0) - (b.dia_pagamento || 0))
+    .slice(0, 5)
 
   function handleNovaComColapso(nova) {
     onNovaTransacao(nova)
@@ -76,6 +103,7 @@ export default function PaginaDashboard({
                 onNovaTransacao={handleNovaComColapso}
                 onAtualizouTransacao={onAtualizou}
                 cartoes={cartoes}
+                transacoes={transacoes}
               />
             </div>
           ) : (
@@ -102,8 +130,22 @@ export default function PaginaDashboard({
         <CardHistoricoMes
           comparativo={comparativo}
           mesSelecionado={mesSelecionado}
+          parcial={mesEmAndamento}
         />
       </div>
+
+      {/* Saldo Real / Saldo Projetado / A Pagar — alerta antecipado de contas pendentes */}
+      <div style={p.metricasGrid}>
+        <CardMetricaSecundaria label="Saldo Real" valor={saldoReal} sub="créditos recebidos − despesas pagas" tom={saldoReal >= 0 ? 'positivo' : 'negativo'} />
+        <CardMetricaSecundaria label="Saldo Projetado" valor={saldoProjetado} sub="considerando o que ainda está pendente" tom={saldoProjetado >= 0 ? 'positivo' : 'negativo'} />
+        <CardMetricaSecundaria label="A Pagar" valor={totalAPagar} sub={`${qtdPendente} conta${qtdPendente !== 1 ? 's' : ''} pendente${qtdPendente !== 1 ? 's' : ''}`} tom="pendente" />
+        {/* Saldo bancário do momento presente — não recorta por mês, por isso busca os próprios dados independente de mesSelecionado */}
+        <CardSaldoContas usuarioId={usuarioId} />
+      </div>
+
+      {mesEmAndamento && proximosVencimentos.length > 0 && (
+        <BlocoProximosVencimentos items={proximosVencimentos} diaHoje={diaHoje} />
+      )}
 
       {/* Card Destaque Central: Análise de IA do Mês (Image 2) */}
       <BlocoAnaliseIA
@@ -182,6 +224,11 @@ const p = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
     gap: 20,
+  },
+  metricasGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: 14,
   },
   placeholder: {
     background: 'var(--surface)',

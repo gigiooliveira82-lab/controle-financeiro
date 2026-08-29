@@ -86,6 +86,7 @@ export default function PaginaLancamentos({
         onNovaTransacao={handleNovaComColapso}
         onAtualizouTransacao={onAtualizou}
         cartoes={cartoes}
+        transacoes={transacoes}
       />
     ) : (
       <button onClick={() => setExpandido(true)} style={l.botaoNovo}>

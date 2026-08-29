@@ -4,18 +4,20 @@ import {
   IconDashboard,
   IconDespesas,
   IconReceitas,
+  IconContas,
   IconCartoes,
   IconAplicacoes,
   IconSonhos,
 } from './Icones'
 
 const NAV_ITENS = [
-  { path: '/dashboard',     Icon: IconDashboard, label: 'Dashboard',     curto: 'Dashboard'  },
-  { path: '/despesas',      Icon: IconDespesas,  label: 'Despesas',      curto: 'Despesas'   },
-  { path: '/receitas',      Icon: IconReceitas,  label: 'Receitas',      curto: 'Receitas'   },
-  { path: '/cartoes',       Icon: IconCartoes,   label: 'Cartões',       curto: 'Cartões'    },
-  { path: '/aplicacoes',    Icon: IconAplicacoes,label: 'Aplicações',    curto: 'Aplicações' },
-  { path: '/sonhos',        Icon: IconSonhos,    label: 'Meus Sonhos',   curto: 'Sonhos'     },
+  { path: '/dashboard',     Icon: IconDashboard,  label: 'Dashboard',   curto: 'Dashboard'  },
+  { path: '/despesas',      Icon: IconDespesas,   label: 'Despesas',    curto: 'Despesas'   },
+  { path: '/receitas',      Icon: IconReceitas,   label: 'Receitas',    curto: 'Receitas'   },
+  { path: '/contas',        Icon: IconContas,     label: 'Contas',      curto: 'Contas'     },
+  { path: '/cartoes',       Icon: IconCartoes,    label: 'Cartões',     curto: 'Cartões'    },
+  { path: '/aplicacoes',    Icon: IconAplicacoes, label: 'Aplicações',  curto: 'Aplicações' },
+  { path: '/sonhos',        Icon: IconSonhos,     label: 'Meus Sonhos', curto: 'Sonhos'     },
 ]
 
 export default function NavLateral({ qtdVencidas }) {
@@ -95,16 +97,13 @@ export default function NavLateral({ qtdVencidas }) {
 
 const st = {
   sidebar: {
-    width: 230,
-    minWidth: 230,
-    background: '#0A0F0D',
+    width: 210,
+    minWidth: 210,
+    background: 'var(--bg-deep)',
     borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
-    padding: '24px 14px',
-    width: 210, minWidth: 210,
-    background: 'var(--bg-deep)',
-    display: 'flex', flexDirection: 'column', gap: 4,
+    gap: 4,
     padding: '28px 14px',
     minHeight: '100vh',
     position: 'sticky',
@@ -112,6 +111,7 @@ const st = {
     alignSelf: 'flex-start',
     flexShrink: 0,
     boxSizing: 'border-box',
+    boxShadow: '2px 0 8px rgba(0,0,0,0.3)',
   },
   sidebarLogo: {
     display: 'flex',
@@ -119,6 +119,7 @@ const st = {
     gap: 12,
     padding: '4px 8px 28px',
     marginBottom: 8,
+    borderBottom: '1px solid var(--border)',
   },
   logoAvatar: {
     width: 38,
@@ -174,23 +175,6 @@ const st = {
     transition: 'all 0.15s ease',
   },
   sidebarItemActive: {
-    background: 'rgba(15, 118, 110, 0.32)',
-    color: 'var(--primary)',
-    boxShadow: '2px 0 8px rgba(0,0,0,0.3)',
-  },
-  sidebarLogo: {
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '0 4px 28px', marginBottom: 16,
-    borderBottom: '1px solid var(--border)',
-  },
-  sidebarItem: {
-    display: 'flex', alignItems: 'center', gap: 11,
-    padding: '11px 14px', borderRadius: 8,
-    color: 'var(--text-muted)',
-    textDecoration: 'none', fontWeight: 500, fontSize: 15,
-    letterSpacing: '0.005em',
-  },
-  sidebarItemActive: {
     background: 'var(--surface-raised)',
     color: 'var(--text)',
     fontWeight: 600,
@@ -204,13 +188,14 @@ const st = {
     left: 0,
     right: 0,
     zIndex: 100,
-    background: '#0D1411',
+    background: 'var(--bg-deep)',
     borderTop: '1px solid var(--border)',
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
     padding: '8px 2px 6px',
     backdropFilter: 'blur(12px)',
+    boxShadow: '0 -2px 12px rgba(0,0,0,0.4)',
   },
   bottomItem: {
     display: 'flex',
@@ -226,11 +211,11 @@ const st = {
     minWidth: 0,
   },
   bottomItemActive: {
-    color: 'var(--primary)',
+    color: 'var(--text)',
     fontWeight: 600,
   },
   bottomLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: 500,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
@@ -242,19 +227,6 @@ const st = {
     borderRadius: '50%',
     background: 'var(--primary)',
     marginTop: 2,
-    position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
-    background: 'var(--bg-deep)',
-    display: 'flex', justifyContent: 'space-around', alignItems: 'stretch',
-    boxShadow: '0 -2px 12px rgba(0,0,0,0.4)',
-  },
-  bottomItem: {
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-    color: 'var(--text-muted)', textDecoration: 'none',
-    padding: '9px 4px', flex: 1, justifyContent: 'center',
-  },
-  bottomItemActive: {
-    color: 'var(--text)',
-    background: 'var(--surface-raised)',
   },
   badge: {
     position: 'absolute',
@@ -264,10 +236,6 @@ const st = {
     height: 7,
     borderRadius: '50%',
     background: 'var(--tertiary)',
-    border: '1.5px solid #0A0F0D',
-    position: 'absolute', top: -1, right: -5,
-    width: 7, height: 7, borderRadius: '50%',
-    background: '#ef4444',
     border: '1.5px solid var(--bg-deep)',
   },
 }
