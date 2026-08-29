@@ -1,17 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
-import { IconCadeado, IconLogout, IconSol, IconLua } from './Icones'
+import { IconCadeado, IconExportar, IconLogout, IconSol, IconLua } from './Icones'
 import { useTheme } from '../hooks/useTheme'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
 import ModalAlterarSenha from './ModalAlterarSenha'
+import ModalExportarDados from './ModalExportarDados'
 
 // Menu suspenso do usuário — avatar no header abre um dropdown com:
 // - Info do usuário (email/status)
 // - Alternador de Modo Claro/Escuro
-// - Alterar Senha (abre modal interativo com validações e integração Supabase)
+// - Exportar Dados (CSV / JSON)
+// - Alterar Senha
 // - Sair
-export default function MenuUsuario({ email, onLogout }) {
+export default function MenuUsuario({ email, onLogout, usuarioId }) {
   const [aberto, setAberto] = useState(false)
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
+  const [modalExportarAberto, setModalExportarAberto] = useState(false)
   const rootRef = useRef(null)
   const { isDark, toggleTheme } = useTheme()
   const isMobile = useIsNavMobile()
@@ -112,6 +115,22 @@ export default function MenuUsuario({ email, onLogout }) {
 
             <div style={m.divisor} />
 
+            {/* Exportar Dados */}
+            <button
+              type="button"
+              role="menuitem"
+              style={m.item}
+              onClick={() => {
+                setAberto(false)
+                setModalExportarAberto(true)
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <IconExportar size={16} color="var(--primary)" />
+              <span style={m.itemTexto}>Exportar Dados</span>
+            </button>
+
             {/* Alterar Senha */}
             <button
               type="button"
@@ -124,7 +143,7 @@ export default function MenuUsuario({ email, onLogout }) {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
-              <IconCadeado size={16} color="var(--primary)" />
+              <IconCadeado size={16} color="var(--text-muted)" />
               <span style={m.itemTexto}>Alterar Senha</span>
             </button>
 
@@ -148,6 +167,14 @@ export default function MenuUsuario({ email, onLogout }) {
       <ModalAlterarSenha
         aberto={modalSenhaAberto}
         onFechar={() => setModalSenhaAberto(false)}
+      />
+
+      {/* Modal de Exportar Dados */}
+      <ModalExportarDados
+        aberto={modalExportarAberto}
+        onFechar={() => setModalExportarAberto(false)}
+        usuarioId={usuarioId}
+        email={email}
       />
     </>
   )

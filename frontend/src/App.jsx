@@ -213,7 +213,7 @@ export default function App() {
 
               {/* Menu suspenso: avatar na extremidade direita */}
               <div style={estilos.headerRight}>
-                <MenuUsuario email={usuario.email} onLogout={handleLogout} />
+                <MenuUsuario email={usuario.email} onLogout={handleLogout} usuarioId={usuario.id} />
               </div>
             </header>
 
