@@ -57,7 +57,7 @@ export default function NavLateral({ qtdVencidas }) {
       <div style={st.sidebarLogo}>
         <div style={st.logoAvatar}>
           <div style={st.logoAvatarRing}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
           </div>
@@ -82,7 +82,7 @@ export default function NavLateral({ qtdVencidas }) {
             {({ isActive }) => (
               <>
                 <span style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <Icon size={18} />
+                  <Icon size={18} color={isActive ? 'var(--primary)' : 'currentColor'} />
                   {path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
                 </span>
                 <span style={{ flex: 1 }}>{label}</span>
@@ -97,9 +97,9 @@ export default function NavLateral({ qtdVencidas }) {
 
 const st = {
   sidebar: {
-    width: 210,
-    minWidth: 210,
-    background: 'var(--bg-deep)',
+    width: 250,
+    minWidth: 250,
+    background: 'var(--surface)',
     borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
@@ -111,13 +111,14 @@ const st = {
     alignSelf: 'flex-start',
     flexShrink: 0,
     boxSizing: 'border-box',
-    boxShadow: '2px 0 8px rgba(0,0,0,0.3)',
+    boxShadow: 'var(--sidebar-shadow)',
+    transition: 'background-color 0.2s ease, border-color 0.2s ease',
   },
   sidebarLogo: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    padding: '4px 8px 28px',
+    padding: '4px 8px 24px',
     marginBottom: 8,
     borderBottom: '1px solid var(--border)',
   },
@@ -125,12 +126,12 @@ const st = {
     width: 38,
     height: 38,
     borderRadius: '50%',
-    background: 'radial-gradient(circle at 30% 30%, #153E32, #0A1E17)',
+    background: 'rgba(16, 185, 129, 0.14)',
     border: '1.5px solid rgba(16, 185, 129, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 0 16px rgba(16, 185, 129, 0.2)',
+    boxShadow: '0 0 16px var(--primary-glow)',
     flexShrink: 0,
   },
   logoAvatarRing: {
@@ -175,10 +176,10 @@ const st = {
     transition: 'all 0.15s ease',
   },
   sidebarItemActive: {
-    background: 'var(--surface-raised)',
-    color: 'var(--text)',
+    background: 'rgba(16, 185, 129, 0.12)',
+    color: 'var(--text-pure)',
     fontWeight: 600,
-    border: '1px solid rgba(16, 185, 129, 0.25)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
   },
 
   // Mobile Bottom Bar
@@ -188,14 +189,14 @@ const st = {
     left: 0,
     right: 0,
     zIndex: 100,
-    background: 'var(--bg-deep)',
+    background: 'var(--surface)',
     borderTop: '1px solid var(--border)',
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
     padding: '8px 2px 6px',
     backdropFilter: 'blur(12px)',
-    boxShadow: '0 -2px 12px rgba(0,0,0,0.4)',
+    boxShadow: 'var(--dropdown-shadow)',
   },
   bottomItem: {
     display: 'flex',
@@ -211,7 +212,7 @@ const st = {
     minWidth: 0,
   },
   bottomItemActive: {
-    color: 'var(--text)',
+    color: 'var(--primary)',
     fontWeight: 600,
   },
   bottomLabel: {
@@ -236,6 +237,6 @@ const st = {
     height: 7,
     borderRadius: '50%',
     background: 'var(--tertiary)',
-    border: '1.5px solid var(--bg-deep)',
+    border: '1.5px solid var(--surface)',
   },
 }

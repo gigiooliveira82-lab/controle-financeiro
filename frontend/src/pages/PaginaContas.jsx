@@ -453,7 +453,7 @@ const s = {
     borderRadius: 8,
     border: 'none',
     background: 'var(--primary)',
-    color: '#0A0F0D',
+    color: 'var(--primary-contrast)',
     fontWeight: 700,
     fontSize: 13,
     cursor: 'pointer',

@@ -76,7 +76,7 @@ export function CardBalancoMes({ saldo, totalReceitas, totalDespesas }) {
         </div>
       </div>
 
-      <div style={{ ...s.cardBalancoValor, color: positivo ? '#FFFFFF' : 'var(--tertiary)' }}>
+      <div style={{ ...s.cardBalancoValor, color: positivo ? 'var(--text-pure)' : 'var(--tertiary)' }}>
         {fmtSaldo(saldo)}
       </div>
 
@@ -454,9 +454,9 @@ export function FloatingAIPromptBar({ usuarioId }) {
           {carregando ? (
             <span style={{ fontSize: 12 }}>...</span>
           ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0F0D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-contrast)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" fill="#0A0F0D" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" fill="var(--primary-contrast)" />
             </svg>
           )}
         </button>
@@ -811,7 +811,7 @@ const s = {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    boxShadow: 'var(--card-shadow)',
   },
   cardBalancoTopo: {
     display: 'flex',
@@ -874,7 +874,7 @@ const s = {
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    boxShadow: 'var(--card-shadow)',
   },
   cardHistoricoIcone: {
     marginBottom: 10,
@@ -988,11 +988,11 @@ const s = {
 
   // Bloco Análise IA (Destaque)
   blocoAnaliseDestaque: {
-    background: '#101915',
+    background: 'var(--surface-overlay)',
     border: '1.5px solid rgba(16, 185, 129, 0.45)',
     borderRadius: 18,
     padding: '24px 28px',
-    boxShadow: '0 0 30px rgba(16, 185, 129, 0.08)',
+    boxShadow: 'var(--card-shadow)',
     display: 'flex',
     flexDirection: 'column',
     gap: 20,
@@ -1052,8 +1052,8 @@ const s = {
   },
   analiseCardInsight: {
     flex: 1,
-    background: 'rgba(10, 20, 16, 0.75)',
-    border: '1px solid rgba(16, 185, 129, 0.25)',
+    background: 'var(--surface-hover)',
+    border: '1px solid var(--border)',
     borderRadius: 14,
     padding: '20px 22px',
     display: 'flex',
@@ -1102,12 +1102,12 @@ const s = {
     borderRadius: 8,
     border: 'none',
     background: 'var(--primary)',
-    color: '#0A0F0D',
+    color: 'var(--primary-contrast)',
     fontSize: 13,
     fontWeight: 700,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
-    boxShadow: '0 0 14px rgba(16, 185, 129, 0.25)',
+    boxShadow: '0 0 14px var(--primary-glow)',
   },
   insightPlaceholder: {
     display: 'flex',
@@ -1203,7 +1203,7 @@ const s = {
     border: '1.5px solid var(--border)',
     borderRadius: 99,
     padding: '6px 8px 6px 18px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    boxShadow: 'var(--dropdown-shadow)',
     backdropFilter: 'blur(10px)',
   },
   floatingAttachIcon: {
@@ -1239,7 +1239,7 @@ const s = {
     border: '1px solid var(--border)',
     borderRadius: 14,
     padding: '16px 20px',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+    boxShadow: 'var(--dropdown-shadow)',
   },
   floatingRespostaHeader: {
     display: 'flex',

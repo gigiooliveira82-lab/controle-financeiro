@@ -179,7 +179,7 @@ const p = {
   },
   botaoNovaEntradaDashboard: {
     background: 'var(--primary)',
-    color: '#0A0F0D',
+    color: 'var(--primary-contrast)',
     border: 'none',
     padding: '11px 22px',
     borderRadius: 10,
@@ -190,7 +190,7 @@ const p = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 8,
-    boxShadow: '0 0 16px rgba(16, 185, 129, 0.22)',
+    boxShadow: '0 0 16px var(--primary-glow)',
     transition: 'transform 0.15s ease, background 0.15s ease',
   },
   novoLancamentoWrap: {
@@ -198,7 +198,7 @@ const p = {
     border: '1px solid var(--border)',
     borderRadius: 16,
     padding: '18px 20px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+    boxShadow: 'var(--card-shadow)',
   },
   novoLancamentoHeader: {
     display: 'flex',
