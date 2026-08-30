@@ -1,9 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../services/supabase'
 import logoImg from '../assets/logomarca.svg'
-
-const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768)
@@ -15,69 +12,8 @@ function useIsMobile() {
   return mobile
 }
 
-function FormularioListaEspera() {
-  const [email, setEmail]         = useState('')
-  const [enviando, setEnviando]   = useState(false)
-  const [enviado, setEnviado]     = useState(false)
-  const [erro, setErro]           = useState('')
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setErro('')
-    const valor = email.trim()
-    if (!REGEX_EMAIL.test(valor)) {
-      setErro('Digite um e-mail válido.')
-      return
-    }
-    setEnviando(true)
-    const { error } = await supabase.from('lista_espera').insert({ email: valor })
-    setEnviando(false)
-    if (error) {
-      setErro('Não foi possível enviar agora. Tente novamente em instantes.')
-      return
-    }
-    setEnviado(true)
-  }
-
-  if (enviado) {
-    return (
-      <div style={s.sucessoBox}>
-        <span>✓</span> Você está na lista! Avisaremos assim que abrirmos o acesso.
-      </div>
-    )
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={s.formEspera} noValidate>
-      <div style={s.formEsperaCampo}>
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          inputMode="email"
-          placeholder="seu@email.com"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          disabled={enviando}
-          style={s.inputEspera}
-          aria-label="Seu e-mail"
-        />
-        <button type="submit" disabled={enviando} style={s.botaoEspera}>
-          {enviando ? 'Enviando...' : 'Quero ser avisado'}
-        </button>
-      </div>
-      {erro && <p style={s.erroEspera}>{erro}</p>}
-    </form>
-  )
-}
-
 export default function PaginaLanding() {
   const isMobile = useIsMobile()
-  const ctaFinalRef = useRef(null)
-
-  function scrollAteFormulario() {
-    ctaFinalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
 
   return (
     <div style={s.pagina} data-theme="dark" data-theme-locked="dark" className="theme-dark-locked">
@@ -95,11 +31,9 @@ export default function PaginaLanding() {
 
         <div style={s.navAcoes}>
           <Link to="/login" style={s.navLinkEntrar}>Entrar</Link>
-          {!isMobile && (
-            <button onClick={scrollAteFormulario} style={s.navBotaoDestaque}>
-              Entrar na lista de espera
-            </button>
-          )}
+          <Link to="/login" style={s.navBotaoDestaque}>
+            Experimente Grátis
+          </Link>
         </div>
       </header>
 
@@ -109,7 +43,7 @@ export default function PaginaLanding() {
         <div style={s.heroConteudo}>
           <div style={s.heroBadge}>
             <span style={s.heroBadgeIcone}>✦</span>
-            <span>Inteligência Financeira em Tempo Real</span>
+            <span>Inteligência Financeira em Tempo Real • 7 Dias Grátis</span>
           </div>
           <h1 style={{ ...s.heroTitulo, fontSize: isMobile ? 36 : 60 }}>
             A Clareza<br /><span style={s.heroTituloDestaque}>começa aqui.</span>
@@ -117,17 +51,20 @@ export default function PaginaLanding() {
           <p style={{ ...s.heroSub, fontSize: isMobile ? 16 : 19 }}>
             Chega de descobrir só no fim do mês que gastou mais do que podia.
             Chega de somar na mão a fatura do cartão para não duplicar no orçamento.
-            O Contas Claras junta despesas, receitas, cartões e metas num só lugar —
+            O Contas Claras junta despesas, receitas, cartões e metas num só lugar com inteligência artificial —
             e te avisa antes do aperto, não depois.
           </p>
           <div style={s.heroBotoes}>
-            <button onClick={scrollAteFormulario} style={s.botaoPrimario}>
-              Entrar na lista de espera
-            </button>
+            <Link to="/login" style={s.botaoPrimario}>
+              Experimentar 7 dias grátis
+            </Link>
             <Link to="/login" style={s.botaoSecundario}>
               Já tenho conta
             </Link>
           </div>
+          <p style={s.heroGarantia}>
+            ✓ Acesso ilimitado a todas as ferramentas &bull; Sem taxa de adesão &bull; Cancele quando quiser
+          </p>
         </div>
       </section>
 
@@ -145,16 +82,15 @@ export default function PaginaLanding() {
           </div>
           <div style={s.statCard}>
             <span style={s.statNumero}>6</span>
-            <span style={s.statLabel}>módulos integrados</span>
+            <span style={s.statLabel}>módulos integrados com IA</span>
           </div>
           <div style={s.statCard}>
             <span style={s.statNumero}>100%</span>
-            <span style={s.statLabel}>dos dados protegidos por login real</span>
+            <span style={s.statLabel}>dos dados protegidos por criptografia</span>
           </div>
         </div>
         <p style={s.statsRodape}>
-          São marcos do produto em construção, não estatísticas de clientes — o app já roda de
-          verdade, no dia a dia de quem está testando.
+          O aplicativo já funciona de verdade com todas as ferramentas liberadas para você avaliar durante 7 dias.
         </p>
       </section>
 
@@ -177,43 +113,59 @@ export default function PaginaLanding() {
         </div>
       </section>
 
-      {/* PREÇOS */}
+      {/* PREÇOS / PLANOS */}
       <section style={{ ...s.secao, padding: isMobile ? '56px 20px' : '80px 48px' }}>
         <p style={s.eyebrow}>Investimento</p>
         <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 26 : 36 }}>
-          Comece de graça, evolua quando quiser
+          Acesso completo liberado no cadastro
         </h2>
         <div style={{ ...s.precosGrid, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
+          {/* Card Trial 7 Dias */}
           <div style={s.planoCard}>
-            <h3 style={s.planoNome}>Grátis</h3>
-            <p style={s.planoPreco}>R$ 0</p>
-            <p style={s.planoDescricao}>Controle manual completo — todas as funcionalidades, exceto IA.</p>
+            <span style={s.planoSeloGratis}>Avaliação Gratuita</span>
+            <h3 style={s.planoNome}>7 Dias Grátis</h3>
+            <p style={s.planoPreco}>R$ 0<span style={s.planoPrecoPeriodo}> /primeira semana</span></p>
+            <p style={s.planoDescricao}>Acesso total e irrestrito a todas as funcionalidades do sistema para você testar na prática.</p>
             <ul style={s.planoLista}>
-              <li><span style={s.checkVerde}>✓</span> Despesas, receitas e cartões de crédito</li>
-              <li><span style={s.checkVerde}>✓</span> Meus Sonhos e metas financeiras com cálculo de prazos</li>
-              <li><span style={s.checkVerde}>✓</span> Dashboard completo com saldo do mês</li>
-              <li><span style={s.checkVerde}>✓</span> Gestão de parcelamentos e despesas recorrentes</li>
+              <li><span style={s.checkVerde}>✓</span> <strong>100% dos recursos liberados</strong> desde o primeiro minuto</li>
+              <li><span style={s.checkVerde}>✓</span> Lançamentos inteligentes por voz e texto com IA</li>
+              <li><span style={s.checkVerde}>✓</span> Gestão de cartões de crédito e conciliação bancária</li>
+              <li><span style={s.checkVerde}>✓</span> Metas financeiras com cálculo de prazos no <em>Meus Sonhos</em></li>
+              <li><span style={s.checkVerde}>✓</span> Dashboard completo com saldo real e saldo projetado</li>
             </ul>
+            <div style={{ marginTop: 24 }}>
+              <Link to="/login" style={s.planoBotaoAcao}>
+                Começar 7 dias grátis
+              </Link>
+            </div>
+            <p style={s.planoAviso}>Crie sua conta em 30 segundos e comece a usar agora mesmo.</p>
           </div>
 
+          {/* Card Assinatura Completa */}
           <div style={{ ...s.planoCard, ...s.planoCardPro }}>
-            <span style={s.planoSelo}>Lançamento em breve</span>
-            <h3 style={{ ...s.planoNome, color: 'var(--primary)' }}>Pro com IA</h3>
-            <p style={s.planoPreco}>~R$ 20–25<span style={s.planoPrecoPeriodo}>/mês</span></p>
-            <p style={s.planoDescricao}>Tudo do Grátis, mais o poder da IA resolvendo tudo por você.</p>
+            <span style={s.planoSelo}>Acesso Ilimitado</span>
+            <h3 style={{ ...s.planoNome, color: 'var(--primary)' }}>Plano Completo</h3>
+            <p style={s.planoPreco}>R$ 24,90<span style={s.planoPrecoPeriodo}>/mês</span></p>
+            <p style={s.planoDescricao}>Após os 7 dias grátis, continue tendo clareza total das suas finanças por menos de R$ 0,85 ao dia.</p>
             <ul style={s.planoLista}>
-              <li><span style={s.checkVerde}>✓</span> Categorização automática e lançamentos por voz</li>
-              <li><span style={s.checkVerde}>✓</span> Análise do mês em linguagem natural sob demanda</li>
-              <li><span style={s.checkVerde}>✓</span> Assistente financeiro para perguntas sobre seus gastos</li>
-              <li><span style={s.checkVerde}>✓</span> Dicas inteligentes personalizadas de economia</li>
+              <li><span style={s.checkVerde}>✓</span> Uso ilimitado do assistente financeiro e IA</li>
+              <li><span style={s.checkVerde}>✓</span> Todas as ferramentas e relatórios avançados</li>
+              <li><span style={s.checkVerde}>✓</span> Gestão ilimitada de cartões, contas e parcelamentos</li>
+              <li><span style={s.checkVerde}>✓</span> Novas funcionalidades e atualizações automáticas</li>
+              <li><span style={s.checkVerde}>✓</span> Suporte prioritário e exportação completa dos seus dados</li>
             </ul>
-            <p style={s.planoAviso}>Cobrança ainda não disponível. Entre na lista de espera para ter condições especiais.</p>
+            <div style={{ marginTop: 24 }}>
+              <Link to="/login" style={s.planoBotaoAcaoDestaque}>
+                Criar conta e testar grátis
+              </Link>
+            </div>
+            <p style={s.planoAviso}>Sem fidelidade. Cancele quando quiser diretamente pelo painel.</p>
           </div>
         </div>
       </section>
 
       {/* CTA FINAL */}
-      <section ref={ctaFinalRef} style={{ ...s.ctaFinal, padding: isMobile ? '64px 20px' : '96px 48px' }}>
+      <section style={{ ...s.ctaFinal, padding: isMobile ? '64px 20px' : '96px 48px' }}>
         <div style={s.ctaContainer}>
           <div style={s.ctaIconeDestaque}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -221,14 +173,19 @@ export default function PaginaLanding() {
             </svg>
           </div>
           <h2 style={{ ...s.ctaTitulo, fontSize: isMobile ? 28 : 42 }}>
-            Ainda em construção.<br />Já funcionando de verdade.
+            Comece agora com 7 dias grátis.<br />Sem compromisso.
           </h2>
           <p style={s.ctaSub}>
-            Entre na lista de espera e seja avisado assim que abrirmos novas vagas de acesso antecipado.
+            Cadastre-se em segundos, acesse todos os recursos inteligentes e tenha clareza absoluta sobre o seu dinheiro.
           </p>
-          <div style={s.ctaFormWrap}>
-            <FormularioListaEspera />
+          <div style={s.ctaBotoesWrap}>
+            <Link to="/login" style={s.botaoPrimarioGrande}>
+              Criar Minha Conta Grátis
+            </Link>
           </div>
+          <p style={s.ctaGarantiaTexto}>
+            ✓ 7 dias de avaliação gratuita &bull; Acesso completo a todas as funções &bull; Sem complicações
+          </p>
         </div>
       </section>
 
@@ -415,7 +372,10 @@ const s = {
     fontWeight: 700,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-block',
     boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
+    textAlign: 'center',
   },
   botaoSecundario: {
     background: 'var(--surface)',
@@ -429,6 +389,13 @@ const s = {
     textDecoration: 'none',
     display: 'inline-block',
     boxSizing: 'border-box',
+    textAlign: 'center',
+  },
+  heroGarantia: {
+    margin: '22px 0 0',
+    fontSize: 13,
+    color: 'var(--text-dim)',
+    textAlign: 'center',
   },
 
   secao: {
@@ -557,6 +524,19 @@ const s = {
     borderRadius: 99,
     fontFamily: 'var(--font-headline)',
   },
+  planoSeloGratis: {
+    position: 'absolute',
+    top: -12,
+    right: 24,
+    background: 'rgba(16, 185, 129, 0.18)',
+    border: '1px solid var(--primary)',
+    color: 'var(--primary)',
+    fontSize: 11,
+    fontWeight: 800,
+    padding: '4px 12px',
+    borderRadius: 99,
+    fontFamily: 'var(--font-headline)',
+  },
   planoNome: {
     margin: '0 0 6px',
     fontSize: 20,
@@ -596,6 +576,35 @@ const s = {
     color: 'var(--primary)',
     fontWeight: 800,
     marginRight: 8,
+  },
+  planoBotaoAcao: {
+    display: 'block',
+    background: 'var(--surface-raised)',
+    border: '1.5px solid var(--primary)',
+    color: 'var(--primary)',
+    padding: '13px 20px',
+    borderRadius: 10,
+    fontSize: 14,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    textAlign: 'center',
+    textDecoration: 'none',
+    transition: 'all 0.15s ease',
+  },
+  planoBotaoAcaoDestaque: {
+    display: 'block',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    border: 'none',
+    padding: '13px 20px',
+    borderRadius: 10,
+    fontSize: 14,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    textAlign: 'center',
+    textDecoration: 'none',
+    boxShadow: '0 0 16px rgba(16, 185, 129, 0.3)',
+    transition: 'all 0.15s ease',
   },
   planoAviso: {
     margin: '22px 0 0',
@@ -642,53 +651,30 @@ const s = {
     lineHeight: 1.6,
     color: 'var(--text-muted)',
   },
-  ctaFormWrap: {
-    maxWidth: 420,
-    margin: '0 auto',
+  ctaBotoesWrap: {
+    display: 'flex',
+    justifyContent: 'center',
+    margin: '0 auto 16px',
   },
-
-  formEspera: { display: 'flex', flexDirection: 'column', gap: 10, width: '100%' },
-  formEsperaCampo: { display: 'flex', gap: 8, flexWrap: 'wrap', width: '100%' },
-  inputEspera: {
-    flex: '1 1 200px',
-    minWidth: 0,
-    padding: '13px 16px',
-    borderRadius: 10,
-    border: '1.5px solid var(--border)',
-    background: 'var(--surface-raised)',
-    color: 'var(--text-pure)',
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'var(--font-body)',
-  },
-  botaoEspera: {
-    flex: '0 0 auto',
+  botaoPrimarioGrande: {
     background: 'var(--primary)',
     color: '#0A0F0D',
     border: 'none',
-    borderRadius: 10,
-    padding: '13px 22px',
-    fontSize: 14,
-    fontWeight: 700,
+    borderRadius: 12,
+    padding: '16px 36px',
+    fontSize: 16,
+    fontWeight: 800,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    boxShadow: '0 0 16px rgba(16, 185, 129, 0.25)',
+    textDecoration: 'none',
+    display: 'inline-block',
+    boxShadow: '0 0 24px rgba(16, 185, 129, 0.35)',
+    textAlign: 'center',
   },
-  erroEspera: { margin: 0, fontSize: 13, color: 'var(--tertiary)', textAlign: 'left' },
-  sucessoBox: {
-    background: 'rgba(16, 185, 129, 0.16)',
-    border: '1px solid rgba(16, 185, 129, 0.35)',
-    borderRadius: 10,
-    padding: '14px 18px',
-    fontSize: 14,
-    fontWeight: 600,
-    color: 'var(--primary)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    justifyContent: 'center',
+  ctaGarantiaTexto: {
+    margin: 0,
+    fontSize: 12.5,
+    color: 'var(--text-dim)',
   },
 
   rodape: {
