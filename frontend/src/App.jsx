@@ -17,6 +17,7 @@ import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 import MenuUsuario from './components/MenuUsuario'
 import { ConfirmProvider } from './components/ModalConfirmacao'
+import logoImg from './assets/logomarca.svg'
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -175,12 +176,33 @@ export default function App() {
           <NavLateral qtdVencidas={qtdVencidas} />
 
           <div style={estilos.conteudo}>
-            {/* Header Superior — Conforme solicitado pelo usuário */}
+            {/* Header Mobile com Identificação do Sistema */}
+            {isMobileNav && (
+              <div style={estilos.mobileTopBar}>
+                <div style={estilos.mobileBrandLogo}>
+                  <div style={estilos.logoAvatar}>
+                    <img src={logoImg} alt="Contas Claras" style={estilos.logoImg} />
+                  </div>
+                  <div style={estilos.logoTextWrap}>
+                    <span style={estilos.logoTitulo}>Contas Claras</span>
+                    <span style={estilos.logoSub}>Inteligência Financeira</span>
+                  </div>
+                </div>
+                <MenuUsuario email={usuario.email} onLogout={handleLogout} usuarioId={usuario.id} />
+              </div>
+            )}
+
+            {/* Header Superior / Subheader */}
             <header style={{
               ...estilos.header,
-              padding: isMobileNav ? '16px 16px 6px' : '24px 36px 12px',
+              padding: isMobileNav ? '14px 16px 6px' : '24px 36px 12px',
+              justifyContent: isMobileNav ? 'center' : 'space-between',
             }}>
-              <div style={estilos.headerLeft}>
+              <div style={{
+                ...estilos.headerLeft,
+                alignItems: isMobileNav ? 'center' : 'flex-start',
+                textAlign: isMobileNav ? 'center' : 'left',
+              }}>
                 <div style={estilos.mesNavegacao}>
                   <button
                     onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
@@ -191,7 +213,7 @@ export default function App() {
                   </button>
                   <h1 style={{
                     ...estilos.tituloMes,
-                    fontSize: isMobileNav ? 23 : 28,
+                    fontSize: isMobileNav ? 22 : 28,
                   }}>
                     {formatarMesHeader(mesSelecionado)}
                   </h1>
@@ -205,16 +227,18 @@ export default function App() {
                 </div>
                 <span style={{
                   ...estilos.subtituloHeader,
-                  fontSize: isMobileNav ? 14 : 14.5,
+                  fontSize: isMobileNav ? 13.5 : 14.5,
                 }}>
                   Visão geral financeira
                 </span>
               </div>
 
-              {/* Menu suspenso: avatar na extremidade direita */}
-              <div style={estilos.headerRight}>
-                <MenuUsuario email={usuario.email} onLogout={handleLogout} usuarioId={usuario.id} />
-              </div>
+              {/* Menu suspenso: visível no header superior no desktop */}
+              {!isMobileNav && (
+                <div style={estilos.headerRight}>
+                  <MenuUsuario email={usuario.email} onLogout={handleLogout} usuarioId={usuario.id} />
+                </div>
+              )}
             </header>
 
             <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
@@ -260,6 +284,60 @@ const estilos = {
     color: 'var(--text-muted)',
     fontFamily: 'var(--font-headline)',
     fontSize: 16,
+  },
+  mobileTopBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 16px',
+    background: 'var(--surface)',
+    borderBottom: '1px solid var(--border)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 30,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+  },
+  mobileBrandLogo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logoAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.14)',
+    border: '1.5px solid rgba(16, 185, 129, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 0 14px var(--primary-glow)',
+    flexShrink: 0,
+    overflow: 'hidden',
+  },
+  logoImg: {
+    width: 22,
+    height: 22,
+    objectFit: 'contain',
+    display: 'block',
+  },
+  logoTextWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    lineHeight: 1.15,
+  },
+  logoTitulo: {
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+    letterSpacing: '-0.01em',
+  },
+  logoSub: {
+    fontSize: 10.5,
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+    marginTop: 1,
   },
   header: {
     padding: '24px 36px 12px',

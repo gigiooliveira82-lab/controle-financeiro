@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../services/supabase'
+import logoImg from '../assets/logomarca.svg'
 
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -84,9 +85,7 @@ export default function PaginaLanding() {
       <header style={{ ...s.nav, padding: isMobile ? '14px 20px' : '18px 48px' }}>
         <div style={s.navLogo}>
           <div style={s.logoAvatar}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+            <img src={logoImg} alt="Contas Claras" style={s.logoImg} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={s.navLogoTexto}>Contas Claras</span>
@@ -237,9 +236,7 @@ export default function PaginaLanding() {
       <footer style={{ ...s.rodape, padding: isMobile ? '24px 20px' : '28px 48px' }}>
         <div style={s.navLogo}>
           <div style={{ ...s.logoAvatar, width: 28, height: 28 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+            <img src={logoImg} alt="Contas Claras" style={{ width: 17, height: 17, objectFit: 'contain', display: 'block' }} />
           </div>
           <span style={s.rodapeLogoTexto}>Contas Claras</span>
         </div>
@@ -292,6 +289,14 @@ const s = {
     alignItems: 'center',
     justifyContent: 'center',
     boxShadow: '0 0 14px rgba(16, 185, 129, 0.2)',
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  logoImg: {
+    width: 22,
+    height: 22,
+    objectFit: 'contain',
+    display: 'block',
   },
   navLogoTexto: {
     fontSize: 16,

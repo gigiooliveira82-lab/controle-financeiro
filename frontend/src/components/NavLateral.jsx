@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
+import logoImg from '../assets/logomarca.svg'
 import {
   IconDashboard,
   IconDespesas,
@@ -56,11 +57,7 @@ export default function NavLateral({ qtdVencidas }) {
       {/* Brand Header */}
       <div style={st.sidebarLogo}>
         <div style={st.logoAvatar}>
-          <div style={st.logoAvatarRing}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-          </div>
+          <img src={logoImg} alt="Contas Claras" style={st.logoImg} />
         </div>
         <div style={st.logoTextWrap}>
           <span style={st.logoTitulo}>Contas Claras</span>
@@ -133,6 +130,13 @@ const st = {
     justifyContent: 'center',
     boxShadow: '0 0 16px var(--primary-glow)',
     flexShrink: 0,
+    overflow: 'hidden',
+  },
+  logoImg: {
+    width: 24,
+    height: 24,
+    objectFit: 'contain',
+    display: 'block',
   },
   logoAvatarRing: {
     display: 'flex',
