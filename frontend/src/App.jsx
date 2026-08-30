@@ -17,6 +17,7 @@ import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
 import PaginaTermosPrivacidade from './pages/PaginaTermosPrivacidade'
 import MenuUsuario from './components/MenuUsuario'
+import ModalOnboardingTour from './components/ModalOnboardingTour'
 import { ConfirmProvider } from './components/ModalConfirmacao'
 import logoImg from './assets/logomarca.svg'
 
@@ -46,12 +47,18 @@ export default function App() {
   const [carregandoDados, setCarregandoDados] = useState(false)
   const [mesSelecionado, setMesSelecionado]   = useState(mesISOHoje)
   const [modoRedefinir, setModoRedefinir]     = useState(false)
+  const [tourAberto, setTourAberto]           = useState(false)
   const isMobileNav                           = useIsNavMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUsuario(data.session?.user ?? null)
+      const user = data.session?.user ?? null
+      setUsuario(user)
       setCarregando(false)
+      if (user?.id) {
+        const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
+        if (!tourFeito) setTourAberto(true)
+      }
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -60,7 +67,12 @@ export default function App() {
         setUsuario(session?.user ?? null)
       } else {
         setModoRedefinir(false)
-        setUsuario(session?.user ?? null)
+        const user = session?.user ?? null
+        setUsuario(user)
+        if (user?.id && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
+          if (!tourFeito) setTourAberto(true)
+        }
       }
     })
 
@@ -170,6 +182,7 @@ export default function App() {
     onRemoveu:        handleRemoveu,
     onAtualizou:      handleAtualizou,
     carregando:       carregandoDados,
+    onAbrirTour:      () => setTourAberto(true),
   }
 
   return (
@@ -191,7 +204,12 @@ export default function App() {
                     <span style={estilos.logoSub}>Inteligência Financeira</span>
                   </div>
                 </div>
-                <MenuUsuario email={usuario.email} onLogout={handleLogout} usuarioId={usuario.id} />
+                <MenuUsuario
+                  email={usuario.email}
+                  onLogout={handleLogout}
+                  usuarioId={usuario.id}
+                  onAbrirTour={() => setTourAberto(true)}
+                />
               </div>
             )}
 
@@ -239,7 +257,12 @@ export default function App() {
               {/* Menu suspenso: visível no header superior no desktop */}
               {!isMobileNav && (
                 <div style={estilos.headerRight}>
-                  <MenuUsuario email={usuario.email} onLogout={handleLogout} usuarioId={usuario.id} />
+                  <MenuUsuario
+                    email={usuario.email}
+                    onLogout={handleLogout}
+                    usuarioId={usuario.id}
+                    onAbrirTour={() => setTourAberto(true)}
+                  />
                 </div>
               )}
             </header>
@@ -257,12 +280,19 @@ export default function App() {
                 <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
                 <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
                 <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
-                <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
+                <Route path="/configuracoes" element={<PaginaConfiguracoes onAbrirTour={() => setTourAberto(true)} />} />
                 <Route path="*"              element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </main>
           </div>
         </div>
+
+        {/* Modal de Onboarding Tour */}
+        <ModalOnboardingTour
+          aberto={tourAberto}
+          onFechar={() => setTourAberto(false)}
+          usuarioId={usuario.id}
+        />
       </ConfirmProvider>
     </BrowserRouter>
   )

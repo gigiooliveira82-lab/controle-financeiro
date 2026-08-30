@@ -3,7 +3,7 @@ import CabecalhoPagina from '../components/CabecalhoPagina'
 import { IconConfiguracoes, IconSol, IconLua } from '../components/Icones'
 import { useTheme } from '../hooks/useTheme'
 
-export default function PaginaConfiguracoes() {
+export default function PaginaConfiguracoes({ onAbrirTour }) {
   const { theme, isDark, toggleTheme, setTheme } = useTheme()
   const savedPreference = typeof window !== 'undefined' ? localStorage.getItem('contas_claras_theme') : null
   const modoAtual = !savedPreference ? 'system' : theme
@@ -87,6 +87,38 @@ export default function PaginaConfiguracoes() {
           </button>
         </div>
       </div>
+
+      {/* Card Tour de Introdução */}
+      {onAbrirTour && (
+        <div style={s.card}>
+          <div style={s.secaoHeader}>
+            <h3 style={s.secaoTitulo}>Guia de Introdução</h3>
+            <p style={s.secaoDesc}>
+              Reveja o tour inicial para relembrar os recursos e funcionalidades da plataforma.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onAbrirTour}
+            style={{
+              ...s.btnTema,
+              justifyContent: 'space-between',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ ...s.iconeTemaWrap, color: 'var(--primary)' }}>
+                <span style={{ fontSize: 18 }}>✦</span>
+              </div>
+              <div style={s.temaTextos}>
+                <span style={s.temaTitulo}>Rever Tour do Sistema</span>
+                <span style={s.temaSub}>Guia interativo de 4 passos com dicas práticas</span>
+              </div>
+            </div>
+            <span style={{ color: 'var(--primary)', fontSize: 16, fontWeight: 700 }}>→</span>
+          </button>
+        </div>
+      )}
 
       {/* Card Jurídico & Privacidade */}
       <div style={s.card}>

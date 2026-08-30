@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { buscarComparativoMensal } from '../services/api'
 import LancamentoTexto from '../components/LancamentoTexto'
+import GuiaPrimeirosPassos from '../components/GuiaPrimeirosPassos'
 import {
   CardBalancoMes,
   CardHistoricoMes,
@@ -22,6 +23,7 @@ export default function PaginaDashboard({
   onNovaTransacao,
   onAtualizou,
   carregando,
+  onAbrirTour,
 }) {
   const [expandido, setExpandido]     = useState(false)
   const [comparativo, setComparativo] = useState(null)
@@ -89,6 +91,15 @@ export default function PaginaDashboard({
 
   return (
     <div style={p.root}>
+      {/* Guia de Primeiros Passos para Novos Usuários */}
+      <GuiaPrimeirosPassos
+        usuarioId={usuarioId}
+        transacoes={transacoes}
+        cartoes={cartoes}
+        onAbrirLancamento={() => setExpandido(true)}
+        onAbrirTour={onAbrirTour}
+      />
+
       {/* Botão / Área de Nova Entrada no Dashboard */}
       {mostrarLancamento && (
         <div style={p.novaEntradaSection}>

@@ -11,7 +11,7 @@ import ModalExportarDados from './ModalExportarDados'
 // - Exportar Dados (CSV / JSON)
 // - Alterar Senha
 // - Sair
-export default function MenuUsuario({ email, onLogout, usuarioId }) {
+export default function MenuUsuario({ email, onLogout, usuarioId, onAbrirTour }) {
   const [aberto, setAberto] = useState(false)
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
   const [modalExportarAberto, setModalExportarAberto] = useState(false)
@@ -114,6 +114,24 @@ export default function MenuUsuario({ email, onLogout, usuarioId }) {
             </button>
 
             <div style={m.divisor} />
+
+            {/* Tour do Sistema / Guia de Introdução */}
+            {onAbrirTour && (
+              <button
+                type="button"
+                role="menuitem"
+                style={m.item}
+                onClick={() => {
+                  setAberto(false)
+                  onAbrirTour()
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                <span style={{ fontSize: 15, lineHeight: 1 }}>✦</span>
+                <span style={{ ...m.itemTexto, color: 'var(--primary)', fontWeight: 600 }}>Tour do Sistema</span>
+              </button>
+            )}
 
             {/* Exportar Dados */}
             <button
