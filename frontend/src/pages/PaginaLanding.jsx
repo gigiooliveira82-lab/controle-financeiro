@@ -240,7 +240,10 @@ export default function PaginaLanding() {
           </div>
           <span style={s.rodapeLogoTexto}>Contas Claras</span>
         </div>
-        <Link to="/login" style={s.rodapeLink}>Acessar Conta</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <Link to="/termos" style={s.rodapeLink}>Termos & Privacidade</Link>
+          <Link to="/login" style={s.rodapeLink}>Acessar Conta</Link>
+        </div>
         <span style={s.rodapeAno}>© {new Date().getFullYear()} Contas Claras · Todos os direitos reservados</span>
       </footer>
     </div>

@@ -15,6 +15,7 @@ import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaSonhos from './pages/PaginaSonhos'
 import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
+import PaginaTermosPrivacidade from './pages/PaginaTermosPrivacidade'
 import MenuUsuario from './components/MenuUsuario'
 import { ConfirmProvider } from './components/ModalConfirmacao'
 import logoImg from './assets/logomarca.svg'
@@ -136,6 +137,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login onLogin={setUsuario} />} />
+          <Route path="/termos" element={<PaginaTermosPrivacidade />} />
+          <Route path="/privacidade" element={<PaginaTermosPrivacidade />} />
           <Route path="/"      element={<PaginaLanding />} />
           <Route path="*"      element={<Navigate to="/" replace />} />
         </Routes>
@@ -245,6 +248,8 @@ export default function App() {
               <Routes>
                 <Route path="/"              element={<Navigate to="/dashboard" replace />} />
                 <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
+                <Route path="/termos"        element={<PaginaTermosPrivacidade />} />
+                <Route path="/privacidade"   element={<PaginaTermosPrivacidade />} />
                 <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
                 <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
                 <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />

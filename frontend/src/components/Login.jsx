@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 import { useIsMobile } from './Dashboard'
 import logoImg from '../assets/logomarca.svg'
@@ -171,6 +172,12 @@ export default function Login({ onLogin }) {
               <button type="submit" style={m.botao} disabled={carregando}>
                 {carregando ? 'Criando conta...' : 'Cadastrar'}
               </button>
+              <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.4 }}>
+                Ao criar sua conta, você concorda com nossos{' '}
+                <Link to="/termos" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                  Termos e Privacidade
+                </Link>.
+              </p>
             </form>
 
             <button type="button" onClick={() => { setModo('login'); setErro(''); setSucesso('') }} style={m.linkBtnSolo}>
