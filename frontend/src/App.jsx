@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useIsNavMobile } from './hooks/useIsNavMobile'
 import { supabase } from './services/supabase'
-import { buscarTransacoes, gerarRecorrentes, buscarCartoes } from './services/api'
+import { buscarTransacoes, gerarRecorrentes, buscarCartoes, registrarLogAuth } from './services/api'
 import Login from './components/Login'
 import RedefinirSenha from './components/RedefinirSenha'
 import PaginaLanding from './pages/PaginaLanding'
@@ -15,11 +15,15 @@ import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaSonhos from './pages/PaginaSonhos'
 import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
+import PaginaAdmin from './pages/PaginaAdmin'
+import PaginaAdminUsuarios from './pages/PaginaAdminUsuarios'
+import PaginaAdminLogs from './pages/PaginaAdminLogs'
 import PaginaTermosPrivacidade from './pages/PaginaTermosPrivacidade'
 import MenuUsuario from './components/MenuUsuario'
 import ModalOnboardingTour from './components/ModalOnboardingTour'
 import { ConfirmProvider } from './components/ModalConfirmacao'
 import logoImg from './assets/logomarca.svg'
+
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -70,6 +74,9 @@ export default function App() {
         const user = session?.user ?? null
         setUsuario(user)
         if (user?.id && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          if (event === 'SIGNED_IN' && user?.email) {
+            registrarLogAuth('login', user.email)
+          }
           const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
           if (!tourFeito) setTourAberto(true)
         }
@@ -131,6 +138,9 @@ export default function App() {
   }
 
   async function handleLogout() {
+    if (usuario?.email) {
+      await registrarLogAuth('logout', usuario.email)
+    }
     await supabase.auth.signOut()
     setTransacoes([])
   }
@@ -188,22 +198,107 @@ export default function App() {
   return (
     <BrowserRouter>
       <ConfirmProvider>
-        <div style={estilos.layout}>
-          <NavLateral qtdVencidas={qtdVencidas} />
+        <AppAutenticado
+          usuario={usuario}
+          isMobileNav={isMobileNav}
+          qtdVencidas={qtdVencidas}
+          mesSelecionado={mesSelecionado}
+          setMesSelecionado={setMesSelecionado}
+          propsPaginas={propsPaginas}
+          handleLogout={handleLogout}
+          tourAberto={tourAberto}
+          setTourAberto={setTourAberto}
+        />
+      </ConfirmProvider>
+    </BrowserRouter>
+  )
+}
 
-          <div style={estilos.conteudo}>
-            {/* Header Mobile com Identificação do Sistema */}
-            {isMobileNav && (
-              <div style={estilos.mobileTopBar}>
-                <div style={estilos.mobileBrandLogo}>
-                  <div style={estilos.logoAvatar}>
-                    <img src={logoImg} alt="Contas Claras" style={estilos.logoImg} />
-                  </div>
-                  <div style={estilos.logoTextWrap}>
-                    <span style={estilos.logoTitulo}>Contas Claras</span>
-                    <span style={estilos.logoSub}>Inteligência Financeira</span>
-                  </div>
-                </div>
+function AppAutenticado({
+  usuario,
+  isMobileNav,
+  qtdVencidas,
+  mesSelecionado,
+  setMesSelecionado,
+  propsPaginas,
+  handleLogout,
+  tourAberto,
+  setTourAberto,
+}) {
+  const location = useLocation()
+  const isRotaAdmin = location.pathname.startsWith('/admin')
+
+  return (
+    <div style={estilos.layout}>
+      <NavLateral qtdVencidas={qtdVencidas} />
+
+      <div style={estilos.conteudo}>
+        {/* Header Mobile com Identificação do Sistema */}
+        {isMobileNav && (
+          <div style={estilos.mobileTopBar}>
+            <div style={estilos.mobileBrandLogo}>
+              <div style={estilos.logoAvatar}>
+                <img src={logoImg} alt="Contas Claras" style={estilos.logoImg} />
+              </div>
+              <div style={estilos.logoTextWrap}>
+                <span style={estilos.logoTitulo}>Contas Claras</span>
+                <span style={estilos.logoSub}>Inteligência Financeira</span>
+              </div>
+            </div>
+            <MenuUsuario
+              email={usuario.email}
+              onLogout={handleLogout}
+              usuarioId={usuario.id}
+              onAbrirTour={() => setTourAberto(true)}
+            />
+          </div>
+        )}
+
+        {/* Header Superior / Subheader (oculto quando estiver no Painel Admin) */}
+        {!isRotaAdmin && (
+          <header style={{
+            ...estilos.header,
+            padding: isMobileNav ? '14px 16px 6px' : '24px 36px 12px',
+            justifyContent: isMobileNav ? 'center' : 'space-between',
+          }}>
+            <div style={{
+              ...estilos.headerLeft,
+              alignItems: isMobileNav ? 'center' : 'flex-start',
+              textAlign: isMobileNav ? 'center' : 'left',
+            }}>
+              <div style={estilos.mesNavegacao}>
+                <button
+                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
+                  style={estilos.botaoSetaMes}
+                  aria-label="Mês anterior"
+                >
+                  ‹
+                </button>
+                <h1 style={{
+                  ...estilos.tituloMes,
+                  fontSize: isMobileNav ? 22 : 28,
+                }}>
+                  {formatarMesHeader(mesSelecionado)}
+                </h1>
+                <button
+                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
+                  style={estilos.botaoSetaMes}
+                  aria-label="Próximo mês"
+                >
+                  ›
+                </button>
+              </div>
+              <span style={{
+                ...estilos.subtituloHeader,
+                fontSize: isMobileNav ? 13.5 : 14.5,
+              }}>
+                Visão geral financeira
+              </span>
+            </div>
+
+            {/* Menu suspenso: visível no header superior no desktop */}
+            {!isMobileNav && (
+              <div style={estilos.headerRight}>
                 <MenuUsuario
                   email={usuario.email}
                   onLogout={handleLogout}
@@ -212,89 +307,43 @@ export default function App() {
                 />
               </div>
             )}
+          </header>
+        )}
 
-            {/* Header Superior / Subheader */}
-            <header style={{
-              ...estilos.header,
-              padding: isMobileNav ? '14px 16px 6px' : '24px 36px 12px',
-              justifyContent: isMobileNav ? 'center' : 'space-between',
-            }}>
-              <div style={{
-                ...estilos.headerLeft,
-                alignItems: isMobileNav ? 'center' : 'flex-start',
-                textAlign: isMobileNav ? 'center' : 'left',
-              }}>
-                <div style={estilos.mesNavegacao}>
-                  <button
-                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
-                    style={estilos.botaoSetaMes}
-                    aria-label="Mês anterior"
-                  >
-                    ‹
-                  </button>
-                  <h1 style={{
-                    ...estilos.tituloMes,
-                    fontSize: isMobileNav ? 22 : 28,
-                  }}>
-                    {formatarMesHeader(mesSelecionado)}
-                  </h1>
-                  <button
-                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
-                    style={estilos.botaoSetaMes}
-                    aria-label="Próximo mês"
-                  >
-                    ›
-                  </button>
-                </div>
-                <span style={{
-                  ...estilos.subtituloHeader,
-                  fontSize: isMobileNav ? 13.5 : 14.5,
-                }}>
-                  Visão geral financeira
-                </span>
-              </div>
+        <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
+          <Routes>
+            <Route path="/"              element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
+            <Route path="/termos"        element={<PaginaTermosPrivacidade />} />
+            <Route path="/privacidade"   element={<PaginaTermosPrivacidade />} />
+            <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
+            <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
+            <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
+            <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
+            <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
+            <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
+            <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
+            <Route path="/configuracoes" element={<PaginaConfiguracoes onAbrirTour={() => setTourAberto(true)} />} />
+            
+            {/* Rotas Administrativas com Proteção por Hash */}
+            <Route path="/admin/:hash"          element={<PaginaAdmin usuario={usuario} />} />
+            <Route path="/admin/:hash/usuarios" element={<PaginaAdminUsuarios usuario={usuario} />} />
+            <Route path="/admin/:hash/logs"     element={<PaginaAdminLogs usuario={usuario} />} />
+            <Route path="/admin"                element={<Navigate to="/dashboard" replace />} />
+            <Route path="/admin/*"              element={<Navigate to="/dashboard" replace />} />
+            
+            <Route path="*"                     element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
+      </div>
 
-              {/* Menu suspenso: visível no header superior no desktop */}
-              {!isMobileNav && (
-                <div style={estilos.headerRight}>
-                  <MenuUsuario
-                    email={usuario.email}
-                    onLogout={handleLogout}
-                    usuarioId={usuario.id}
-                    onAbrirTour={() => setTourAberto(true)}
-                  />
-                </div>
-              )}
-            </header>
-
-            <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
-              <Routes>
-                <Route path="/"              element={<Navigate to="/dashboard" replace />} />
-                <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
-                <Route path="/termos"        element={<PaginaTermosPrivacidade />} />
-                <Route path="/privacidade"   element={<PaginaTermosPrivacidade />} />
-                <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
-                <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
-                <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
-                <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
-                <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
-                <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
-                <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
-                <Route path="/configuracoes" element={<PaginaConfiguracoes onAbrirTour={() => setTourAberto(true)} />} />
-                <Route path="*"              element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </main>
-          </div>
-        </div>
-
-        {/* Modal de Onboarding Tour */}
-        <ModalOnboardingTour
-          aberto={tourAberto}
-          onFechar={() => setTourAberto(false)}
-          usuarioId={usuario.id}
-        />
-      </ConfirmProvider>
-    </BrowserRouter>
+      {/* Modal de Onboarding Tour */}
+      <ModalOnboardingTour
+        aberto={tourAberto}
+        onFechar={() => setTourAberto(false)}
+        usuarioId={usuario.id}
+      />
+    </div>
   )
 }
 

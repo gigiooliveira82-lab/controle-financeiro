@@ -12,6 +12,8 @@ build/
 
 # Logs
 *.log
+*.jsonl
+backend/logs/
 npm-debug.log*
 
 # Sistema operacional

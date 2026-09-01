@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
-import { IconCadeado, IconExportar, IconLogout, IconSol, IconLua } from './Icones'
+import { useNavigate } from 'react-router-dom'
+import { IconCadeado, IconExportar, IconLogout, IconSol, IconLua, IconPainelAdm } from './Icones'
 import { useTheme } from '../hooks/useTheme'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
+import { isUsuarioAdmin, gerarHashAdmin } from '../utils/hashAdmin'
 import ModalAlterarSenha from './ModalAlterarSenha'
 import ModalExportarDados from './ModalExportarDados'
 
 // Menu suspenso do usuário — avatar no header abre um dropdown com:
 // - Info do usuário (email/status)
+// - Painel Adm (somente para administradores)
 // - Alternador de Modo Claro/Escuro
 // - Exportar Dados (CSV / JSON)
 // - Alterar Senha
@@ -16,9 +19,13 @@ export default function MenuUsuario({ email, onLogout, usuarioId, onAbrirTour })
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false)
   const [modalExportarAberto, setModalExportarAberto] = useState(false)
   const rootRef = useRef(null)
+  const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
   const isMobile = useIsNavMobile()
   const letraInicial = email ? email[0].toUpperCase() : 'U'
+  const ehAdmin = isUsuarioAdmin(email)
+  const adminHash = ehAdmin ? gerarHashAdmin(email) : ''
+
 
   useEffect(() => {
     if (!aberto) return
@@ -83,9 +90,46 @@ export default function MenuUsuario({ email, onLogout, usuarioId, onAbrirTour })
               <div style={m.avatarGrande}>{letraInicial}</div>
               <div style={m.usuarioTextos}>
                 <span style={m.usuarioEmail} title={email}>{email}</span>
-                <span style={m.usuarioBadge}>Conta ativa</span>
+                <span style={m.usuarioBadge}>{ehAdmin ? 'Administrador' : 'Conta ativa'}</span>
               </div>
             </div>
+
+            {ehAdmin && (
+              <>
+                <div style={m.divisor} />
+                <button
+                  type="button"
+                  role="menuitem"
+                  style={{
+                    ...m.item,
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.22)',
+                  }}
+                  onClick={() => {
+                    setAberto(false)
+                    navigate(`/admin/${adminHash}`)
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.16)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(16, 185, 129, 0.08)'}
+                >
+                  <IconPainelAdm size={16} color="var(--primary)" />
+                  <span style={{ ...m.itemTexto, color: 'var(--primary)', fontWeight: 600 }}>Painel Adm</span>
+                  <span style={{
+                    marginLeft: 'auto',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    padding: '2px 6px',
+                    borderRadius: 4,
+                    background: 'var(--primary)',
+                    color: '#0A0F0D',
+                  }}>
+                    Admin
+                  </span>
+                </button>
+              </>
+            )}
 
             <div style={m.divisor} />
 

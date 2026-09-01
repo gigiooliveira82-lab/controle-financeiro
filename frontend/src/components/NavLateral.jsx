@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation, Link } from 'react-router-dom'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
 import logoImg from '../assets/logomarca.svg'
 import {
@@ -9,9 +9,13 @@ import {
   IconCartoes,
   IconAplicacoes,
   IconSonhos,
+  IconPainelAdm,
+  IconUsuarios,
+  IconLogs,
+  IconVoltar,
 } from './Icones'
 
-const NAV_ITENS = [
+const NAV_ITENS_SISTEMA = [
   { path: '/dashboard',     Icon: IconDashboard,  label: 'Dashboard',   curto: 'Dashboard'  },
   { path: '/despesas',      Icon: IconDespesas,   label: 'Despesas',    curto: 'Despesas'   },
   { path: '/receitas',      Icon: IconReceitas,   label: 'Receitas',    curto: 'Receitas'   },
@@ -23,14 +27,45 @@ const NAV_ITENS = [
 
 export default function NavLateral({ qtdVencidas }) {
   const isMobile = useIsNavMobile()
+  const location = useLocation()
+
+  const isRotaAdmin = location.pathname.startsWith('/admin')
+  const partesRota = location.pathname.split('/')
+  const adminHash = partesRota[2] || ''
+
+  // Itens dinâmicos para a barra lateral do painel de administração
+  const navItensAdmin = [
+    {
+      path: `/admin/${adminHash}`,
+      end: true,
+      Icon: IconDashboard,
+      label: 'Visão Geral',
+      curto: 'Visão Geral',
+    },
+    {
+      path: `/admin/${adminHash}/usuarios`,
+      Icon: IconUsuarios,
+      label: 'Usuários',
+      curto: 'Usuários',
+    },
+    {
+      path: `/admin/${adminHash}/logs`,
+      Icon: IconLogs,
+      label: 'Logs',
+      curto: 'Logs',
+    },
+  ]
+
+  const itensAtuais = isRotaAdmin ? navItensAdmin : NAV_ITENS_SISTEMA
 
   if (isMobile) {
     return (
       <nav style={st.bottomBar}>
-        {NAV_ITENS.map(({ path, Icon, curto }) => (
+        {itensAtuais.map(({ path, end, Icon, curto }) => (
           <NavLink
             key={path}
             to={path}
+            end={end}
             style={({ isActive }) => ({
               ...st.bottomItem,
               ...(isActive ? st.bottomItemActive : {}),
@@ -40,7 +75,7 @@ export default function NavLateral({ qtdVencidas }) {
               <>
                 <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={18} />
-                  {path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
+                  {!isRotaAdmin && path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
                 </span>
                 <span style={st.bottomLabel}>{curto}</span>
                 {isActive && <span style={st.activeDot} />}
@@ -48,6 +83,17 @@ export default function NavLateral({ qtdVencidas }) {
             )}
           </NavLink>
         ))}
+
+        {isRotaAdmin && (
+          <Link
+            to="/dashboard"
+            style={{ ...st.bottomItem, color: 'var(--primary)' }}
+            title="Voltar ao sistema"
+          >
+            <IconVoltar size={18} color="var(--primary)" />
+            <span style={{ ...st.bottomLabel, color: 'var(--primary)', fontWeight: 600 }}>Voltar</span>
+          </Link>
+        )}
       </nav>
     )
   }
@@ -60,17 +106,27 @@ export default function NavLateral({ qtdVencidas }) {
           <img src={logoImg} alt="Contas Claras" style={st.logoImg} />
         </div>
         <div style={st.logoTextWrap}>
-          <span style={st.logoTitulo}>Contas Claras</span>
-          <span style={st.logoSub}>Inteligência Financeira</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={st.logoTitulo}>Contas Claras</span>
+          </div>
+          {isRotaAdmin ? (
+            <span style={st.badgeAdminLateral}>
+              <IconPainelAdm size={10} color="#0A0F0D" />
+              Painel Adm
+            </span>
+          ) : (
+            <span style={st.logoSub}>Inteligência Financeira</span>
+          )}
         </div>
       </div>
 
       {/* Navigation Items */}
       <div style={st.navGroup}>
-        {NAV_ITENS.map(({ path, Icon, label }) => (
+        {itensAtuais.map(({ path, end, Icon, label }) => (
           <NavLink
             key={path}
             to={path}
+            end={end}
             style={({ isActive }) => ({
               ...st.sidebarItem,
               ...(isActive ? st.sidebarItemActive : {}),
@@ -80,7 +136,7 @@ export default function NavLateral({ qtdVencidas }) {
               <>
                 <span style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Icon size={18} color={isActive ? 'var(--primary)' : 'currentColor'} />
-                  {path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
+                  {!isRotaAdmin && path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
                 </span>
                 <span style={{ flex: 1 }}>{label}</span>
               </>
@@ -88,6 +144,21 @@ export default function NavLateral({ qtdVencidas }) {
           </NavLink>
         ))}
       </div>
+
+      {/* Botão de Voltar ao Sistema quando na barra lateral de Admin */}
+      {isRotaAdmin && (
+        <div style={st.footerAdminWrap}>
+          <div style={st.divisorAdmin} />
+          <Link
+            to="/dashboard"
+            style={st.btnVoltarSidebar}
+            title="Voltar ao dashboard do sistema"
+          >
+            <IconVoltar size={18} color="var(--primary)" />
+            <span>Voltar ao Sistema</span>
+          </Link>
+        </div>
+      )}
     </nav>
   )
 }
@@ -242,5 +313,45 @@ const st = {
     borderRadius: '50%',
     background: 'var(--tertiary)',
     border: '1.5px solid var(--surface)',
+  },
+  badgeAdminLateral: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 9.5,
+    fontWeight: 700,
+    color: '#0A0F0D',
+    background: 'var(--primary)',
+    padding: '2px 6px',
+    borderRadius: 4,
+    marginTop: 2,
+    width: 'fit-content',
+    letterSpacing: '0.03em',
+    textTransform: 'uppercase',
+  },
+  footerAdminWrap: {
+    marginTop: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  divisorAdmin: {
+    height: 1,
+    background: 'var(--border)',
+    margin: '4px 0',
+  },
+  btnVoltarSidebar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '11px 14px',
+    borderRadius: 10,
+    background: 'rgba(16, 185, 129, 0.08)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    color: 'var(--primary)',
+    textDecoration: 'none',
+    fontWeight: 600,
+    fontSize: 13.5,
+    transition: 'all 0.15s ease',
   },
 }
