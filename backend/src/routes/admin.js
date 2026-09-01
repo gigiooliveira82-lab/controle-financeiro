@@ -2,7 +2,7 @@ import { Router } from 'express'
 import autenticar from '../middleware/autenticar.js'
 import supabase from '../services/supabase.js'
 import { isUsuarioAdmin, gerarHashAdmin } from '../utils/hashAdmin.js'
-import { gravarLogAcesso, lerLogsPaginados } from '../utils/logger.js'
+import { gravarLogAcesso, lerLogsPaginados, calcularTempoMedioSessao } from '../utils/logger.js'
 
 const router = Router()
 
@@ -95,10 +95,17 @@ router.get('/metricas', autenticar, verificarPermissaoAdmin, async (req, res) =>
     ]
     const mesReferencia = `${nomesMeses[mesAtual]} de ${anoAtual}`
 
+    // Calcula tempo médio de permanência dos usuários com base nos logs
+    const dadosSessao = await calcularTempoMedioSessao()
+
     return res.json({
       totalUsuarios,
       novosUsuariosMes,
       mesReferencia,
+      tempoMedioPermanencia: dadosSessao.tempoFormatado,
+      tempoMedioPermanenciaExtenso: dadosSessao.tempoFormatadoExtenso,
+      tempoMedioSegundos: dadosSessao.tempoMedioSegundos,
+      totalSessoesMonitoradas: dadosSessao.totalSessoes,
       atualizadoEm: new Date().toISOString(),
     })
   } catch (err) {

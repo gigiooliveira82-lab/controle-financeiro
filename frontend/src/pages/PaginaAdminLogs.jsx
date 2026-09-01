@@ -9,8 +9,10 @@ import {
   IconAtualizar,
   IconVoltar,
 } from '../components/Icones'
+import { useIsNavMobile } from '../hooks/useIsNavMobile'
 
 export default function PaginaAdminLogs({ usuario }) {
+  const isMobile = useIsNavMobile()
   const { hash } = useParams()
   const navigate = useNavigate()
 
@@ -151,99 +153,165 @@ export default function PaginaAdminLogs({ usuario }) {
         </div>
       </div>
 
-      {/* Tabela de Logs */}
-      <div style={estilos.tabelaWrapper}>
-        <table style={estilos.tabela}>
-          <thead>
-            <tr>
-              <th style={estilos.th}>IP</th>
-              <th style={estilos.th}>Data / Hora</th>
-              <th style={estilos.th}>Local de Acesso</th>
-              <th style={estilos.th}>E-mail / Usuário</th>
-              <th style={estilos.th}>Evento</th>
-            </tr>
-          </thead>
-          <tbody>
-            {carregando ? (
-              <tr>
-                <td colSpan={5} style={estilos.tdVazio}>
-                  <div style={estilos.loadingRow}>
-                    <IconAtualizar size={20} color="var(--primary)" />
-                    <span>Carregando registros de login/logout...</span>
+      {/* Tabela ou Cards de Logs */}
+      {isMobile ? (
+        <div style={estilos.mobileCardsLista}>
+          {carregando ? (
+            <div style={estilos.cardVazioMobile}>
+              <IconAtualizar size={20} color="var(--primary)" />
+              <span>Carregando registros de login/logout...</span>
+            </div>
+          ) : logs.length === 0 ? (
+            <div style={estilos.cardVazioMobile}>
+              Nenhum registro de login/logout encontrado {busca ? `com o termo "${busca}"` : ''}.
+            </div>
+          ) : (
+            logs.map(log => {
+              const dataFormatada = log.criado_em
+                ? new Date(log.criado_em).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })
+                : '-'
+
+              const ehLogin = log.acao === 'login'
+
+              return (
+                <div key={log.id} style={estilos.cardLogMobile}>
+                  <div style={estilos.cardLogHeaderMobile}>
+                    <span style={{
+                      ...estilos.badgeAcao,
+                      background: ehLogin ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                      borderColor: ehLogin ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)',
+                      color: ehLogin ? 'var(--primary)' : '#F59E0B',
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}>
+                      {ehLogin ? '● Login' : '○ Logout'}
+                    </span>
+
+                    <span style={estilos.textoDataHoraMobile}>{dataFormatada}</span>
                   </div>
-                </td>
-              </tr>
-            ) : logs.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={estilos.tdVazio}>
-                  Nenhum registro de login/logout encontrado {busca ? `com o termo "${busca}"` : ''}.
-                </td>
-              </tr>
-            ) : (
-              logs.map(log => {
-                const dataFormatada = log.criado_em
-                  ? new Date(log.criado_em).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit',
-                    })
-                  : '-'
 
-                const ehLogin = log.acao === 'login'
+                  <div style={estilos.cardLogCorpoMobile}>
+                    <div style={estilos.cardLogEmailTexto}>
+                      {log.email || 'anônimo'}
+                    </div>
 
-                return (
-                  <tr key={log.id} style={estilos.tr}>
-                    {/* IP */}
-                    <td style={estilos.td}>
-                      <span style={estilos.badgeIp}>
-                        {log.ip || '127.0.0.1'}
-                      </span>
-                    </td>
-
-                    {/* Data / Hora de Acesso */}
-                    <td style={estilos.td}>
-                      <span style={estilos.textoDataHora}>{dataFormatada}</span>
-                    </td>
-
-                    {/* Local de Acesso */}
-                    <td style={estilos.td}>
+                    <div style={estilos.cardLogMetaRow}>
+                      <span style={estilos.badgeIpMobile}>{log.ip || '127.0.0.1'}</span>
                       <div style={estilos.localCell}>
-                        <IconLocalizacao size={14} color="#06B6D4" />
-                        <span style={estilos.textoLocal}>
+                        <IconLocalizacao size={13} color="#06B6D4" />
+                        <span style={estilos.textoLocalMobile}>
                           {log.localizacao || 'Brasil (IP Local)'}
                         </span>
                       </div>
-                    </td>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      ) : (
+        /* Tabela de Logs Desktop */
+        <div style={estilos.tabelaWrapper}>
+          <table style={estilos.tabela}>
+            <thead>
+              <tr>
+                <th style={estilos.th}>IP</th>
+                <th style={estilos.th}>Data / Hora</th>
+                <th style={estilos.th}>Local de Acesso</th>
+                <th style={estilos.th}>E-mail / Usuário</th>
+                <th style={estilos.th}>Evento</th>
+              </tr>
+            </thead>
+            <tbody>
+              {carregando ? (
+                <tr>
+                  <td colSpan={5} style={estilos.tdVazio}>
+                    <div style={estilos.loadingRow}>
+                      <IconAtualizar size={20} color="var(--primary)" />
+                      <span>Carregando registros de login/logout...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={estilos.tdVazio}>
+                    Nenhum registro de login/logout encontrado {busca ? `com o termo "${busca}"` : ''}.
+                  </td>
+                </tr>
+              ) : (
+                logs.map(log => {
+                  const dataFormatada = log.criado_em
+                    ? new Date(log.criado_em).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })
+                    : '-'
 
-                    {/* E-mail / Usuário */}
-                    <td style={estilos.td}>
-                      <span style={estilos.textoEmail}>
-                        {log.email || 'anônimo'}
-                      </span>
-                    </td>
+                  const ehLogin = log.acao === 'login'
 
-                    {/* Evento (Login / Logout) */}
-                    <td style={estilos.td}>
-                      <span style={{
-                        ...estilos.badgeAcao,
-                        background: ehLogin ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
-                        borderColor: ehLogin ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)',
-                        color: ehLogin ? 'var(--primary)' : '#F59E0B',
-                        fontWeight: 700,
-                      }}>
-                        {ehLogin ? '● Login' : '○ Logout'}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                  return (
+                    <tr key={log.id} style={estilos.tr}>
+                      {/* IP */}
+                      <td style={estilos.td}>
+                        <span style={estilos.badgeIp}>
+                          {log.ip || '127.0.0.1'}
+                        </span>
+                      </td>
+
+                      {/* Data / Hora de Acesso */}
+                      <td style={estilos.td}>
+                        <span style={estilos.textoDataHora}>{dataFormatada}</span>
+                      </td>
+
+                      {/* Local de Acesso */}
+                      <td style={estilos.td}>
+                        <div style={estilos.localCell}>
+                          <IconLocalizacao size={14} color="#06B6D4" />
+                          <span style={estilos.textoLocal}>
+                            {log.localizacao || 'Brasil (IP Local)'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* E-mail / Usuário */}
+                      <td style={estilos.td}>
+                        <span style={estilos.textoEmail}>
+                          {log.email || 'anônimo'}
+                        </span>
+                      </td>
+
+                      {/* Evento (Login / Logout) */}
+                      <td style={estilos.td}>
+                        <span style={{
+                          ...estilos.badgeAcao,
+                          background: ehLogin ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                          borderColor: ehLogin ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)',
+                          color: ehLogin ? 'var(--primary)' : '#F59E0B',
+                          fontWeight: 700,
+                        }}>
+                          {ehLogin ? '● Login' : '○ Logout'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Paginação */}
       {totalPaginas > 1 && (
@@ -561,5 +629,77 @@ const estilos = {
     padding: '4px 10px',
     borderRadius: 20,
     whiteSpace: 'nowrap',
+  },
+  mobileCardsLista: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    width: '100%',
+  },
+  cardLogMobile: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '14px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    boxShadow: 'var(--card-shadow-sm)',
+  },
+  cardLogHeaderMobile: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  textoDataHoraMobile: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+    fontWeight: 500,
+  },
+  cardLogCorpoMobile: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  cardLogEmailTexto: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    wordBreak: 'break-all',
+  },
+  cardLogMetaRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  badgeIpMobile: {
+    fontSize: 11.5,
+    fontFamily: 'monospace',
+    fontWeight: 600,
+    color: 'var(--primary)',
+    background: 'rgba(16, 185, 129, 0.08)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    padding: '2px 8px',
+    borderRadius: 6,
+  },
+  textoLocalMobile: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+  },
+  cardVazioMobile: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: '32px 16px',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    color: 'var(--text-muted)',
+    fontSize: 13.5,
+    textAlign: 'center',
   },
 }

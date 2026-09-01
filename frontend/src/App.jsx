@@ -60,6 +60,8 @@ export default function App() {
       setUsuario(user)
       setCarregando(false)
       if (user?.id) {
+        // Marca que a sessão já está ativa para evitar reenvio de login ao atualizar a página
+        sessionStorage.setItem(`cc_sessao_${user.id}`, 'true')
         const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
         if (!tourFeito) setTourAberto(true)
       }
@@ -75,7 +77,11 @@ export default function App() {
         setUsuario(user)
         if (user?.id && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
           if (event === 'SIGNED_IN' && user?.email) {
-            registrarLogAuth('login', user.email)
+            const jaRegistrado = sessionStorage.getItem(`cc_sessao_${user.id}`)
+            if (!jaRegistrado) {
+              sessionStorage.setItem(`cc_sessao_${user.id}`, 'true')
+              registrarLogAuth('login', user.email)
+            }
           }
           const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
           if (!tourFeito) setTourAberto(true)
@@ -138,6 +144,9 @@ export default function App() {
   }
 
   async function handleLogout() {
+    if (usuario?.id) {
+      sessionStorage.removeItem(`cc_sessao_${usuario.id}`)
+    }
     if (usuario?.email) {
       await registrarLogAuth('logout', usuario.email)
     }
@@ -233,8 +242,8 @@ function AppAutenticado({
       <NavLateral qtdVencidas={qtdVencidas} />
 
       <div style={estilos.conteudo}>
-        {/* Header Mobile com Identificação do Sistema */}
-        {isMobileNav && (
+        {/* Header Mobile com Identificação do Sistema (apenas fora do painel administrativo) */}
+        {isMobileNav && !isRotaAdmin && (
           <div style={estilos.mobileTopBar}>
             <div style={estilos.mobileBrandLogo}>
               <div style={estilos.logoAvatar}>

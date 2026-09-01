@@ -6,6 +6,7 @@ import {
   IconPainelAdm,
   IconUsuarios,
   IconNovosUsuarios,
+  IconTempo,
   IconVoltar,
   IconAtualizar,
 } from '../components/Icones'
@@ -215,6 +216,49 @@ export default function PaginaAdmin({ usuario }) {
           <div style={estilos.cardFooter}>
             <span style={estilos.badgeNovosMes}>
               ✦ Ver Detalhes do Mês ›
+            </span>
+          </div>
+        </div>
+
+        {/* Card 3: Tempo Médio de Permanência */}
+        <div
+          style={{ ...estilos.card, cursor: 'pointer' }}
+          onClick={() => navigate(`/admin/${hash}/logs`)}
+          title="Clique para ver o histórico de acessos e logs"
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = '#8B5CF6'
+            e.currentTarget.style.transform = 'translateY(-2px)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border)'
+            e.currentTarget.style.transform = 'none'
+          }}
+        >
+          <div style={estilos.cardHeader}>
+            <span style={estilos.cardLabel}>Tempo Médio no Sistema</span>
+            <div style={{ ...estilos.iconeWrap, background: 'rgba(139, 92, 246, 0.15)', color: '#8B5CF6' }}>
+              <IconTempo size={22} color="#8B5CF6" />
+            </div>
+          </div>
+
+          <div style={estilos.cardBody}>
+            {carregando ? (
+              <div style={estilos.skeletonNumero} />
+            ) : (
+              <div style={{ ...estilos.numeroGrande, color: '#8B5CF6' }}>
+                {metricas?.tempoMedioPermanencia || '0 min'}
+              </div>
+            )}
+            <div style={estilos.cardSubtexto}>
+              {metricas?.totalSessoesMonitoradas > 0
+                ? `Média de ${metricas.totalSessoesMonitoradas} ${metricas.totalSessoesMonitoradas === 1 ? 'sessão registrada' : 'sessões registradas'}`
+                : 'Aguardando encerramento de sessões'}
+            </div>
+          </div>
+
+          <div style={estilos.cardFooter}>
+            <span style={estilos.badgeTempoMedio}>
+              ⏱ Ver Logs de Acesso ›
             </span>
           </div>
         </div>
@@ -501,6 +545,14 @@ const estilos = {
     fontWeight: 600,
     color: '#06B6D4',
     background: 'rgba(6, 182, 212, 0.1)',
+    padding: '4px 10px',
+    borderRadius: 6,
+  },
+  badgeTempoMedio: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: '#8B5CF6',
+    background: 'rgba(139, 92, 246, 0.1)',
     padding: '4px 10px',
     borderRadius: 6,
   },

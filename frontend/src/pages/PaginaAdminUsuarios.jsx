@@ -18,8 +18,10 @@ import {
   IconOlho,
   IconOlhoFechado,
 } from '../components/Icones'
+import { useIsNavMobile } from '../hooks/useIsNavMobile'
 
 export default function PaginaAdminUsuarios({ usuario }) {
+  const isMobile = useIsNavMobile()
   const { hash } = useParams()
   const navigate = useNavigate()
 
@@ -267,157 +269,297 @@ export default function PaginaAdminUsuarios({ usuario }) {
         </div>
       </div>
 
-      {/* Tabela de Usuários */}
-      <div style={estilos.tabelaWrapper}>
-        <table style={estilos.tabela}>
-          <thead>
-            <tr>
-              <th style={estilos.th}>Usuário / E-mail</th>
-              <th style={estilos.th}>Telefone</th>
-              <th style={estilos.th}>Data de Cadastro</th>
-              <th style={estilos.th}>Último Login</th>
-              <th style={estilos.th}>Administrador</th>
-              <th style={{ ...estilos.th, textAlign: 'center' }}>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {carregando ? (
-              <tr>
-                <td colSpan={6} style={estilos.tdVazio}>
-                  <div style={estilos.loadingRow}>
-                    <IconAtualizar size={20} color="var(--primary)" />
-                    <span>Carregando usuários...</span>
-                  </div>
-                </td>
-              </tr>
-            ) : usuarios.length === 0 ? (
-              <tr>
-                <td colSpan={6} style={estilos.tdVazio}>
-                  Nenhum usuário encontrado {busca ? `com o termo "${busca}"` : ''}.
-                </td>
-              </tr>
-            ) : (
-              usuarios.map(u => {
-                const letra = (u.nome || u.email || 'U')[0].toUpperCase()
-                const dataCriacaoFormatada = u.criado_em
-                  ? new Date(u.criado_em).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : '-'
+      {/* Tabela ou Lista de Cards de Usuários */}
+      {isMobile ? (
+        <div style={estilos.mobileCardsLista}>
+          {carregando ? (
+            <div style={estilos.cardVazioMobile}>
+              <IconAtualizar size={20} color="var(--primary)" />
+              <span>Carregando usuários...</span>
+            </div>
+          ) : usuarios.length === 0 ? (
+            <div style={estilos.cardVazioMobile}>
+              Nenhum usuário encontrado {busca ? `com o termo "${busca}"` : ''}.
+            </div>
+          ) : (
+            usuarios.map(u => {
+              const letra = (u.nome || u.email || 'U')[0].toUpperCase()
+              const dataCriacaoFormatada = u.criado_em
+                ? new Date(u.criado_em).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '-'
 
-                const ultimoLoginFormatado = u.ultimo_acesso
-                  ? new Date(u.ultimo_acesso).toLocaleDateString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })
-                  : 'Nunca acessou'
+              const ultimoLoginFormatado = u.ultimo_acesso
+                ? new Date(u.ultimo_acesso).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : 'Nunca acessou'
 
-                const ehUsuarioAtual = u.id === usuario?.id
+              const ehUsuarioAtual = u.id === usuario?.id
 
-                return (
-                  <tr key={u.id} style={estilos.tr}>
-                    {/* Nome / E-mail */}
-                    <td style={estilos.td}>
-                      <div style={estilos.userCell}>
-                        <div style={estilos.avatarBadge}>{letra}</div>
-                        <div style={estilos.userTextWrap}>
-                          {u.nome && (
-                            <span style={estilos.nomeTexto}>{u.nome}</span>
-                          )}
-                          <span style={estilos.emailTexto}>{u.email}</span>
-                          <span style={estilos.idSub}>ID: {u.id.slice(0, 8)}...</span>
-                        </div>
+              return (
+                <div key={u.id} style={estilos.cardUsuarioMobile}>
+                  {/* Topo do Card: Avatar, Identificação e Badge Admin */}
+                  <div style={estilos.cardMobileHeader}>
+                    <div style={estilos.userCell}>
+                      <div style={estilos.avatarBadge}>{letra}</div>
+                      <div style={estilos.userTextWrap}>
+                        {u.nome && (
+                          <span style={estilos.nomeTexto}>{u.nome}</span>
+                        )}
+                        <span style={estilos.emailTexto}>{u.email}</span>
+                        <span style={estilos.idSub}>ID: {u.id.slice(0, 8)}...</span>
                       </div>
-                    </td>
+                    </div>
 
-                    {/* Telefone */}
-                    <td style={estilos.td}>
-                      <span style={estilos.textoTelefone}>
-                        {u.telefone || '—'}
-                      </span>
-                    </td>
+                    <span style={{
+                      ...estilos.badgeRoleMobile,
+                      background: u.is_admin ? 'rgba(16, 185, 129, 0.15)' : 'var(--surface-hover)',
+                      borderColor: u.is_admin ? 'rgba(16, 185, 129, 0.4)' : 'var(--border)',
+                      color: u.is_admin ? 'var(--primary)' : 'var(--text-muted)',
+                    }}>
+                      {u.is_admin ? '🛡️ Admin' : 'Usuário'}
+                    </span>
+                  </div>
 
-                    {/* Data Cadastro */}
-                    <td style={estilos.td}>
-                      <span style={estilos.textoData}>{dataCriacaoFormatada}</span>
-                    </td>
+                  {/* Informações detalhadas */}
+                  <div style={estilos.cardMobileInfoGrid}>
+                    <div style={estilos.cardMobileInfoItem}>
+                      <span style={estilos.cardMobileInfoLabel}>Telefone</span>
+                      <span style={estilos.cardMobileInfoValor}>{u.telefone || '—'}</span>
+                    </div>
 
-                    {/* Último Login */}
-                    <td style={estilos.td}>
+                    <div style={estilos.cardMobileInfoItem}>
+                      <span style={estilos.cardMobileInfoLabel}>Data Cadastro</span>
+                      <span style={estilos.cardMobileInfoValor}>{dataCriacaoFormatada}</span>
+                    </div>
+
+                    <div style={{ ...estilos.cardMobileInfoItem, gridColumn: 'span 2' }}>
+                      <span style={estilos.cardMobileInfoLabel}>Último Acesso</span>
                       <span style={{
-                        ...estilos.textoData,
+                        ...estilos.cardMobileInfoValor,
                         color: u.ultimo_acesso ? 'var(--text-pure)' : 'var(--text-muted)',
                       }}>
                         {ultimoLoginFormatado}
                       </span>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Checkbox / Toggle Administrador */}
-                    <td style={estilos.td}>
-                      <label style={estilos.adminCheckboxWrap}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(u.is_admin)}
-                          onChange={() => handleToggleAdmin(u)}
-                          style={estilos.checkboxInput}
-                        />
-                        <span style={{
-                          ...estilos.adminStatusLabel,
-                          color: u.is_admin ? 'var(--primary)' : 'var(--text-muted)',
-                          fontWeight: u.is_admin ? 700 : 500,
-                        }}>
-                          {u.is_admin ? 'Sim (Admin)' : 'Não'}
+                  {/* Rodapé do Card com Ações */}
+                  <div style={estilos.cardMobileFooter}>
+                    <label style={estilos.adminCheckboxWrap}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(u.is_admin)}
+                        onChange={() => handleToggleAdmin(u)}
+                        style={estilos.checkboxInput}
+                      />
+                      <span style={{
+                        ...estilos.adminStatusLabel,
+                        color: u.is_admin ? 'var(--primary)' : 'var(--text-muted)',
+                        fontWeight: u.is_admin ? 700 : 500,
+                        fontSize: 12,
+                      }}>
+                        {u.is_admin ? 'Acesso Admin Ativo' : 'Tornar Admin'}
+                      </span>
+                    </label>
+
+                    <div style={estilos.acoesRow}>
+                      <button
+                        type="button"
+                        onClick={() => abrirModalEditar(u)}
+                        style={estilos.btnEditarIconeMobile}
+                        title="Editar usuário"
+                        aria-label="Editar usuário"
+                      >
+                        <IconEditar size={14} color="var(--primary)" />
+                        <span>Editar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setUsuarioExcluindo(u)}
+                        disabled={ehUsuarioAtual}
+                        style={{
+                          ...estilos.btnExcluirIconeMobile,
+                          opacity: ehUsuarioAtual ? 0.3 : 1,
+                          cursor: ehUsuarioAtual ? 'not-allowed' : 'pointer',
+                        }}
+                        title={ehUsuarioAtual ? 'Não pode excluir sua conta' : 'Excluir usuário'}
+                        aria-label="Excluir usuário"
+                      >
+                        <IconLixeira size={14} color="#EF4444" />
+                        <span>Excluir</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      ) : (
+        /* Tabela de Usuários Desktop */
+        <div style={estilos.tabelaWrapper}>
+          <table style={estilos.tabela}>
+            <thead>
+              <tr>
+                <th style={estilos.th}>Usuário / E-mail</th>
+                <th style={estilos.th}>Telefone</th>
+                <th style={estilos.th}>Data de Cadastro</th>
+                <th style={estilos.th}>Último Login</th>
+                <th style={estilos.th}>Administrador</th>
+                <th style={{ ...estilos.th, textAlign: 'center' }}>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {carregando ? (
+                <tr>
+                  <td colSpan={6} style={estilos.tdVazio}>
+                    <div style={estilos.loadingRow}>
+                      <IconAtualizar size={20} color="var(--primary)" />
+                      <span>Carregando usuários...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : usuarios.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={estilos.tdVazio}>
+                    Nenhum usuário encontrado {busca ? `com o termo "${busca}"` : ''}.
+                  </td>
+                </tr>
+              ) : (
+                usuarios.map(u => {
+                  const letra = (u.nome || u.email || 'U')[0].toUpperCase()
+                  const dataCriacaoFormatada = u.criado_em
+                    ? new Date(u.criado_em).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '-'
+
+                  const ultimoLoginFormatado = u.ultimo_acesso
+                    ? new Date(u.ultimo_acesso).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : 'Nunca acessou'
+
+                  const ehUsuarioAtual = u.id === usuario?.id
+
+                  return (
+                    <tr key={u.id} style={estilos.tr}>
+                      {/* Nome / E-mail */}
+                      <td style={estilos.td}>
+                        <div style={estilos.userCell}>
+                          <div style={estilos.avatarBadge}>{letra}</div>
+                          <div style={estilos.userTextWrap}>
+                            {u.nome && (
+                              <span style={estilos.nomeTexto}>{u.nome}</span>
+                            )}
+                            <span style={estilos.emailTexto}>{u.email}</span>
+                            <span style={estilos.idSub}>ID: {u.id.slice(0, 8)}...</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Telefone */}
+                      <td style={estilos.td}>
+                        <span style={estilos.textoTelefone}>
+                          {u.telefone || '—'}
                         </span>
-                      </label>
-                    </td>
+                      </td>
 
-                    {/* Ações (Editar e Excluir) */}
-                    <td style={{ ...estilos.td, textAlign: 'center' }}>
-                      <div style={estilos.acoesRow}>
-                        <button
-                          type="button"
-                          onClick={() => abrirModalEditar(u)}
-                          style={estilos.btnEditarIcone}
-                          title="Editar usuário (Nome, Telefone, Senha)"
-                          aria-label="Editar usuário"
-                        >
-                          <IconEditar size={15} color="var(--primary)" />
-                        </button>
+                      {/* Data Cadastro */}
+                      <td style={estilos.td}>
+                        <span style={estilos.textoData}>{dataCriacaoFormatada}</span>
+                      </td>
 
-                        <button
-                          type="button"
-                          onClick={() => setUsuarioExcluindo(u)}
-                          disabled={ehUsuarioAtual}
-                          style={{
-                            ...estilos.btnExcluirIcone,
-                            opacity: ehUsuarioAtual ? 0.3 : 1,
-                            cursor: ehUsuarioAtual ? 'not-allowed' : 'pointer',
-                          }}
-                          title={
-                            ehUsuarioAtual
-                              ? 'Você não pode excluir sua própria conta conectada'
-                              : 'Excluir usuário'
-                          }
-                          aria-label="Excluir usuário"
-                        >
-                          <IconLixeira size={15} color="#EF4444" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                      {/* Último Login */}
+                      <td style={estilos.td}>
+                        <span style={{
+                          ...estilos.textoData,
+                          color: u.ultimo_acesso ? 'var(--text-pure)' : 'var(--text-muted)',
+                        }}>
+                          {ultimoLoginFormatado}
+                        </span>
+                      </td>
+
+                      {/* Checkbox / Toggle Administrador */}
+                      <td style={estilos.td}>
+                        <label style={estilos.adminCheckboxWrap}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(u.is_admin)}
+                            onChange={() => handleToggleAdmin(u)}
+                            style={estilos.checkboxInput}
+                          />
+                          <span style={{
+                            ...estilos.adminStatusLabel,
+                            color: u.is_admin ? 'var(--primary)' : 'var(--text-muted)',
+                            fontWeight: u.is_admin ? 700 : 500,
+                          }}>
+                            {u.is_admin ? 'Sim (Admin)' : 'Não'}
+                          </span>
+                        </label>
+                      </td>
+
+                      {/* Ações (Editar e Excluir) */}
+                      <td style={{ ...estilos.td, textAlign: 'center' }}>
+                        <div style={estilos.acoesRow}>
+                          <button
+                            type="button"
+                            onClick={() => abrirModalEditar(u)}
+                            style={estilos.btnEditarIcone}
+                            title="Editar usuário (Nome, Telefone, Senha)"
+                            aria-label="Editar usuário"
+                          >
+                            <IconEditar size={15} color="var(--primary)" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setUsuarioExcluindo(u)}
+                            disabled={ehUsuarioAtual}
+                            style={{
+                              ...estilos.btnExcluirIcone,
+                              opacity: ehUsuarioAtual ? 0.3 : 1,
+                              cursor: ehUsuarioAtual ? 'not-allowed' : 'pointer',
+                            }}
+                            title={
+                              ehUsuarioAtual
+                                ? 'Você não pode excluir sua própria conta conectada'
+                                : 'Excluir usuário'
+                            }
+                            aria-label="Excluir usuário"
+                          >
+                            <IconLixeira size={15} color="#EF4444" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Barra de Paginação */}
       {totalPaginas > 1 && (
@@ -1154,5 +1296,113 @@ const estilos = {
     fontSize: 13,
     fontWeight: 700,
     cursor: 'pointer',
+  },
+  mobileCardsLista: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    width: '100%',
+  },
+  cardUsuarioMobile: {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 14,
+    boxShadow: 'var(--card-shadow-sm)',
+  },
+  cardMobileHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  badgeRoleMobile: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontSize: 11,
+    fontWeight: 700,
+    padding: '3px 8px',
+    borderRadius: 6,
+    border: '1px solid transparent',
+    letterSpacing: '0.02em',
+  },
+  cardMobileInfoGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: 10,
+    padding: '10px 12px',
+    background: 'var(--surface-hover)',
+    borderRadius: 10,
+    border: '1px solid var(--border-subtle)',
+  },
+  cardMobileInfoItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+  },
+  cardMobileInfoLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.02em',
+  },
+  cardMobileInfoValor: {
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: 'var(--text-pure)',
+    wordBreak: 'break-word',
+  },
+  cardMobileFooter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingTop: 10,
+    borderTop: '1px solid var(--border-subtle)',
+  },
+  btnEditarIconeMobile: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '7px 12px',
+    borderRadius: 8,
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    background: 'rgba(16, 185, 129, 0.1)',
+    color: 'var(--primary)',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  btnExcluirIconeMobile: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '7px 12px',
+    borderRadius: 8,
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    background: 'rgba(239, 68, 68, 0.1)',
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  cardVazioMobile: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: '32px 16px',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 14,
+    color: 'var(--text-muted)',
+    fontSize: 13.5,
+    textAlign: 'center',
   },
 }

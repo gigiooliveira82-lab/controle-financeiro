@@ -211,6 +211,14 @@ export const IconOlhoFechado = ({ size = 18, color = 'currentColor', strokeWidth
   </svg>
 )
 
+export const IconTempo = ({ size = 18, color = 'currentColor', strokeWidth = 2 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+)
+
+
 
 
 
