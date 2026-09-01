@@ -285,7 +285,8 @@ export default function PaginaTermosPrivacidade() {
                 <p style={s.paragrafo}>Os dados permanecem armazenados enquanto durar a relação contratual (conta ativa). Havendo solicitação de cancelamento e exclusão:</p>
                 <ul style={s.lista}>
                   <li>Os registros financeiros e cadastrais operacionais serão anonimizados ou deletados definitivamente em até <strong>30 dias</strong>;</li>
-                  <li>Logs de conexão a aplicações de internet são mantidos sob sigilo pelo prazo estrito de 6 (seis) meses, em obediência ao Art. 15 da Lei nº 12.965/2014 (Marco Civil da Internet).</li>
+                  <li><strong>Logs de Autenticação e Acesso:</strong> Os registros estritos de autenticação (eventos de entrada e saída, data/hora e endereço IP) são mantidos em arquivo seguro exclusivamente para fins de auditoria e segurança operacional pelo prazo rotativo de <strong>60 (sessenta) dias</strong>, sendo automaticamente e definitivamente expurgados após esse período;</li>
+                  <li>Demais registros legais de conexão a aplicações de internet são mantidos sob sigilo pelo prazo estrito de 6 (seis) meses, em estrita obediência ao Art. 15 da Lei nº 12.965/2014 (Marco Civil da Internet).</li>
                 </ul>
               </div>
 

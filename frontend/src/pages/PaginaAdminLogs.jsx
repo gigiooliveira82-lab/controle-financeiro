@@ -106,6 +106,24 @@ export default function PaginaAdminLogs({ usuario }) {
         </div>
       )}
 
+      {/* Banner Informativo de Retenção de 60 Dias */}
+      <div style={estilos.bannerRetencao}>
+        <div style={estilos.iconeRetencaoWrap}>
+          <IconLogs size={20} color="var(--primary)" />
+        </div>
+        <div style={estilos.textoRetencaoWrap}>
+          <div style={estilos.tituloRetencao}>
+            <strong>Política de Retenção:</strong> Limpeza Automática a cada 60 dias
+          </div>
+          <div style={estilos.descRetencao}>
+            Para garantir a privacidade dos usuários (LGPD) e máxima performance do servidor, todos os registros de <strong>login</strong> e <strong>logout</strong> são armazenados em arquivo seguro e <strong>apagados automaticamente após 60 dias</strong>.
+          </div>
+        </div>
+        <span style={estilos.badgeRetencao}>
+          ● Retenção: 60 Dias
+        </span>
+      </div>
+
       {/* Barra de Filtro / Busca */}
       <div style={estilos.filtroCard}>
         <div style={estilos.buscaWrap}>
@@ -494,5 +512,54 @@ const estilos = {
   textoPaginacao: {
     fontSize: 13.5,
     color: 'var(--text-muted)',
+  },
+  bannerRetencao: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 14,
+    background: 'rgba(16, 185, 129, 0.06)',
+    border: '1px solid rgba(16, 185, 129, 0.22)',
+    borderRadius: 14,
+    padding: '12px 18px',
+    flexWrap: 'wrap',
+  },
+  iconeRetencaoWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    background: 'rgba(16, 185, 129, 0.14)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  textoRetencaoWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    flex: 1,
+    minWidth: 260,
+  },
+  tituloRetencao: {
+    fontSize: 13.5,
+    color: 'var(--text-pure)',
+  },
+  descRetencao: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+    lineHeight: 1.4,
+  },
+  badgeRetencao: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--primary)',
+    background: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    padding: '4px 10px',
+    borderRadius: 20,
+    whiteSpace: 'nowrap',
   },
 }
