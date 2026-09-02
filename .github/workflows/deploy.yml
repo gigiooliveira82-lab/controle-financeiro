@@ -1,0 +1,37 @@
+name: Deploy Contas Claras DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executar Deploy via SSH na DigitalOcean
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Puxar alterações do repositório
+            cd /var/www/contasclaras
+            git pull origin main
+
+            # 2. Atualizar e reiniciar o Backend
+            cd /var/www/contasclaras/backend
+            npm install
+            pm2 restart contasclaras-backend
+
+            # 3. Atualizar e recompilar o Frontend
+            cd /var/www/contasclaras/frontend
+            npm install
+            npm run build
+
+            # 4. Ajustar permissões e recarregar o Nginx
+            chown -R www-data:www-data /var/www/contasclaras
+            chmod -R 755 /var/www/contasclaras
+            systemctl reload nginx
