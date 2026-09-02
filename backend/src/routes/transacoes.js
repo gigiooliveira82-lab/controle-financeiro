@@ -6,13 +6,18 @@ import { responderPergunta } from '../services/pergunta.js'
 import { calcularVencimentoCartao } from '../utils/cartao.js'
 import supabase from '../services/supabase.js'
 import autenticar from '../middleware/autenticar.js'
+import {
+  rateLimitLancamentosIA,
+  rateLimitPerguntasIA,
+  rateLimitAnaliseMesIA,
+} from '../middleware/rateLimitIA.js'
 
 const router = Router()
 
 router.use(autenticar)
 
 // POST /transacoes/analise-mes/:usuario_id — análise inteligente do mês via IA
-router.post('/analise-mes/:usuario_id', async (req, res) => {
+router.post('/analise-mes/:usuario_id', rateLimitAnaliseMesIA, async (req, res) => {
   const usuario_id = req.usuarioId
   const { mes_referencia } = req.body
 
@@ -152,7 +157,7 @@ router.post('/analise-mes/:usuario_id', async (req, res) => {
 })
 
 // POST /transacoes/pergunta/:usuario_id — responde perguntas em linguagem natural sobre os dados do usuário
-router.post('/pergunta/:usuario_id', async (req, res) => {
+router.post('/pergunta/:usuario_id', rateLimitPerguntasIA, async (req, res) => {
   const usuario_id = req.usuarioId
   const { pergunta } = req.body
 
@@ -403,7 +408,7 @@ router.post('/gerar-recorrentes', async (req, res) => {
 })
 
 // POST /transacoes/lancar — recebe texto livre, IA categoriza e salva
-router.post('/lancar', async (req, res) => {
+router.post('/lancar', rateLimitLancamentosIA, async (req, res) => {
   const { texto, cartao_id, data_compra } = req.body
   const usuario_id = req.usuarioId
 

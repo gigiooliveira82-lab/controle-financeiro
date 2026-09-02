@@ -12,6 +12,8 @@ build/
 
 # Logs
 *.log
+*.jsonl
+backend/logs/
 npm-debug.log*
 
 # Sistema operacional
@@ -26,3 +28,7 @@ Thumbs.db
 # Claude Code
 .claude/
 .agents/
+
+# Relatórios e documentos locais
+comparativo_ia_contas_claras.*
+

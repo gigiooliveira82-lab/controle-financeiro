@@ -14,7 +14,13 @@ export async function lancarTexto(texto, usuarioId, cartaoInfo) {
     body: JSON.stringify({ texto, ...cartaoInfo }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.erro || 'Erro ao lançar transação')
+  if (!res.ok) {
+    const error = new Error(json.erro || (res.status === 429 ? 'Limite de lançamentos com IA atingido. Por favor, aguarde alguns minutos para tentar novamente.' : 'Erro ao lançar transação'))
+    error.status = res.status
+    error.codigo = json.codigo
+    error.detalhe = json.detalhe
+    throw error
+  }
   return json
 }
 
@@ -85,7 +91,13 @@ export async function gerarAnaliseMes(usuarioId, mesReferencia) {
     body: JSON.stringify({ mes_referencia: mesReferencia }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.erro || 'Erro ao gerar análise')
+  if (!res.ok) {
+    const error = new Error(json.erro || (res.status === 429 ? 'Limite de análises com IA atingido. Por favor, aguarde alguns minutos antes de gerar uma nova análise.' : 'Erro ao gerar análise'))
+    error.status = res.status
+    error.codigo = json.codigo
+    error.detalhe = json.detalhe
+    throw error
+  }
   return json.analise
 }
 
@@ -138,7 +150,13 @@ export async function perguntarSobreFinancas(usuarioId, pergunta) {
     body: JSON.stringify({ pergunta }),
   })
   const json = await res.json()
-  if (!res.ok) throw new Error(json.erro || 'Erro ao processar pergunta')
+  if (!res.ok) {
+    const error = new Error(json.erro || (res.status === 429 ? 'Limite de perguntas ao assistente IA atingido. Por favor, aguarde alguns minutos antes de perguntar novamente.' : 'Erro ao processar pergunta'))
+    error.status = res.status
+    error.codigo = json.codigo
+    error.detalhe = json.detalhe
+    throw error
+  }
   return json.resposta
 }
 
@@ -263,3 +281,89 @@ export async function removerTransacao(id, usuarioId) {
   if (!res.ok) throw new Error(json.erro || 'Erro ao remover transação')
   return json
 }
+
+export async function buscarMetricasAdmin() {
+  const res = await fetch(`${BASE_URL}/admin/metricas`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar métricas administrativas')
+  return json
+}
+
+export async function verificarAdmin() {
+  const res = await fetch(`${BASE_URL}/admin/verificar`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Não autorizado')
+  return json
+}
+
+export async function buscarUsuariosAdmin(pagina = 1, porPagina = 10, busca = '') {
+  const params = new URLSearchParams({ pagina, porPagina, busca })
+  const res = await fetch(`${BASE_URL}/admin/usuarios?${params.toString()}`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar lista de usuários')
+  return json
+}
+
+export async function atualizarUsuarioAdmin(id, dados) {
+  const res = await fetch(`${BASE_URL}/admin/usuarios/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao atualizar dados do usuário')
+  return json
+}
+
+export async function excluirUsuarioAdmin(id) {
+  const res = await fetch(`${BASE_URL}/admin/usuarios/${id}`, {
+    method: 'DELETE',
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao excluir usuário')
+  return json
+}
+
+export async function alternarAdminUsuario(id, isAdmin) {
+  const res = await fetch(`${BASE_URL}/admin/usuarios/${id}/role`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify({ isAdmin }),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao alterar permissão de administrador')
+  return json
+}
+
+export async function buscarLogsAdmin(pagina = 1, porPagina = 15, busca = '') {
+  const params = new URLSearchParams({ pagina, porPagina, busca })
+  const res = await fetch(`${BASE_URL}/admin/logs?${params.toString()}`, {
+    headers: await headersAuth(),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao buscar logs de acesso')
+  return json
+}
+
+export async function registrarLogAuth(evento, email) {
+  try {
+    await fetch(`${BASE_URL}/admin/logs/evento`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evento, email }),
+    })
+  } catch (err) {
+    // Falha silenciosa para não travar o fluxo de login/logout
+    console.error('Erro ao registrar log de autenticação:', err)
+  }
+}
+
+
+

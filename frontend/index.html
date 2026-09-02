@@ -8,6 +8,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet" />
     <title>Contas Claras — Inteligência Financeira</title>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('contas_claras_theme');
+          var theme = saved;
+          if (!theme || (theme !== 'light' && theme !== 'dark')) {
+            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -5,6 +5,7 @@ import transacoesRouter from './routes/transacoes.js'
 import cartoesRouter from './routes/cartoes.js'
 import sonhosRouter from './routes/sonhos.js'
 import contasRouter from './routes/contas.js'
+import adminRouter from './routes/admin.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -23,6 +24,7 @@ app.use('/transacoes', transacoesRouter)
 app.use('/cartoes', cartoesRouter)
 app.use('/sonhos', sonhosRouter)
 app.use('/contas', contasRouter)
+app.use('/admin', adminRouter)
 
 app.listen(PORT, () => {
   console.log(`Backend rodando em http://localhost:${PORT}`)

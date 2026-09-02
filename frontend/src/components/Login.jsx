@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 import { useIsMobile } from './Dashboard'
+import logoImg from '../assets/logomarca.svg'
 
 export default function Login({ onLogin }) {
   const [modo, setModo]                 = useState('login') // 'login' | 'cadastro' | 'recuperar'
@@ -78,9 +80,7 @@ export default function Login({ onLogin }) {
         {/* Nova Logomarca Padronizada */}
         <div style={m.logoRow}>
           <div style={m.logoAvatar}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+            <img src={logoImg} alt="Contas Claras" style={m.logoImg} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={m.logoTitulo}>Contas Claras</span>
@@ -172,6 +172,12 @@ export default function Login({ onLogin }) {
               <button type="submit" style={m.botao} disabled={carregando}>
                 {carregando ? 'Criando conta...' : 'Cadastrar'}
               </button>
+              <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.4 }}>
+                Ao criar sua conta, você concorda com nossos{' '}
+                <Link to="/termos" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>
+                  Termos e Privacidade
+                </Link>.
+              </p>
             </form>
 
             <button type="button" onClick={() => { setModo('login'); setErro(''); setSucesso('') }} style={m.linkBtnSolo}>
@@ -214,7 +220,7 @@ export default function Login({ onLogin }) {
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh', background: 'var(--bg-deep)' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', minHeight: '100vh', background: 'var(--bg-deep)' }} data-theme="dark" data-theme-locked="dark" className="theme-dark-locked">
       {painelEsq}
       {formulario}
     </div>
@@ -313,6 +319,13 @@ const m = {
     justifyContent: 'center',
     boxShadow: '0 0 16px rgba(16, 185, 129, 0.22)',
     flexShrink: 0,
+    overflow: 'hidden',
+  },
+  logoImg: {
+    width: 25,
+    height: 25,
+    objectFit: 'contain',
+    display: 'block',
   },
   logoTitulo: {
     fontSize: 18,

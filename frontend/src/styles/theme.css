@@ -1,12 +1,17 @@
 /*
- * Midnight Emerald Design System — Stitch Theme Tokens
+ * Contas Claras Design System Tokens — Dark & Light Mode
  * Baseado no design system oficial:
- * Primary: #10B981, Secondary: #0F766E, Tertiary: #FC7C78, Neutral: #0A0F0D
+ * Primary: #10B981, Secondary: #0F766E, Tertiary: #FC7C78
  * Typography: Plus Jakarta Sans (Headlines), Inter (Body & Labels)
  */
 
-:root {
-  /* Cores Base / Superfícies */
+:root,
+[data-theme="dark"],
+[data-theme-locked="dark"],
+[data-theme="light"] [data-theme="dark"],
+[data-theme="light"] [data-theme-locked="dark"],
+.theme-dark-locked {
+  /* Cores Base / Superfícies (Dark) */
   --bg-deep:        #0A0F0D;
   --surface:        #121A16;
   --surface-raised: #18231E;
@@ -18,14 +23,15 @@
   --border-focus:   #10B981;
   --border-subtle:  rgba(255, 255, 255, 0.07);
 
-  /* Paleta Stitch */
-  --primary:        #10B981;
-  --primary-hover:  #0EA372;
-  --primary-glow:   rgba(16, 185, 129, 0.22);
-  --secondary:      #0F766E;
-  --secondary-hover:#115E59;
-  --tertiary:       #FC7C78;
-  --tertiary-glow:  rgba(252, 124, 120, 0.22);
+  /* Paleta */
+  --primary:         #10B981;
+  --primary-hover:   #0EA372;
+  --primary-glow:    rgba(16, 185, 129, 0.22);
+  --primary-contrast:#0A0F0D;
+  --secondary:       #0F766E;
+  --secondary-hover: #115E59;
+  --tertiary:        #FC7C78;
+  --tertiary-glow:   rgba(252, 124, 120, 0.22);
 
   /* Variáveis de compatibilidade de Marca */
   --emerald:        #10B981;
@@ -34,13 +40,13 @@
   --coral:          #FC7C78;
   --gold:           #F59E0B;
 
-  /* Texto */
+  /* Texto (Dark) */
   --text:           #E8F0EC;
   --text-pure:      #FFFFFF;
   --text-muted:     #8FA69B;
   --text-dim:       #5E756A;
 
-  /* Status */
+  /* Status (Dark) */
   --status-pago-fg:      #10B981;
   --status-pago-bg:      rgba(16, 185, 129, 0.14);
   --status-pendente-fg:  #F59E0B;
@@ -48,13 +54,79 @@
   --status-vencida-fg:   #FC7C78;
   --status-vencida-bg:   rgba(252, 124, 120, 0.14);
 
+  /* Sombras & Gráficos (Dark) */
+  --card-shadow:     0 4px 20px rgba(0, 0, 0, 0.3);
+  --card-shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.2);
+  --dropdown-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --sidebar-shadow:  2px 0 8px rgba(0, 0, 0, 0.3);
+  --grid-dot:        rgba(16, 185, 129, 0.08);
+
   /* Fontes */
   --font-headline: 'Plus Jakarta Sans', sans-serif;
   --font-body:     'Inter', sans-serif;
 
-  /* Compatibilidade com variáveis antigas */
+  /* Compatibilidade */
   --verde-profundo: #0F766E;
   --verde-medium:   #10B981;
   --creme-fundo:    #0A0F0D;
   --creme-header:   #E8F0EC;
+}
+
+/* ── Light Mode Tokens (Apenas para áreas que não estejam bloqueadas em dark) ── */
+[data-theme="light"]:not([data-theme-locked="dark"]) {
+  /* Cores Base / Superfícies (Light — Inspirado no design FINA) */
+  --bg-deep:        #F8FAFC;
+  --surface:        #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-hover:  #F1F5F9;
+  --surface-active: #E2E8F0;
+  --surface-overlay:#F8FAFC;
+  --surface-line:   #E2E8F0;
+  --border:         #E2E8F0;
+  --border-focus:   #10B981;
+  --border-subtle:  rgba(0, 0, 0, 0.06);
+
+  /* Paleta (Light) */
+  --primary:         #10B981;
+  --primary-hover:   #059669;
+  --primary-glow:    rgba(16, 185, 129, 0.18);
+  --primary-contrast:#FFFFFF;
+  --secondary:       #0F766E;
+  --secondary-hover: #0D9488;
+  --tertiary:        #EF4444;
+  --tertiary-glow:   rgba(239, 68, 68, 0.16);
+
+  /* Variáveis de compatibilidade de Marca */
+  --emerald:        #059669;
+  --mint:           #10B981;
+  --teal:           #0F766E;
+  --coral:          #EF4444;
+  --gold:           #D97706;
+
+  /* Texto (Light) */
+  --text:           #334155;
+  --text-pure:      #0F172A;
+  --text-muted:     #64748B;
+  --text-dim:       #94A3B8;
+
+  /* Status (Light) */
+  --status-pago-fg:      #059669;
+  --status-pago-bg:      rgba(16, 185, 129, 0.12);
+  --status-pendente-fg:  #D97706;
+  --status-pendente-bg:  rgba(217, 119, 6, 0.12);
+  --status-vencida-fg:   #EF4444;
+  --status-vencida-bg:   rgba(239, 68, 68, 0.12);
+
+  /* Sombras & Gráficos (Light) */
+  --card-shadow:     0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --card-shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.04);
+  --dropdown-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  --sidebar-shadow:  2px 0 12px rgba(0, 0, 0, 0.04);
+  --grid-dot:        rgba(15, 118, 110, 0.05);
+
+  /* Compatibilidade */
+  --verde-profundo: #0F766E;
+  --verde-medium:   #059669;
+  --creme-fundo:    #F8FAFC;
+  --creme-header:   #0F172A;
 }

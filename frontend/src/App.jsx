@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useIsNavMobile } from './hooks/useIsNavMobile'
 import { supabase } from './services/supabase'
-import { buscarTransacoes, gerarRecorrentes, buscarCartoes } from './services/api'
+import { buscarTransacoes, gerarRecorrentes, buscarCartoes, registrarLogAuth } from './services/api'
 import Login from './components/Login'
 import RedefinirSenha from './components/RedefinirSenha'
 import PaginaLanding from './pages/PaginaLanding'
@@ -15,7 +15,15 @@ import PaginaAplicacoes from './pages/PaginaAplicacoes'
 import PaginaSonhos from './pages/PaginaSonhos'
 import PaginaContas from './pages/PaginaContas'
 import PaginaConfiguracoes from './pages/PaginaConfiguracoes'
+import PaginaAdmin from './pages/PaginaAdmin'
+import PaginaAdminUsuarios from './pages/PaginaAdminUsuarios'
+import PaginaAdminLogs from './pages/PaginaAdminLogs'
+import PaginaTermosPrivacidade from './pages/PaginaTermosPrivacidade'
 import MenuUsuario from './components/MenuUsuario'
+import ModalOnboardingTour from './components/ModalOnboardingTour'
+import { ConfirmProvider } from './components/ModalConfirmacao'
+import logoImg from './assets/logomarca.svg'
+
 
 function mesISOHoje() {
   const hoje = new Date()
@@ -43,12 +51,20 @@ export default function App() {
   const [carregandoDados, setCarregandoDados] = useState(false)
   const [mesSelecionado, setMesSelecionado]   = useState(mesISOHoje)
   const [modoRedefinir, setModoRedefinir]     = useState(false)
+  const [tourAberto, setTourAberto]           = useState(false)
   const isMobileNav                           = useIsNavMobile()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      setUsuario(data.session?.user ?? null)
+      const user = data.session?.user ?? null
+      setUsuario(user)
       setCarregando(false)
+      if (user?.id) {
+        // Marca que a sessão já está ativa para evitar reenvio de login ao atualizar a página
+        sessionStorage.setItem(`cc_sessao_${user.id}`, 'true')
+        const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
+        if (!tourFeito) setTourAberto(true)
+      }
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -57,7 +73,19 @@ export default function App() {
         setUsuario(session?.user ?? null)
       } else {
         setModoRedefinir(false)
-        setUsuario(session?.user ?? null)
+        const user = session?.user ?? null
+        setUsuario(user)
+        if (user?.id && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          if (event === 'SIGNED_IN' && user?.email) {
+            const jaRegistrado = sessionStorage.getItem(`cc_sessao_${user.id}`)
+            if (!jaRegistrado) {
+              sessionStorage.setItem(`cc_sessao_${user.id}`, 'true')
+              registrarLogAuth('login', user.email)
+            }
+          }
+          const tourFeito = localStorage.getItem(`contas_claras_onboarding_${user.id}`)
+          if (!tourFeito) setTourAberto(true)
+        }
       }
     })
 
@@ -116,6 +144,12 @@ export default function App() {
   }
 
   async function handleLogout() {
+    if (usuario?.id) {
+      sessionStorage.removeItem(`cc_sessao_${usuario.id}`)
+    }
+    if (usuario?.email) {
+      await registrarLogAuth('logout', usuario.email)
+    }
     await supabase.auth.signOut()
     setTransacoes([])
   }
@@ -130,13 +164,17 @@ export default function App() {
   )
 
   if (!usuario) return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login onLogin={setUsuario} />} />
-        <Route path="/"      element={<PaginaLanding />} />
-        <Route path="*"      element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <div data-theme="dark" data-theme-locked="dark" className="theme-dark-locked" style={{ minHeight: '100vh', background: '#0A0F0D' }}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login onLogin={setUsuario} />} />
+          <Route path="/termos" element={<PaginaTermosPrivacidade />} />
+          <Route path="/privacidade" element={<PaginaTermosPrivacidade />} />
+          <Route path="/"      element={<PaginaLanding />} />
+          <Route path="*"      element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   )
 
   // Badge de pendências vencidas
@@ -163,17 +201,80 @@ export default function App() {
     onRemoveu:        handleRemoveu,
     onAtualizou:      handleAtualizou,
     carregando:       carregandoDados,
+    onAbrirTour:      () => setTourAberto(true),
   }
 
   return (
     <BrowserRouter>
-      <div style={estilos.layout}>
-        <NavLateral qtdVencidas={qtdVencidas} />
+      <ConfirmProvider>
+        <AppAutenticado
+          usuario={usuario}
+          isMobileNav={isMobileNav}
+          qtdVencidas={qtdVencidas}
+          mesSelecionado={mesSelecionado}
+          setMesSelecionado={setMesSelecionado}
+          propsPaginas={propsPaginas}
+          handleLogout={handleLogout}
+          tourAberto={tourAberto}
+          setTourAberto={setTourAberto}
+        />
+      </ConfirmProvider>
+    </BrowserRouter>
+  )
+}
 
-        <div style={estilos.conteudo}>
-          {/* Header Superior — Conforme solicitado pelo usuário */}
-          <header style={estilos.header}>
-            <div style={estilos.headerLeft}>
+function AppAutenticado({
+  usuario,
+  isMobileNav,
+  qtdVencidas,
+  mesSelecionado,
+  setMesSelecionado,
+  propsPaginas,
+  handleLogout,
+  tourAberto,
+  setTourAberto,
+}) {
+  const location = useLocation()
+  const isRotaAdmin = location.pathname.startsWith('/admin')
+
+  return (
+    <div style={estilos.layout}>
+      <NavLateral qtdVencidas={qtdVencidas} />
+
+      <div style={estilos.conteudo}>
+        {/* Header Mobile com Identificação do Sistema (apenas fora do painel administrativo) */}
+        {isMobileNav && !isRotaAdmin && (
+          <div style={estilos.mobileTopBar}>
+            <div style={estilos.mobileBrandLogo}>
+              <div style={estilos.logoAvatar}>
+                <img src={logoImg} alt="Contas Claras" style={estilos.logoImg} />
+              </div>
+              <div style={estilos.logoTextWrap}>
+                <span style={estilos.logoTitulo}>Contas Claras</span>
+                <span style={estilos.logoSub}>Inteligência Financeira</span>
+              </div>
+            </div>
+            <MenuUsuario
+              email={usuario.email}
+              onLogout={handleLogout}
+              usuarioId={usuario.id}
+              onAbrirTour={() => setTourAberto(true)}
+            />
+          </div>
+        )}
+
+        {/* Header Superior / Subheader (oculto quando estiver no Painel Admin) */}
+        {!isRotaAdmin && (
+          <header style={{
+            ...estilos.header,
+            padding: isMobileNav ? '14px 16px 6px' : '24px 36px 12px',
+            justifyContent: isMobileNav ? 'center' : 'space-between',
+          }}>
+            <div style={{
+              ...estilos.headerLeft,
+              alignItems: isMobileNav ? 'center' : 'flex-start',
+              textAlign: isMobileNav ? 'center' : 'left',
+            }}>
               <div style={estilos.mesNavegacao}>
                 <button
                   onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
@@ -182,7 +283,10 @@ export default function App() {
                 >
                   ‹
                 </button>
-                <h1 style={estilos.tituloMes}>
+                <h1 style={{
+                  ...estilos.tituloMes,
+                  fontSize: isMobileNav ? 22 : 28,
+                }}>
                   {formatarMesHeader(mesSelecionado)}
                 </h1>
                 <button
@@ -193,33 +297,62 @@ export default function App() {
                   ›
                 </button>
               </div>
-              <span style={estilos.subtituloHeader}>Visão geral financeira</span>
+              <span style={{
+                ...estilos.subtituloHeader,
+                fontSize: isMobileNav ? 13.5 : 14.5,
+              }}>
+                Visão geral financeira
+              </span>
             </div>
 
-            {/* Menu suspenso: avatar + email abrem Configurações e Sair */}
-            <div style={estilos.headerRight}>
-              <MenuUsuario email={usuario.email} onLogout={handleLogout} />
-            </div>
+            {/* Menu suspenso: visível no header superior no desktop */}
+            {!isMobileNav && (
+              <div style={estilos.headerRight}>
+                <MenuUsuario
+                  email={usuario.email}
+                  onLogout={handleLogout}
+                  usuarioId={usuario.id}
+                  onAbrirTour={() => setTourAberto(true)}
+                />
+              </div>
+            )}
           </header>
+        )}
 
-          <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
-            <Routes>
-              <Route path="/"              element={<Navigate to="/dashboard" replace />} />
-              <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
-              <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
-              <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
-              <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
-              <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
-              <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
-              <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
-              <Route path="/configuracoes" element={<PaginaConfiguracoes />} />
-              <Route path="*"              element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </main>
-        </div>
+        <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
+          <Routes>
+            <Route path="/"              element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
+            <Route path="/termos"        element={<PaginaTermosPrivacidade />} />
+            <Route path="/privacidade"   element={<PaginaTermosPrivacidade />} />
+            <Route path="/dashboard"     element={<PaginaDashboard   {...propsPaginas} />} />
+            <Route path="/despesas"      element={<PaginaLancamentos {...propsPaginas} />} />
+            <Route path="/receitas"      element={<PaginaReceitas    {...propsPaginas} />} />
+            <Route path="/contas"        element={<PaginaContas      usuarioId={usuario.id} />} />
+            <Route path="/cartoes"       element={<PaginaCartoes     {...propsPaginas} />} />
+            <Route path="/aplicacoes"    element={<PaginaAplicacoes  {...propsPaginas} />} />
+            <Route path="/sonhos"        element={<PaginaSonhos      {...propsPaginas} />} />
+            <Route path="/configuracoes" element={<PaginaConfiguracoes onAbrirTour={() => setTourAberto(true)} />} />
+            
+            {/* Rotas Administrativas com Proteção por Hash */}
+            <Route path="/admin/:hash"          element={<PaginaAdmin usuario={usuario} />} />
+            <Route path="/admin/:hash/usuarios" element={<PaginaAdminUsuarios usuario={usuario} />} />
+            <Route path="/admin/:hash/logs"     element={<PaginaAdminLogs usuario={usuario} />} />
+            <Route path="/admin"                element={<Navigate to="/dashboard" replace />} />
+            <Route path="/admin/*"              element={<Navigate to="/dashboard" replace />} />
+            
+            <Route path="*"                     element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
       </div>
-    </BrowserRouter>
+
+      {/* Modal de Onboarding Tour */}
+      <ModalOnboardingTour
+        aberto={tourAberto}
+        onFechar={() => setTourAberto(false)}
+        usuarioId={usuario.id}
+      />
+    </div>
   )
 }
 
@@ -245,23 +378,79 @@ const estilos = {
     fontFamily: 'var(--font-headline)',
     fontSize: 16,
   },
+  mobileTopBar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 16px',
+    background: 'var(--surface)',
+    borderBottom: '1px solid var(--border)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 30,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+  },
+  mobileBrandLogo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logoAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.14)',
+    border: '1.5px solid rgba(16, 185, 129, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 0 14px var(--primary-glow)',
+    flexShrink: 0,
+    overflow: 'hidden',
+  },
+  logoImg: {
+    width: 22,
+    height: 22,
+    objectFit: 'contain',
+    display: 'block',
+  },
+  logoTextWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    lineHeight: 1.15,
+  },
+  logoTitulo: {
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+    letterSpacing: '-0.01em',
+  },
+  logoSub: {
+    fontSize: 10.5,
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+    marginTop: 1,
+  },
   header: {
     padding: '24px 36px 12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
-    flexWrap: 'wrap',
+    gap: 12,
+    flexWrap: 'nowrap',
   },
   headerLeft: {
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
+    minWidth: 0,
+    flex: 1,
   },
   mesNavegacao: {
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   tituloMes: {
     margin: 0,
@@ -272,9 +461,10 @@ const estilos = {
     letterSpacing: '-0.02em',
   },
   subtituloHeader: {
-    fontSize: 13,
+    fontSize: 14.5,
     color: 'var(--text-muted)',
-    fontWeight: 500,
+    fontWeight: 700,
+    letterSpacing: '-0.01em',
   },
   botaoSetaMes: {
     background: 'transparent',
@@ -291,6 +481,8 @@ const estilos = {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
   main: {
     maxWidth: 1200,

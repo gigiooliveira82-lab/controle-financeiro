@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+button, input, select, textarea {
+  font-family: var(--font-body);
+}
+
 html, body {
   overflow-x: hidden;
   min-height: 100vh;
@@ -13,11 +17,12 @@ body {
   margin: 0;
   font-family: var(--font-body);
   background-color: var(--bg-deep);
-  background-image: radial-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+  background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
   background-size: 24px 24px;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -49,7 +54,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Selection */
 ::selection {
   background: var(--primary);
-  color: #0A0F0D;
+  color: var(--primary-contrast);
 }
 
 /* Animação de pulsação com sombra para o microfone ativo */

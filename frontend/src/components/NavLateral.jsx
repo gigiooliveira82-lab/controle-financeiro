@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation, Link } from 'react-router-dom'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
+import logoImg from '../assets/logomarca.svg'
 import {
   IconDashboard,
   IconDespesas,
@@ -8,9 +9,13 @@ import {
   IconCartoes,
   IconAplicacoes,
   IconSonhos,
+  IconPainelAdm,
+  IconUsuarios,
+  IconLogs,
+  IconVoltar,
 } from './Icones'
 
-const NAV_ITENS = [
+const NAV_ITENS_SISTEMA = [
   { path: '/dashboard',     Icon: IconDashboard,  label: 'Dashboard',   curto: 'Dashboard'  },
   { path: '/despesas',      Icon: IconDespesas,   label: 'Despesas',    curto: 'Despesas'   },
   { path: '/receitas',      Icon: IconReceitas,   label: 'Receitas',    curto: 'Receitas'   },
@@ -22,14 +27,45 @@ const NAV_ITENS = [
 
 export default function NavLateral({ qtdVencidas }) {
   const isMobile = useIsNavMobile()
+  const location = useLocation()
+
+  const isRotaAdmin = location.pathname.startsWith('/admin')
+  const partesRota = location.pathname.split('/')
+  const adminHash = partesRota[2] || ''
+
+  // Itens dinâmicos para a barra lateral do painel de administração
+  const navItensAdmin = [
+    {
+      path: `/admin/${adminHash}`,
+      end: true,
+      Icon: IconDashboard,
+      label: 'Visão Geral',
+      curto: 'Visão Geral',
+    },
+    {
+      path: `/admin/${adminHash}/usuarios`,
+      Icon: IconUsuarios,
+      label: 'Usuários',
+      curto: 'Usuários',
+    },
+    {
+      path: `/admin/${adminHash}/logs`,
+      Icon: IconLogs,
+      label: 'Logs',
+      curto: 'Logs',
+    },
+  ]
+
+  const itensAtuais = isRotaAdmin ? navItensAdmin : NAV_ITENS_SISTEMA
 
   if (isMobile) {
     return (
       <nav style={st.bottomBar}>
-        {NAV_ITENS.map(({ path, Icon, curto }) => (
+        {itensAtuais.map(({ path, end, Icon, curto }) => (
           <NavLink
             key={path}
             to={path}
+            end={end}
             style={({ isActive }) => ({
               ...st.bottomItem,
               ...(isActive ? st.bottomItemActive : {}),
@@ -39,7 +75,7 @@ export default function NavLateral({ qtdVencidas }) {
               <>
                 <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={18} />
-                  {path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
+                  {!isRotaAdmin && path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
                 </span>
                 <span style={st.bottomLabel}>{curto}</span>
                 {isActive && <span style={st.activeDot} />}
@@ -47,6 +83,17 @@ export default function NavLateral({ qtdVencidas }) {
             )}
           </NavLink>
         ))}
+
+        {isRotaAdmin && (
+          <Link
+            to="/dashboard"
+            style={{ ...st.bottomItem, color: 'var(--primary)' }}
+            title="Voltar ao sistema"
+          >
+            <IconVoltar size={18} color="var(--primary)" />
+            <span style={{ ...st.bottomLabel, color: 'var(--primary)', fontWeight: 600 }}>Voltar</span>
+          </Link>
+        )}
       </nav>
     )
   }
@@ -56,24 +103,30 @@ export default function NavLateral({ qtdVencidas }) {
       {/* Brand Header */}
       <div style={st.sidebarLogo}>
         <div style={st.logoAvatar}>
-          <div style={st.logoAvatarRing}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-          </div>
+          <img src={logoImg} alt="Contas Claras" style={st.logoImg} />
         </div>
         <div style={st.logoTextWrap}>
-          <span style={st.logoTitulo}>Contas Claras</span>
-          <span style={st.logoSub}>Inteligência Financeira</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={st.logoTitulo}>Contas Claras</span>
+          </div>
+          {isRotaAdmin ? (
+            <span style={st.badgeAdminLateral}>
+              <IconPainelAdm size={10} color="#0A0F0D" />
+              Painel Adm
+            </span>
+          ) : (
+            <span style={st.logoSub}>Inteligência Financeira</span>
+          )}
         </div>
       </div>
 
       {/* Navigation Items */}
       <div style={st.navGroup}>
-        {NAV_ITENS.map(({ path, Icon, label }) => (
+        {itensAtuais.map(({ path, end, Icon, label }) => (
           <NavLink
             key={path}
             to={path}
+            end={end}
             style={({ isActive }) => ({
               ...st.sidebarItem,
               ...(isActive ? st.sidebarItemActive : {}),
@@ -82,8 +135,8 @@ export default function NavLateral({ qtdVencidas }) {
             {({ isActive }) => (
               <>
                 <span style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <Icon size={18} />
-                  {path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
+                  <Icon size={18} color={isActive ? 'var(--primary)' : 'currentColor'} />
+                  {!isRotaAdmin && path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
                 </span>
                 <span style={{ flex: 1 }}>{label}</span>
               </>
@@ -91,15 +144,30 @@ export default function NavLateral({ qtdVencidas }) {
           </NavLink>
         ))}
       </div>
+
+      {/* Botão de Voltar ao Sistema quando na barra lateral de Admin */}
+      {isRotaAdmin && (
+        <div style={st.footerAdminWrap}>
+          <div style={st.divisorAdmin} />
+          <Link
+            to="/dashboard"
+            style={st.btnVoltarSidebar}
+            title="Voltar ao dashboard do sistema"
+          >
+            <IconVoltar size={18} color="var(--primary)" />
+            <span>Voltar ao Sistema</span>
+          </Link>
+        </div>
+      )}
     </nav>
   )
 }
 
 const st = {
   sidebar: {
-    width: 210,
-    minWidth: 210,
-    background: 'var(--bg-deep)',
+    width: 250,
+    minWidth: 250,
+    background: 'var(--surface)',
     borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
@@ -111,13 +179,14 @@ const st = {
     alignSelf: 'flex-start',
     flexShrink: 0,
     boxSizing: 'border-box',
-    boxShadow: '2px 0 8px rgba(0,0,0,0.3)',
+    boxShadow: 'var(--sidebar-shadow)',
+    transition: 'background-color 0.2s ease, border-color 0.2s ease',
   },
   sidebarLogo: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    padding: '4px 8px 28px',
+    padding: '4px 8px 24px',
     marginBottom: 8,
     borderBottom: '1px solid var(--border)',
   },
@@ -125,13 +194,20 @@ const st = {
     width: 38,
     height: 38,
     borderRadius: '50%',
-    background: 'radial-gradient(circle at 30% 30%, #153E32, #0A1E17)',
+    background: 'rgba(16, 185, 129, 0.14)',
     border: '1.5px solid rgba(16, 185, 129, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 0 16px rgba(16, 185, 129, 0.2)',
+    boxShadow: '0 0 16px var(--primary-glow)',
     flexShrink: 0,
+    overflow: 'hidden',
+  },
+  logoImg: {
+    width: 24,
+    height: 24,
+    objectFit: 'contain',
+    display: 'block',
   },
   logoAvatarRing: {
     display: 'flex',
@@ -175,10 +251,10 @@ const st = {
     transition: 'all 0.15s ease',
   },
   sidebarItemActive: {
-    background: 'var(--surface-raised)',
-    color: 'var(--text)',
+    background: 'rgba(16, 185, 129, 0.12)',
+    color: 'var(--text-pure)',
     fontWeight: 600,
-    border: '1px solid rgba(16, 185, 129, 0.25)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
   },
 
   // Mobile Bottom Bar
@@ -188,14 +264,14 @@ const st = {
     left: 0,
     right: 0,
     zIndex: 100,
-    background: 'var(--bg-deep)',
+    background: 'var(--surface)',
     borderTop: '1px solid var(--border)',
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
     padding: '8px 2px 6px',
     backdropFilter: 'blur(12px)',
-    boxShadow: '0 -2px 12px rgba(0,0,0,0.4)',
+    boxShadow: 'var(--dropdown-shadow)',
   },
   bottomItem: {
     display: 'flex',
@@ -211,7 +287,7 @@ const st = {
     minWidth: 0,
   },
   bottomItemActive: {
-    color: 'var(--text)',
+    color: 'var(--primary)',
     fontWeight: 600,
   },
   bottomLabel: {
@@ -236,6 +312,46 @@ const st = {
     height: 7,
     borderRadius: '50%',
     background: 'var(--tertiary)',
-    border: '1.5px solid var(--bg-deep)',
+    border: '1.5px solid var(--surface)',
+  },
+  badgeAdminLateral: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 9.5,
+    fontWeight: 700,
+    color: '#0A0F0D',
+    background: 'var(--primary)',
+    padding: '2px 6px',
+    borderRadius: 4,
+    marginTop: 2,
+    width: 'fit-content',
+    letterSpacing: '0.03em',
+    textTransform: 'uppercase',
+  },
+  footerAdminWrap: {
+    marginTop: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  divisorAdmin: {
+    height: 1,
+    background: 'var(--border)',
+    margin: '4px 0',
+  },
+  btnVoltarSidebar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '11px 14px',
+    borderRadius: 10,
+    background: 'rgba(16, 185, 129, 0.08)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    color: 'var(--primary)',
+    textDecoration: 'none',
+    fontWeight: 600,
+    fontSize: 13.5,
+    transition: 'all 0.15s ease',
   },
 }
