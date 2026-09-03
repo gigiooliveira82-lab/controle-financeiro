@@ -10,15 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Executar Deploy via SSH na DigitalOcean
+      - name: Executar Deploy via SSH
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Puxar alterações do repositório
+            # 1. Configurar diretório seguro e alinhar com o Git
+            git config --global --add safe.directory /var/www/contasclaras
             cd /var/www/contasclaras
+            git fetch origin main
+            git reset --hard origin/main
             git pull origin main
 
             # 2. Atualizar e reiniciar o Backend
@@ -26,12 +29,12 @@ jobs:
             npm install
             pm2 restart contasclaras-backend
 
-            # 3. Atualizar e recompilar o Frontend
+            # 3. Recompilar o Frontend
             cd /var/www/contasclaras/frontend
             npm install
             npm run build
 
-            # 4. Ajustar permissões e recarregar o Nginx
+            # 4. Atualizar permissões e recarregar Nginx
             chown -R www-data:www-data /var/www/contasclaras
             chmod -R 755 /var/www/contasclaras
             systemctl reload nginx
