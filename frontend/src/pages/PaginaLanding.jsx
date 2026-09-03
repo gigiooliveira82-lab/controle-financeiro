@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import logoImg from '../assets/logomarca.svg'
+import './PaginaLanding.css'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768)
@@ -15,6 +16,62 @@ function useIsMobile() {
 export default function PaginaLanding() {
   const isMobile = useIsMobile()
   const [faqAberta, setFaqAberta] = useState(null)
+  const [mockupVisivel, setMockupVisivel] = useState(false)
+  const [saldoAnimado, setSaldoAnimado] = useState(0)
+
+  // Scroll reveal observer para elementos da página
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed')
+          }
+        })
+      },
+      {
+        rootMargin: '0px 0px -40px 0px',
+        threshold: 0.1,
+      }
+    )
+
+    const elements = document.querySelectorAll('.landing-reveal')
+    elements.forEach((el) => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [])
+
+  // Início suave da animação do produto no Hero
+  useEffect(() => {
+    const timer = setTimeout(() => setMockupVisivel(true), 260)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Demonstração do Produto: Contador fluido de saldo (0 -> R$ 5.420,80)
+  useEffect(() => {
+    if (!mockupVisivel) return
+    let start = null
+    const target = 5420.80
+    const duration = 700
+    let animId
+
+    function step(timestamp) {
+      if (!start) start = timestamp
+      const progress = Math.min((timestamp - start) / duration, 1)
+      const easeOut = 1 - Math.pow(1 - progress, 3)
+      setSaldoAnimado(target * easeOut)
+      if (progress < 1) {
+        animId = requestAnimationFrame(step)
+      }
+    }
+    animId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animId)
+  }, [mockupVisivel])
+
+  function formatarMoeda(val) {
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  }
 
   function toggleFaq(index) {
     setFaqAberta(prev => prev === index ? null : index)
@@ -35,10 +92,10 @@ export default function PaginaLanding() {
         </div>
 
         <div style={s.navAcoes}>
-          <Link to="/login" style={s.navLinkEntrar}>
+          <Link to="/login" className="landing-nav-link" style={s.navLinkEntrar}>
             Entrar
           </Link>
-          <Link to="/login?modo=cadastro" style={s.navBotaoDestaque}>
+          <Link to="/login?modo=cadastro" className="landing-nav-btn" style={s.navBotaoDestaque}>
             Experimente Grátis
           </Link>
         </div>
@@ -48,31 +105,31 @@ export default function PaginaLanding() {
       <section style={{ ...s.hero, padding: isMobile ? '52px 20px 60px' : '84px 48px 96px' }}>
         <div style={s.heroGlow} />
         <div style={s.heroConteudo}>
-          <div style={s.heroBadge}>
+          <div className="hero-fade-in" style={s.heroBadge}>
             <span style={s.heroBadgeIcone}>✦</span>
             <span>7 Dias Grátis • Sem necessidade de cartão no cadastro</span>
           </div>
 
-          <h1 style={{ ...s.heroTitulo, fontSize: isMobile ? 32 : 54 }}>
+          <h1 className="hero-fade-in-delay-1" style={{ ...s.heroTitulo, fontSize: isMobile ? 32 : 54 }}>
             Controle total dos seus cartões e gastos, <br />
             <span style={s.heroTituloDestaque}>guiado por Inteligência Artificial.</span>
           </h1>
 
-          <p style={{ ...s.heroSub, fontSize: isMobile ? 15.5 : 18 }}>
+          <p className="hero-fade-in-delay-2" style={{ ...s.heroSub, fontSize: isMobile ? 15.5 : 18 }}>
             Lance despesas em segundos por voz ou texto. Tenha conciliação automática 
             de faturas sem duplicar valores e saiba exatamente quanto pode gastar antes de fechar o mês.
           </p>
 
           {/* CTA ÚNICO FOCAL */}
-          <div style={s.heroBotoes}>
-            <Link to="/login?modo=cadastro" style={s.botaoPrimario}>
+          <div className="hero-fade-in-delay-3" style={s.heroBotoes}>
+            <Link to="/login?modo=cadastro" className="landing-btn-cta" style={s.botaoPrimario}>
               Começar 7 dias grátis
-              <span style={s.botaoSeta}> →</span>
+              <span className="btn-seta" style={s.botaoSeta}> →</span>
             </Link>
           </div>
 
           {/* MICROCOPY DE CONFIANÇA */}
-          <div style={s.heroGarantiasRow}>
+          <div className="hero-fade-in-delay-3" style={s.heroGarantiasRow}>
             <span style={s.garantiaItem}>✓ Cadastro em 30 segundos</span>
             <span style={s.garantiaDivisor}>•</span>
             <span style={s.garantiaItem}>✓ Sem fidelidade</span>
@@ -81,7 +138,7 @@ export default function PaginaLanding() {
           </div>
 
           {/* SHOWCASE DA INTERFACE (MOCKUP INTERATIVO DO PRODUTO) */}
-          <div style={s.mockupWrapper}>
+          <div className="landing-mockup hero-fade-in-delay-3" style={s.mockupWrapper}>
             <div style={s.mockupBarraJanela}>
               <div style={s.mockupBolinhas}>
                 <span style={{ ...s.bolinha, background: '#EF4444' }} />
@@ -99,7 +156,37 @@ export default function PaginaLanding() {
               <div style={{ ...s.mockupGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
                 <div style={s.mockupCardKpi}>
                   <span style={s.mockupKpiLabel}>Saldo Disponível em Conta</span>
-                  <div style={s.mockupKpiValorPos}>R$ 5.420,80</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={s.mockupKpiValorPos}>{formatarMoeda(saldoAnimado)}</div>
+                    {/* Mini gráfico vetorial elegante desenhando a curva financeira */}
+                    <svg className="mockup-sparkline" width="68" height="28" viewBox="0 0 76 32" fill="none" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="landingSparklineGrad" x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#10B981" stopOpacity="0.4"/>
+                          <stop offset="100%" stopColor="#10B981" stopOpacity="0.0"/>
+                        </linearGradient>
+                      </defs>
+                      <path
+                        className={`mockup-sparkline-area ${mockupVisivel ? 'is-drawn' : ''}`}
+                        d="M 2 26 C 18 24, 28 14, 42 16 C 54 18, 62 6, 74 4 L 74 32 L 2 32 Z"
+                        fill="url(#landingSparklineGrad)"
+                      />
+                      <path
+                        className={`mockup-sparkline-line ${mockupVisivel ? 'is-drawn' : ''}`}
+                        d="M 2 26 C 18 24, 28 14, 42 16 C 54 18, 62 6, 74 4"
+                        stroke="#10B981"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                      />
+                      <circle
+                        className={`mockup-sparkline-dot ${mockupVisivel ? 'is-drawn' : ''}`}
+                        cx="74"
+                        cy="4"
+                        r="3.5"
+                        fill="#10B981"
+                      />
+                    </svg>
+                  </div>
                   <span style={s.mockupKpiSub}>+ R$ 1.850,00 previstos</span>
                 </div>
 
@@ -118,7 +205,7 @@ export default function PaginaLanding() {
 
               {/* Mensagem da IA em Tempo Real */}
               <div style={s.mockupIaBox}>
-                <div style={s.mockupIaIcone}>✦</div>
+                <div className="ia-badge-pulse" style={s.mockupIaIcone}>✦</div>
                 <div style={{ textAlign: 'left' }}>
                   <div style={s.mockupIaTitulo}>Assistente Financeiro Contas Claras</div>
                   <div style={s.mockupIaTexto}>
@@ -134,29 +221,31 @@ export default function PaginaLanding() {
 
       {/* NÚMEROS REAIS / CREDIBILIDADE */}
       <section style={{ ...s.secao, padding: isMobile ? '48px 20px' : '72px 48px' }}>
-        <p style={s.eyebrow}>Resultados e Segurança</p>
-        <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 32 }}>
-          Projetado para dar clareza e paz ao seu bolso
-        </h2>
+        <div className="landing-reveal">
+          <p style={s.eyebrow}>Resultados e Segurança</p>
+          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 32 }}>
+            Projetado para dar clareza e paz ao seu bolso
+          </h2>
+        </div>
         <div style={{ ...s.statsGrid, gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)' }}>
-          <div style={s.statCard}>
+          <div className="landing-reveal stagger-1 landing-stat-card" style={s.statCard}>
             <span style={s.statNumero}>30 seg</span>
             <span style={s.statLabel}>para lançar gastos por voz ou texto</span>
           </div>
-          <div style={s.statCard}>
+          <div className="landing-reveal stagger-2 landing-stat-card" style={s.statCard}>
             <span style={s.statNumero}>R$ 0</span>
             <span style={s.statLabel}>em faturas duplicadas no seu orçamento</span>
           </div>
-          <div style={s.statCard}>
+          <div className="landing-reveal stagger-3 landing-stat-card" style={s.statCard}>
             <span style={s.statNumero}>6 em 1</span>
             <span style={s.statLabel}>módulos essenciais integrados com IA</span>
           </div>
-          <div style={s.statCard}>
+          <div className="landing-reveal stagger-4 landing-stat-card" style={s.statCard}>
             <span style={s.statNumero}>100%</span>
             <span style={s.statLabel}>dos seus dados criptografados e isolados</span>
           </div>
         </div>
-        <p style={s.statsRodape}>
+        <p className="landing-reveal stagger-4" style={s.statsRodape}>
           Todas as ferramentas liberadas desde o primeiro minuto para você testar gratuitamente por 7 dias.
         </p>
       </section>
@@ -164,14 +253,20 @@ export default function PaginaLanding() {
       {/* FUNCIONALIDADES */}
       <section style={{ ...s.secaoEscura, padding: isMobile ? '56px 20px' : '80px 48px' }}>
         <div style={s.secaoContainer}>
-          <p style={s.eyebrow}>Ecossistema Completo</p>
-          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34 }}>
-            Tudo o que você precisa em uma única tela
-          </h2>
+          <div className="landing-reveal">
+            <p style={s.eyebrow}>Ecossistema Completo</p>
+            <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34 }}>
+              Tudo o que você precisa em uma única tela
+            </h2>
+          </div>
           <div style={{ ...s.featuresGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
-            {FUNCIONALIDADES.map(f => (
-              <div key={f.titulo} style={s.featureCard}>
-                <div style={s.featureIconeBox}>
+            {FUNCIONALIDADES.map((f, index) => (
+              <div
+                key={f.titulo}
+                className={`landing-reveal stagger-${(index % 3) + 1} landing-feature-card`}
+                style={s.featureCard}
+              >
+                <div className="landing-feature-icon" style={s.featureIconeBox}>
                   {f.iconeSvg}
                 </div>
                 <h3 style={s.featureTitulo}>{f.titulo}</h3>
@@ -184,7 +279,7 @@ export default function PaginaLanding() {
 
       {/* PREÇOS / PLANOS */}
       <section style={{ ...s.secao, padding: isMobile ? '56px 20px' : '80px 48px' }}>
-        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 36px' }}>
+        <div className="landing-reveal" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 36px' }}>
           <p style={s.eyebrow}>Investimento Transparente</p>
           <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34, margin: '0 0 12px' }}>
             Comece grátis, decida depois
@@ -195,8 +290,8 @@ export default function PaginaLanding() {
         </div>
 
         {/* Card Único de Ancoragem Focal */}
-        <div style={s.planoContainerUnificado}>
-          <div style={{ ...s.planoCardUnificado, padding: isMobile ? '36px 20px 28px' : '44px 38px 34px' }}>
+        <div className="landing-reveal stagger-1" style={s.planoContainerUnificado}>
+          <div className="landing-plano-card" style={{ ...s.planoCardUnificado, padding: isMobile ? '36px 20px 28px' : '44px 38px 34px' }}>
             <span style={s.planoSeloDestaque}>★ 7 Dias Grátis Inclusos • Sem Cartão</span>
             
             <div style={s.planoHeader}>
@@ -244,9 +339,9 @@ export default function PaginaLanding() {
             </div>
 
             <div style={{ marginTop: 32, textAlign: 'center' }}>
-              <Link to="/login?modo=cadastro" style={s.planoBotaoAcaoUnificado}>
+              <Link to="/login?modo=cadastro" className="landing-btn-cta" style={s.planoBotaoAcaoUnificado}>
                 Começar 7 dias grátis
-                <span style={s.botaoSeta}> →</span>
+                <span className="btn-seta" style={s.botaoSeta}> →</span>
               </Link>
               <p style={s.planoAviso}>
                 🔒 Cadastro em 30 segundos. Não solicitamos cartão de crédito agora.
@@ -259,28 +354,34 @@ export default function PaginaLanding() {
       {/* SEÇÃO DE PERGUNTAS FREQUENTES (FAQ) */}
       <section style={{ ...s.secaoEscura, padding: isMobile ? '56px 20px' : '80px 48px' }}>
         <div style={s.secaoContainer}>
-          <p style={s.eyebrow}>Tire suas dúvidas</p>
-          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34 }}>
-            Perguntas Frequentes
-          </h2>
+          <div className="landing-reveal">
+            <p style={s.eyebrow}>Tire suas dúvidas</p>
+            <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34 }}>
+              Perguntas Frequentes
+            </h2>
+          </div>
           <div style={s.faqContainer}>
             {FAQ_ITEMS.map((item, index) => {
               const aberta = faqAberta === index
               return (
-                <div key={item.pergunta} style={s.faqItem}>
+                <div key={item.pergunta} className={`landing-reveal stagger-${(index % 4) + 1}`} style={s.faqItem}>
                   <button
                     type="button"
                     onClick={() => toggleFaq(index)}
+                    className="faq-pergunta-btn"
                     style={s.faqPerguntaBtn}
                     aria-expanded={aberta}
                   >
                     <span style={s.faqPerguntaTexto}>{item.pergunta}</span>
-                    <span style={{ ...s.faqIconeSeta, transform: aberta ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    <span
+                      className="faq-icone-seta"
+                      style={{ ...s.faqIconeSeta, transform: aberta ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    >
                       ▼
                     </span>
                   </button>
                   {aberta && (
-                    <div style={s.faqResposta}>
+                    <div className="faq-resposta-animada" style={s.faqResposta}>
                       <p style={s.faqRespostaTexto}>{item.resposta}</p>
                     </div>
                   )}
@@ -293,7 +394,7 @@ export default function PaginaLanding() {
 
       {/* CTA FINAL */}
       <section style={{ ...s.ctaFinal, padding: isMobile ? '64px 20px' : '96px 48px' }}>
-        <div style={s.ctaContainer}>
+        <div className="landing-reveal" style={s.ctaContainer}>
           <div style={s.ctaIconeDestaque}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -306,9 +407,9 @@ export default function PaginaLanding() {
             Cadastre-se em segundos, acerte suas contas com a ajuda da IA e tenha clareza absoluta sobre o seu dinheiro.
           </p>
           <div style={s.ctaBotoesWrap}>
-            <Link to="/login?modo=cadastro" style={s.botaoPrimarioGrande}>
+            <Link to="/login?modo=cadastro" className="landing-btn-cta" style={s.botaoPrimarioGrande}>
               Criar Minha Conta Grátis
-              <span style={s.botaoSeta}> →</span>
+              <span className="btn-seta" style={s.botaoSeta}> →</span>
             </Link>
           </div>
           <p style={s.ctaGarantiaTexto}>
