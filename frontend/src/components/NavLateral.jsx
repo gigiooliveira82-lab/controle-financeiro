@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation, Link } from 'react-router-dom'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
 import logoImg from '../assets/logomarca.svg'
@@ -13,6 +14,7 @@ import {
   IconUsuarios,
   IconLogs,
   IconVoltar,
+  IconMais,
 } from './Icones'
 
 const NAV_ITENS_SISTEMA = [
@@ -25,13 +27,34 @@ const NAV_ITENS_SISTEMA = [
   { path: '/sonhos',        Icon: IconSonhos,     label: 'Meus Sonhos', curto: 'Sonhos'     },
 ]
 
+// 4 itens primários focais no celular para eliminar toques errados (Lei de Miller & Fitts)
+const NAV_ITENS_MOBILE_PRINCIPAIS = [
+  { path: '/dashboard', Icon: IconDashboard, label: 'Início',   curto: 'Início'   },
+  { path: '/despesas',  Icon: IconDespesas,  label: 'Despesas', curto: 'Despesas' },
+  { path: '/cartoes',   Icon: IconCartoes,   label: 'Cartões',  curto: 'Cartões'  },
+  { path: '/sonhos',    Icon: IconSonhos,    label: 'Sonhos',   curto: 'Sonhos'   },
+]
+
+// Itens secundários agrupados no menu expansor 'Mais'
+const NAV_ITENS_MOBILE_EXTRAS = [
+  { path: '/receitas',   Icon: IconReceitas,   label: 'Receitas',          curto: 'Receitas' },
+  { path: '/contas',     Icon: IconContas,     label: 'Contas Bancárias',  curto: 'Contas' },
+  { path: '/aplicacoes', Icon: IconAplicacoes, label: 'Aplicações / Invest.', curto: 'Aplicações' },
+]
+
 export default function NavLateral({ qtdVencidas }) {
   const isMobile = useIsNavMobile()
   const location = useLocation()
+  const [menuMaisAberto, setMenuMaisAberto] = useState(false)
 
   const isRotaAdmin = location.pathname.startsWith('/admin')
   const partesRota = location.pathname.split('/')
   const adminHash = partesRota[2] || ''
+
+  // Fecha o menu 'Mais' automaticamente ao navegar
+  useEffect(() => {
+    setMenuMaisAberto(false)
+  }, [location.pathname])
 
   // Itens dinâmicos para a barra lateral do painel de administração
   const navItensAdmin = [
@@ -56,35 +79,34 @@ export default function NavLateral({ qtdVencidas }) {
     },
   ]
 
-  const itensAtuais = isRotaAdmin ? navItensAdmin : NAV_ITENS_SISTEMA
+  const extraAtivo = !isRotaAdmin && NAV_ITENS_MOBILE_EXTRAS.find(item => location.pathname === item.path)
 
   if (isMobile) {
-    return (
-      <nav style={st.bottomBar}>
-        {itensAtuais.map(({ path, end, Icon, curto }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={end}
-            style={({ isActive }) => ({
-              ...st.bottomItem,
-              ...(isActive ? st.bottomItemActive : {}),
-            })}
-          >
-            {({ isActive }) => (
-              <>
-                <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={18} />
-                  {!isRotaAdmin && path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
-                </span>
-                <span style={st.bottomLabel}>{curto}</span>
-                {isActive && <span style={st.activeDot} />}
-              </>
-            )}
-          </NavLink>
-        ))}
+    if (isRotaAdmin) {
+      return (
+        <nav style={st.bottomBar}>
+          {navItensAdmin.map(({ path, end, Icon, curto }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end={end}
+              style={({ isActive }) => ({
+                ...st.bottomItem,
+                ...(isActive ? st.bottomItemActive : {}),
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={18} />
+                  </span>
+                  <span style={st.bottomLabel}>{curto}</span>
+                  {isActive && <span style={st.activeDot} />}
+                </>
+              )}
+            </NavLink>
+          ))}
 
-        {isRotaAdmin && (
           <Link
             to="/dashboard"
             style={{ ...st.bottomItem, color: 'var(--primary)' }}
@@ -93,11 +115,102 @@ export default function NavLateral({ qtdVencidas }) {
             <IconVoltar size={18} color="var(--primary)" />
             <span style={{ ...st.bottomLabel, color: 'var(--primary)', fontWeight: 600 }}>Voltar</span>
           </Link>
+        </nav>
+      )
+    }
+
+    // Modo normal mobile: 4 itens principais + botão expansor 'Mais'
+    return (
+      <>
+        {/* Backdrop para fechar o menu 'Mais' */}
+        {menuMaisAberto && (
+          <div
+            style={st.maisBackdrop}
+            onClick={() => setMenuMaisAberto(false)}
+          />
         )}
-      </nav>
+
+        {/* Painel Flutuante do Menu Mais */}
+        {menuMaisAberto && (
+          <div style={st.maisCard}>
+            <div style={st.maisCardTitulo}>Mais Módulos</div>
+            <div style={st.maisCardLista}>
+              {NAV_ITENS_MOBILE_EXTRAS.map(({ path, Icon, label }) => {
+                const ativo = location.pathname === path
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    onClick={() => setMenuMaisAberto(false)}
+                    style={{
+                      ...st.maisCardItem,
+                      ...(ativo ? st.maisCardItemAtivo : {}),
+                    }}
+                  >
+                    <Icon size={18} color={ativo ? 'var(--primary)' : 'var(--text-muted)'} />
+                    <span style={{
+                      fontSize: 13.5,
+                      fontWeight: ativo ? 700 : 500,
+                      color: ativo ? 'var(--primary)' : 'var(--text-pure)',
+                    }}>
+                      {label}
+                    </span>
+                    {ativo && <span style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: 11 }}>●</span>}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        <nav style={st.bottomBar}>
+          {NAV_ITENS_MOBILE_PRINCIPAIS.map(({ path, Icon, curto }) => (
+            <NavLink
+              key={path}
+              to={path}
+              style={({ isActive }) => ({
+                ...st.bottomItem,
+                ...(isActive ? st.bottomItemActive : {}),
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={19} color={isActive ? 'var(--primary)' : 'currentColor'} />
+                    {path === '/despesas' && qtdVencidas > 0 && <span style={st.badge} />}
+                  </span>
+                  <span style={st.bottomLabel}>{curto}</span>
+                  {isActive && <span style={st.activeDot} />}
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          {/* Botão 'Mais' que agrupa os módulos secundários */}
+          <button
+            type="button"
+            onClick={() => setMenuMaisAberto(v => !v)}
+            style={{
+              ...st.bottomItemBtn,
+              ...((extraAtivo || menuMaisAberto) ? st.bottomItemActive : {}),
+            }}
+            aria-label="Mais módulos"
+            aria-expanded={menuMaisAberto}
+          >
+            <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <IconMais size={20} color={(extraAtivo || menuMaisAberto) ? 'var(--primary)' : 'currentColor'} />
+            </span>
+            <span style={st.bottomLabel}>
+              {extraAtivo ? extraAtivo.curto : 'Mais'}
+            </span>
+            {(extraAtivo || menuMaisAberto) && <span style={st.activeDot} />}
+          </button>
+        </nav>
+      </>
     )
   }
 
+  // Visualização Desktop
   return (
     <nav style={st.sidebar}>
       {/* Brand Header */}
@@ -122,7 +235,7 @@ export default function NavLateral({ qtdVencidas }) {
 
       {/* Navigation Items */}
       <div style={st.navGroup}>
-        {itensAtuais.map(({ path, end, Icon, label }) => (
+        {(isRotaAdmin ? navItensAdmin : NAV_ITENS_SISTEMA).map(({ path, end, Icon, label }) => (
           <NavLink
             key={path}
             to={path}
@@ -152,7 +265,7 @@ export default function NavLateral({ qtdVencidas }) {
           <Link
             to="/dashboard"
             style={st.btnVoltarSidebar}
-            title="Voltar ao dashboard do sistema"
+            title="Sair do painel administrativo e voltar ao aplicativo"
           >
             <IconVoltar size={18} color="var(--primary)" />
             <span>Voltar ao Sistema</span>
@@ -165,36 +278,29 @@ export default function NavLateral({ qtdVencidas }) {
 
 const st = {
   sidebar: {
-    width: 250,
-    minWidth: 250,
+    width: 240,
+    minHeight: '100vh',
     background: 'var(--surface)',
     borderRight: '1px solid var(--border)',
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
-    padding: '28px 14px',
-    minHeight: '100vh',
-    position: 'sticky',
-    top: 0,
-    alignSelf: 'flex-start',
-    flexShrink: 0,
+    padding: '24px 16px',
     boxSizing: 'border-box',
-    boxShadow: 'var(--sidebar-shadow)',
-    transition: 'background-color 0.2s ease, border-color 0.2s ease',
+    flexShrink: 0,
+    zIndex: 30,
   },
   sidebarLogo: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    padding: '4px 8px 24px',
-    marginBottom: 8,
-    borderBottom: '1px solid var(--border)',
+    marginBottom: 32,
+    padding: '0 8px',
   },
   logoAvatar: {
     width: 38,
     height: 38,
     borderRadius: '50%',
-    background: 'rgba(16, 185, 129, 0.14)',
+    background: 'radial-gradient(circle at 30% 30%, #153E32, #0A1E17)',
     border: '1.5px solid rgba(16, 185, 129, 0.4)',
     display: 'flex',
     alignItems: 'center',
@@ -208,11 +314,6 @@ const st = {
     height: 24,
     objectFit: 'contain',
     display: 'block',
-  },
-  logoAvatarRing: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   logoTextWrap: {
     display: 'flex',
@@ -269,40 +370,60 @@ const st = {
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '8px 2px 6px',
-    backdropFilter: 'blur(12px)',
-    boxShadow: 'var(--dropdown-shadow)',
+    padding: '6px 4px 4px',
+    backdropFilter: 'blur(16px)',
+    boxShadow: '0 -4px 20px rgba(0,0,0,0.35)',
   },
   bottomItem: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 3,
     color: 'var(--text-muted)',
     textDecoration: 'none',
-    padding: '4px 6px',
+    padding: '6px 4px',
     flex: 1,
     position: 'relative',
-    fontSize: 10,
+    minHeight: 48,
     minWidth: 0,
+    transition: 'color 0.15s ease',
+  },
+  bottomItemBtn: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    padding: '6px 4px',
+    flex: 1,
+    position: 'relative',
+    minHeight: 48,
+    cursor: 'pointer',
+    minWidth: 0,
+    transition: 'color 0.15s ease',
   },
   bottomItemActive: {
     color: 'var(--primary)',
     fontWeight: 600,
   },
   bottomLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: 500,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    lineHeight: 1.1,
   },
   activeDot: {
     width: 4,
     height: 4,
     borderRadius: '50%',
     background: 'var(--primary)',
-    marginTop: 2,
+    marginTop: 1,
   },
   badge: {
     position: 'absolute',
@@ -353,5 +474,58 @@ const st = {
     fontWeight: 600,
     fontSize: 13.5,
     transition: 'all 0.15s ease',
+  },
+
+  // Modal / Drawer expansor 'Mais'
+  maisBackdrop: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0, 0, 0, 0.65)',
+    zIndex: 98,
+    backdropFilter: 'blur(2px)',
+  },
+  maisCard: {
+    position: 'fixed',
+    bottom: 64,
+    right: 12,
+    left: 12,
+    maxWidth: 320,
+    marginLeft: 'auto',
+    background: 'var(--surface-raised)',
+    border: '1.5px solid var(--border)',
+    borderRadius: 16,
+    padding: '14px 16px',
+    zIndex: 99,
+    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  maisCardTitulo: {
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: 'var(--text-muted)',
+    marginBottom: 4,
+  },
+  maisCardLista: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  maisCardItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '10px 12px',
+    borderRadius: 10,
+    textDecoration: 'none',
+    background: 'transparent',
+    transition: 'background 0.15s ease',
+  },
+  maisCardItemAtivo: {
+    background: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
   },
 }

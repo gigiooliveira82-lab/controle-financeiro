@@ -251,8 +251,8 @@ export default function PaginaAdmin({ usuario }) {
             )}
             <div style={estilos.cardSubtexto}>
               {metricas?.totalSessoesMonitoradas > 0
-                ? `Média de ${metricas.totalSessoesMonitoradas} ${metricas.totalSessoesMonitoradas === 1 ? 'sessão registrada' : 'sessões registradas'}`
-                : 'Aguardando encerramento de sessões'}
+                ? `Média por sessão ativa (${metricas.totalSessoesMonitoradas} ${metricas.totalSessoesMonitoradas === 1 ? 'sessão monitorada' : 'sessões monitoradas'})`
+                : 'Média por sessão ativa de usuário (aguardando dados)'}
             </div>
           </div>
 

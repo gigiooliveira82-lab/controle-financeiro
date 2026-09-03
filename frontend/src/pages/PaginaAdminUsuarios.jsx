@@ -18,12 +18,14 @@ import {
   IconOlho,
   IconOlhoFechado,
 } from '../components/Icones'
+import { useConfirm } from '../components/ModalConfirmacao'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
 
 export default function PaginaAdminUsuarios({ usuario }) {
   const isMobile = useIsNavMobile()
   const { hash } = useParams()
   const navigate = useNavigate()
+  const confirm = useConfirm()
 
   const [usuarios, setUsuarios] = useState([])
   const [carregando, setCarregando] = useState(true)
@@ -95,12 +97,17 @@ export default function PaginaAdminUsuarios({ usuario }) {
 
   async function handleToggleAdmin(user) {
     const novoStatus = !user.is_admin
-    const confirmar = window.confirm(
-      novoStatus
-        ? `Deseja conceder privilégios de ADMINISTRADOR para "${user.email}"?`
-        : `Deseja remover os privilégios de administrador de "${user.email}"?`
-    )
-    if (!confirmar) return
+    const aprovado = await confirm({
+      titulo: novoStatus ? 'Conceder Privilégio de Administrador' : 'Revogar Privilégios de Administrador',
+      mensagem: novoStatus
+        ? `Tem certeza que deseja conceder privilégios totais de ADMINISTRADOR para "${user.email}"?`
+        : `Deseja remover as permissões administrativas de "${user.email}"?`,
+      textoConfirmar: novoStatus ? 'Conceder Admin' : 'Revogar Acesso',
+      textoCancelar: 'Cancelar',
+      variante: novoStatus ? 'primary' : 'danger',
+      icone: 'alerta',
+    })
+    if (!aprovado) return
 
     try {
       await alternarAdminUsuario(user.id, novoStatus)
@@ -113,7 +120,7 @@ export default function PaginaAdminUsuarios({ usuario }) {
           : `Privilégio de administrador revogado para "${user.email}".`
       )
     } catch (err) {
-      alert(err.message || 'Erro ao alterar privilégios do usuário.')
+      setErro(err.message || 'Erro ao alterar privilégios do usuário.')
     }
   }
 
@@ -185,7 +192,7 @@ export default function PaginaAdminUsuarios({ usuario }) {
         fecharModalEditar()
       }
     } catch (err) {
-      alert(err.message || 'Erro ao excluir usuário.')
+      setErro(err.message || 'Erro ao excluir usuário.')
     } finally {
       setExcluindo(false)
     }

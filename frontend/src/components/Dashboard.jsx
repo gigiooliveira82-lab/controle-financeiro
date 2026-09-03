@@ -112,9 +112,12 @@ export function CardHistoricoMes({ comparativo, parcial, mesSelecionado }) {
 
       {semHistorico ? (
         <>
-          <h3 style={s.cardHistoricoTitulo}>Sem histórico</h3>
+          <div style={s.cardHistoricoBadge}>
+            <span style={s.cardHistoricoBadgeTexto}>✦ Primeiro Mês</span>
+          </div>
+          <h3 style={s.cardHistoricoTitulo}>Iniciando seu Histórico</h3>
           <p style={s.cardHistoricoSub}>
-            Não há dados suficientes do mês anterior para comparação.
+            Conforme você registrar suas receitas e despesas, calcularemos suas economias e comparativos aqui.
           </p>
         </>
       ) : (
@@ -304,24 +307,30 @@ export function BlocoAnaliseIA({ usuarioId, mesSelecionado, transacoes, totalDes
       <div style={s.blocoAnaliseHeader}>
         <div style={s.blocoAnaliseHeaderLeft}>
           <div style={s.botIconeBadge}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="12" x="3" y="8" rx="2" />
-              <path d="M12 2v6" />
-              <circle cx="8" cy="14" r="1" fill="#10B981" />
-              <circle cx="16" cy="14" r="1" fill="#10B981" />
-            </svg>
+            <span style={{ color: 'var(--primary)', fontSize: 18, fontWeight: 800 }}>✦</span>
           </div>
-          <h2 style={s.blocoAnaliseTitulo}>Análise do Mês</h2>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h2 style={s.blocoAnaliseTitulo}>Análise do Mês</h2>
+            <span style={s.blocoAnaliseSub}>Inteligência Financeira</span>
+          </div>
         </div>
 
-        <button
-          onClick={handleGerarAnalise}
-          disabled={carregando}
-          style={s.btnGerarAnalise}
-        >
-          <span style={{ fontSize: 13, color: '#10B981' }}>✦</span>
-          <span>{carregando ? 'Analisando...' : analise ? 'Atualizar Análise' : 'Gerar Análise'}</span>
-        </button>
+        {analise ? (
+          <button
+            onClick={handleGerarAnalise}
+            disabled={carregando}
+            style={s.btnGerarAnalise}
+            title="Atualizar análise do mês com novos dados"
+          >
+            <span style={{ fontSize: 13, color: 'var(--primary)' }}>↺</span>
+            <span>{carregando ? 'Analisando...' : 'Atualizar'}</span>
+          </button>
+        ) : (
+          <div style={s.badgeIaHeader}>
+            <span style={{ fontSize: 12, color: 'var(--primary)' }}>✦</span>
+            <span>Insights IA</span>
+          </div>
+        )}
       </div>
 
       <div style={s.blocoAnaliseCorpo}>
@@ -375,15 +384,20 @@ export function BlocoAnaliseIA({ usuarioId, mesSelecionado, transacoes, totalDes
               </div>
             ) : (
               <div style={s.insightPlaceholder}>
+                <div style={s.insightPlaceholderTopo}>
+                  <span style={s.insightPlaceholderIcone}>✦</span>
+                  <h4 style={s.insightPlaceholderTitulo}>Insights Inteligentes de Consumo</h4>
+                </div>
                 <p style={s.insightPlaceholderTexto}>
-                  Clique em <strong>Gerar Análise</strong> para processar as entradas deste mês e obter insights inteligentes da IA.
+                  Descubra padrões de gastos, identifique potenciais de economia e saiba se seu ritmo fechará o mês no azul.
                 </p>
                 <button
                   onClick={handleGerarAnalise}
                   disabled={carregando}
                   style={s.btnGerarAnaliseInline}
                 >
-                  <span>✦ Gerar Análise</span>
+                  <span>✦</span>
+                  <span>{carregando ? 'Processando...' : 'Gerar Insights do Mês'}</span>
                 </button>
               </div>
             )}
@@ -396,10 +410,12 @@ export function BlocoAnaliseIA({ usuarioId, mesSelecionado, transacoes, totalDes
 
 // ── Barra Flutuante de Prompt AI (Stitch Design) ────────────────────────────
 export function FloatingAIPromptBar({ usuarioId }) {
+  const isMobile = useIsMobile()
   const [pergunta, setPergunta] = useState('')
   const [resposta, setResposta] = useState(null)
   const [carregando, setCarregando] = useState(false)
   const [aberto, setAberto] = useState(false)
+  const [sheetMobileAberta, setSheetMobileAberta] = useState(false)
 
   async function handleEnviar(e) {
     e?.preventDefault()
@@ -425,6 +441,89 @@ export function FloatingAIPromptBar({ usuarioId }) {
     }
   }
 
+  if (isMobile) {
+    return (
+      <>
+        {/* Botão Flutuante Compacto (FAB) no Mobile */}
+        <button
+          type="button"
+          onClick={() => setSheetMobileAberta(true)}
+          style={s.fabIaMobile}
+          title="Perguntar à Inteligência Artificial"
+          aria-label="Abrir assistente financeiro IA"
+        >
+          <span style={s.fabIaIcone}>✦</span>
+          <span style={s.fabIaTexto}>IA</span>
+        </button>
+
+        {/* Bottom Sheet com campo de pergunta e respostas no Mobile */}
+        {sheetMobileAberta && (
+          <>
+            <div
+              style={s.fabIaBackdrop}
+              onClick={() => setSheetMobileAberta(false)}
+            />
+            <div style={s.fabIaSheet}>
+              <div style={s.fabIaSheetHeader}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: 'var(--primary)', fontSize: 18 }}>✦</span>
+                  <strong style={{ fontSize: 14, color: 'var(--text-pure)' }}>Assistente Financeiro IA</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSheetMobileAberta(false)}
+                  style={s.fecharBtn}
+                  aria-label="Fechar assistente"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {resposta && (
+                <div style={s.fabIaRespostaBox}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-pure)', marginBottom: 6 }}>
+                    {resposta.pergunta}
+                  </div>
+                  <div style={s.floatingRespostaTexto}>
+                    <ReactMarkdown components={{
+                      p: ({ children }) => <p style={{ margin: '0 0 6px' }}>{children}</p>,
+                      strong: ({ children }) => <strong style={{ color: 'var(--primary)' }}>{children}</strong>,
+                    }}>
+                      {resposta.texto}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleEnviar} style={s.fabIaForm}>
+                <input
+                  type="text"
+                  value={pergunta}
+                  onChange={e => setPergunta(e.target.value)}
+                  placeholder="Pergunte sobre seus gastos..."
+                  style={s.fabIaInput}
+                  disabled={carregando}
+                  autoFocus
+                />
+                <button type="submit" disabled={carregando || !pergunta.trim()} style={s.floatingSendBtn}>
+                  {carregando ? (
+                    <span style={{ fontSize: 12 }}>...</span>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-contrast)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" fill="var(--primary-contrast)" />
+                    </svg>
+                  )}
+                </button>
+              </form>
+            </div>
+          </>
+        )}
+      </>
+    )
+  }
+
+  // Desktop: Barra flutuante horizontal
   return (
     <div style={s.floatingBarContainer}>
       {aberto && resposta && (
@@ -887,6 +986,20 @@ const s = {
     textAlign: 'center',
     boxShadow: 'var(--card-shadow)',
   },
+  cardHistoricoBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    background: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid rgba(16, 185, 129, 0.3)',
+    borderRadius: 99,
+    padding: '2px 10px',
+    marginBottom: 8,
+  },
+  cardHistoricoBadgeTexto: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--primary)',
+  },
   cardHistoricoIcone: {
     marginBottom: 10,
   },
@@ -1030,10 +1143,29 @@ const s = {
   },
   blocoAnaliseTitulo: {
     margin: 0,
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: 700,
     color: 'var(--text-pure)',
     fontFamily: 'var(--font-headline)',
+  },
+  blocoAnaliseSub: {
+    fontSize: 11.5,
+    color: 'var(--text-muted)',
+    marginTop: 2,
+    fontWeight: 500,
+  },
+  badgeIaHeader: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '4px 10px',
+    borderRadius: 20,
+    background: 'rgba(16, 185, 129, 0.1)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--primary)',
+    letterSpacing: '0.04em',
   },
   blocoAnaliseCorpo: {
     display: 'grid',
@@ -1092,24 +1224,51 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
-    padding: '8px 16px',
+    padding: '7px 14px',
     borderRadius: 8,
-    border: '1px solid rgba(16, 185, 129, 0.4)',
-    background: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid rgba(16, 185, 129, 0.35)',
+    background: 'rgba(16, 185, 129, 0.1)',
     color: 'var(--primary)',
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: 700,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
+  insightPlaceholder: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  insightPlaceholderTopo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  insightPlaceholderIcone: {
+    fontSize: 15,
+    color: 'var(--primary)',
+  },
+  insightPlaceholderTitulo: {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    fontFamily: 'var(--font-headline)',
+  },
+  insightPlaceholderTexto: {
+    margin: '0 0 14px',
+    fontSize: 13,
+    color: 'var(--text-muted)',
+    lineHeight: 1.55,
+  },
   btnGerarAnaliseInline: {
-    marginTop: 12,
     alignSelf: 'flex-start',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
-    padding: '8px 18px',
+    gap: 8,
+    padding: '9px 18px',
     borderRadius: 8,
     border: 'none',
     background: 'var(--primary)',
@@ -1119,17 +1278,7 @@ const s = {
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
     boxShadow: '0 0 14px var(--primary-glow)',
-  },
-  insightPlaceholder: {
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
-  insightPlaceholderTexto: {
-    margin: 0,
-    fontSize: 13.5,
-    color: 'var(--text-muted)',
-    lineHeight: 1.6,
+    transition: 'all 0.15s ease',
   },
   btnTentarNovamente: {
     background: 'none',
@@ -1269,6 +1418,95 @@ const s = {
     color: 'var(--text-muted)',
     cursor: 'pointer',
     fontSize: 14,
+  },
+
+  // Mobile FAB e Bottom Sheet IA
+  fabIaMobile: {
+    position: 'fixed',
+    bottom: 74,
+    right: 18,
+    zIndex: 95,
+    width: 48,
+    height: 48,
+    borderRadius: '50%',
+    background: 'var(--primary)',
+    color: 'var(--primary-contrast)',
+    border: 'none',
+    boxShadow: '0 4px 18px rgba(16, 185, 129, 0.45)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    cursor: 'pointer',
+    transition: 'transform 0.15s ease',
+  },
+  fabIaIcone: {
+    fontSize: 14,
+    fontWeight: 800,
+    lineHeight: 1,
+  },
+  fabIaTexto: {
+    fontSize: 11,
+    fontWeight: 800,
+    fontFamily: 'var(--font-headline)',
+    lineHeight: 1,
+  },
+  fabIaBackdrop: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.65)',
+    zIndex: 110,
+    backdropFilter: 'blur(3px)',
+  },
+  fabIaSheet: {
+    position: 'fixed',
+    bottom: 64,
+    left: 12,
+    right: 12,
+    zIndex: 111,
+    background: 'var(--surface-raised)',
+    border: '1.5px solid var(--border)',
+    borderRadius: 18,
+    padding: '16px 18px 14px',
+    boxShadow: '0 12px 36px rgba(0,0,0,0.5)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    maxHeight: '65vh',
+    overflowY: 'auto',
+  },
+  fabIaSheetHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+    borderBottom: '1px solid var(--border-subtle)',
+  },
+  fabIaRespostaBox: {
+    background: 'rgba(255,255,255,0.03)',
+    borderRadius: 12,
+    padding: '12px 14px',
+    border: '1px solid var(--border-subtle)',
+    maxHeight: 220,
+    overflowY: 'auto',
+  },
+  fabIaForm: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 99,
+    padding: '4px 6px 4px 14px',
+  },
+  fabIaInput: {
+    flex: 1,
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    color: 'var(--text-pure)',
+    fontSize: 13.5,
+    fontFamily: 'var(--font-body)',
   },
 
   // Linhas e Blocos
