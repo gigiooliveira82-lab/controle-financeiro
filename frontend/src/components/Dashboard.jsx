@@ -600,6 +600,8 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
   const [novaDesc, setNovaDesc]           = useState(t.descricao)
   const [editandoCat, setEditandoCat]     = useState(false)
   const [novaCat, setNovaCat]             = useState(t.categoria || '')
+  const [editandoDia, setEditandoDia]     = useState(false)
+  const [novoDia, setNovoDia]             = useState(String(t.dia_pagamento))
   const [salvando, setSalvando]           = useState(false)
 
   const isMobile    = useIsMobile()
@@ -638,6 +640,14 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
     finally { setSalvando(false); setEditandoCat(false) }
   }
 
+  async function salvarDia() {
+    const v = parseInt(novoDia, 10)
+    if (isNaN(v) || v < 1 || v > 31) { setNovoDia(String(t.dia_pagamento)); setEditandoDia(false); return }
+    setSalvando(true)
+    try { await onAtualizar({ dia_pagamento: v }) }
+    finally { setSalvando(false); setEditandoDia(false) }
+  }
+
   return (
     <div style={{
       ...s.itemLinha,
@@ -646,7 +656,31 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
       background: vencida ? 'rgba(252, 124, 120, 0.08)' : 'transparent',
     }}>
       <div style={{ ...s.itemLinhaEsq, ...(isMobile ? { width: '100%' } : {}) }}>
-        <span style={s.itemDiaTag}>{t.dia_pagamento}</span>
+        {editandoDia ? (
+          <input
+            autoFocus
+            aria-label="Dia do vencimento"
+            type="number"
+            min="1"
+            max="31"
+            value={novoDia}
+            onChange={e => setNovoDia(e.target.value)}
+            onBlur={salvarDia}
+            onKeyDown={e => {
+              if (e.key === 'Enter') salvarDia()
+              if (e.key === 'Escape') { setNovoDia(String(t.dia_pagamento)); setEditandoDia(false) }
+            }}
+            style={s.inputDia}
+          />
+        ) : (
+          <CampoEditavel
+            onAtivar={() => { setNovoDia(String(t.dia_pagamento)); setEditandoDia(true) }}
+            style={s.itemDiaTag}
+            title="Clique para editar o dia"
+          >
+            {t.dia_pagamento}
+          </CampoEditavel>
+        )}
         <div style={s.itemLinhaTextos}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {editandoDesc ? (
@@ -1567,6 +1601,7 @@ const s = {
     minWidth: 0,
   },
   itemDiaTag: {
+    display: 'inline-block',
     fontSize: 11,
     fontWeight: 700,
     color: 'var(--text-muted)',
@@ -1575,6 +1610,20 @@ const s = {
     borderRadius: 4,
     minWidth: 22,
     textAlign: 'center',
+    cursor: 'pointer',
+  },
+  inputDia: {
+    width: 38,
+    background: 'var(--surface-hover)',
+    border: '1px solid var(--primary)',
+    borderRadius: 4,
+    color: 'var(--text-pure)',
+    padding: '2px 4px',
+    fontSize: 11,
+    fontWeight: 700,
+    textAlign: 'center',
+    outline: 'none',
+    flexShrink: 0,
   },
   itemLinhaTextos: {
     display: 'flex',

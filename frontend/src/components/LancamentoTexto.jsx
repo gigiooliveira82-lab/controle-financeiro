@@ -7,7 +7,7 @@ function hojeISO() {
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
 }
 
-export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [], transacoes = [] }) {
+export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [], transacoes = [], cartaoFixo = null }) {
   const [texto, setTexto] = useState('')
   const [carregando, setCarregando] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -15,7 +15,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   const [perguntaRecorrente, setPerguntaRecorrente] = useState(false)
   const [erro, setErro] = useState('')
   const [ouvindo, setOuvindo] = useState(false)
-  const [cartaoId, setCartaoId] = useState('')
+  const [cartaoId, setCartaoId] = useState(cartaoFixo?.id || '')
   const [dataCompra, setDataCompra] = useState(hojeISO)
   const [avisoFatura, setAvisoFatura] = useState(null)
   const recognitionRef = useRef(null)
@@ -118,7 +118,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
       })
       setTransacaoCriada(resultado.transacao)
       setTexto('')
-      setCartaoId('')
+      setCartaoId(cartaoFixo?.id || '')
       setDataCompra(hojeISO())
       onNovaTransacao(resultado.transacao)
 
@@ -219,7 +219,11 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
           </div>
         )}
 
-        {cartoes.length > 0 && (
+        {cartaoFixo ? (
+          <div style={s.cartaoRow}>
+            <span style={s.cartaoFixoLabel}>💳 Lançando na fatura de <strong>{cartaoFixo.nome}</strong></span>
+          </div>
+        ) : cartoes.length > 0 && (
           <div style={s.cartaoRow}>
             <label style={s.cartaoLabel}>Foi no cartão?</label>
             <select
@@ -350,6 +354,11 @@ const s = {
   },
   cartaoLabel: {
     fontSize: 12,
+    color: 'var(--text-muted)',
+    fontWeight: 500,
+  },
+  cartaoFixoLabel: {
+    fontSize: 12.5,
     color: 'var(--text-muted)',
     fontWeight: 500,
   },

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { criarCartao, atualizarCartao, contarComprasCartao, removerCartao } from '../services/api'
 import { useTransacaoHandlers } from '../hooks/useTransacaoHandlers'
 import { ItemLinha, soma, fmtSaldo } from '../components/Dashboard'
+import LancamentoTexto from '../components/LancamentoTexto'
 import CabecalhoPagina from '../components/CabecalhoPagina'
 import { IconCartoes } from '../components/Icones'
 import { useConfirm } from '../components/ModalConfirmacao'
@@ -58,6 +59,8 @@ export default function PaginaCartoes({
             key={cartao.id}
             cartao={cartao}
             compras={transacoes.filter(t => t.cartao_id === cartao.id && t.mes_referencia === mesSelecionado)}
+            transacoes={transacoes}
+            usuarioId={usuarioId}
             cartoesById={cartoesById}
             removendo={removendo}
             onRemover={handleRemover}
@@ -66,6 +69,8 @@ export default function PaginaCartoes({
             onCancelarParcelas={handleCancelarGrupoParcelas}
             onAtualizarCartao={onAtualizouCartao}
             onRemoverCartao={onRemoveuCartao}
+            onNovaTransacao={onNovaTransacao}
+            onAtualizouTransacao={onAtualizou}
           />
         ))
       )}
@@ -74,11 +79,12 @@ export default function PaginaCartoes({
 }
 
 function BlocoCartao({
-  cartao, compras, cartoesById, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas,
-  onAtualizarCartao, onRemoverCartao,
+  cartao, compras, transacoes, usuarioId, cartoesById, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas,
+  onAtualizarCartao, onRemoverCartao, onNovaTransacao, onAtualizouTransacao,
 }) {
-  const [editando, setEditando]   = useState(false)
-  const [excluindo, setExcluindo] = useState(false)
+  const [editando, setEditando]     = useState(false)
+  const [excluindo, setExcluindo]   = useState(false)
+  const [lancando, setLancando]     = useState(false)
   const total = soma(compras)
   const corCartao = cartao.cor || 'var(--primary)'
   const confirmar = useConfirm()
@@ -139,26 +145,47 @@ function BlocoCartao({
           onCancelar={() => setEditando(false)}
         />
       ) : (
-        <div style={c.comprasLista}>
-          {compras.length === 0 ? (
-            <p style={c.textoVazio}>Nenhuma compra neste cartão para o mês selecionado.</p>
-          ) : (
-            compras.map(t => (
-              <ItemLinha
-                key={t.id}
-                transacao={t}
-                cor={corCartao}
-                mostrarStatus
-                removendo={removendo === t.id}
-                onRemover={() => onRemover(t.id)}
-                onAtualizar={campos => onAtualizar(t.id, campos)}
-                onDuplicar={() => onDuplicar(t.id)}
-                onCancelarParcelas={onCancelarParcelas}
-                cartoesById={cartoesById}
+        <>
+          {lancando ? (
+            <div style={c.lancamentoWrap}>
+              <LancamentoTexto
+                usuarioId={usuarioId}
+                onNovaTransacao={onNovaTransacao}
+                onAtualizouTransacao={onAtualizouTransacao}
+                cartoes={[cartao]}
+                cartaoFixo={cartao}
+                transacoes={transacoes}
               />
-            ))
+              <button onClick={() => setLancando(false)} style={c.btnFecharLancamento}>
+                Fechar
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setLancando(true)} style={{ ...c.btnLancarCompra, borderColor: corCartao, color: corCartao }}>
+              + Lançar compra nesta fatura
+            </button>
           )}
-        </div>
+          <div style={c.comprasLista}>
+            {compras.length === 0 ? (
+              <p style={c.textoVazio}>Nenhuma compra neste cartão para o mês selecionado.</p>
+            ) : (
+              compras.map(t => (
+                <ItemLinha
+                  key={t.id}
+                  transacao={t}
+                  cor={corCartao}
+                  mostrarStatus
+                  removendo={removendo === t.id}
+                  onRemover={() => onRemover(t.id)}
+                  onAtualizar={campos => onAtualizar(t.id, campos)}
+                  onDuplicar={() => onDuplicar(t.id)}
+                  onCancelarParcelas={onCancelarParcelas}
+                  cartoesById={cartoesById}
+                />
+              ))
+            )}
+          </div>
+        </>
       )}
 
       <div style={c.blocoAcoes}>
@@ -321,6 +348,29 @@ const c = {
   comprasLista: {
     display: 'flex',
     flexDirection: 'column',
+  },
+  btnLancarCompra: {
+    display: 'block', width: '100%', padding: '10px',
+    borderRadius: 8, border: '1.5px dashed',
+    background: 'transparent',
+    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+    textAlign: 'center', boxSizing: 'border-box',
+    fontFamily: 'var(--font-headline)',
+  },
+  lancamentoWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+  },
+  btnFecharLancamento: {
+    alignSelf: 'flex-end',
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: '2px 4px',
   },
   textoVazio: {
     fontSize: 13,
