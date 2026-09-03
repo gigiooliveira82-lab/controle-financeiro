@@ -1,17 +1,30 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../services/supabase'
 import { useIsMobile } from './Dashboard'
 import logoImg from '../assets/logomarca.svg'
 
 export default function Login({ onLogin }) {
-  const [modo, setModo]                 = useState('login') // 'login' | 'cadastro' | 'recuperar'
+  const location = useLocation()
+  const [modo, setModo]                 = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('modo') === 'cadastro' ? 'cadastro' : 'login'
+  })
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [email, setEmail]               = useState('')
   const [senha, setSenha]               = useState('')
   const [erro, setErro]                 = useState('')
   const [sucesso, setSucesso]           = useState('')
   const [carregando, setCarregando]     = useState(false)
   const isMobile = useIsMobile()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const m = params.get('modo')
+    if (m === 'cadastro' || m === 'login' || m === 'recuperar') {
+      setModo(m)
+    }
+  }, [location.search])
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -108,16 +121,37 @@ export default function Login({ onLogin }) {
               </div>
               <div style={m.inputWrap}>
                 <label style={m.label} htmlFor="login-senha">Senha</label>
-                <input
-                  id="login-senha"
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  value={senha}
-                  onChange={e => setSenha(e.target.value)}
-                  style={m.input}
-                  required
-                />
+                <div style={m.senhaContainer}>
+                  <input
+                    id="login-senha"
+                    type={mostrarSenha ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={e => setSenha(e.target.value)}
+                    style={{ ...m.input, paddingRight: 44 }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha(v => !v)}
+                    style={m.btnOlho}
+                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Ver senha digitada'}
+                    title={mostrarSenha ? 'Ocultar senha' : 'Ver senha digitada'}
+                  >
+                    {mostrarSenha ? (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               {erro && <p style={m.erro}>{erro}</p>}
               {sucesso && <p style={m.sucesso}>{sucesso}</p>}
@@ -157,16 +191,37 @@ export default function Login({ onLogin }) {
               </div>
               <div style={m.inputWrap}>
                 <label style={m.label} htmlFor="cad-senha">Senha (mínimo 6 caracteres)</label>
-                <input
-                  id="cad-senha"
-                  type="password"
-                  placeholder="••••••••"
-                  value={senha}
-                  onChange={e => setSenha(e.target.value)}
-                  style={m.input}
-                  required
-                  minLength={6}
-                />
+                <div style={m.senhaContainer}>
+                  <input
+                    id="cad-senha"
+                    type={mostrarSenha ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={senha}
+                    onChange={e => setSenha(e.target.value)}
+                    style={{ ...m.input, paddingRight: 44 }}
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha(v => !v)}
+                    style={m.btnOlho}
+                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Ver senha digitada'}
+                    title={mostrarSenha ? 'Ocultar senha' : 'Ver senha digitada'}
+                  >
+                    {mostrarSenha ? (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
               {erro && <p style={m.erro}>{erro}</p>}
               <button type="submit" style={m.botao} disabled={carregando}>
@@ -393,5 +448,25 @@ const m = {
     background: 'none', border: 'none',
     color: 'var(--primary)', fontSize: 13, fontWeight: 500,
     cursor: 'pointer', textAlign: 'center', width: '100%',
+  },
+  senhaContainer: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+  },
+  btnOlho: {
+    position: 'absolute',
+    right: 12,
+    background: 'none',
+    border: 'none',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    padding: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+    transition: 'color 0.15s ease',
   },
 }

@@ -14,6 +14,11 @@ function useIsMobile() {
 
 export default function PaginaLanding() {
   const isMobile = useIsMobile()
+  const [faqAberta, setFaqAberta] = useState(null)
+
+  function toggleFaq(index) {
+    setFaqAberta(prev => prev === index ? null : index)
+  }
 
   return (
     <div style={s.pagina} data-theme="dark" data-theme-locked="dark" className="theme-dark-locked">
@@ -30,81 +35,145 @@ export default function PaginaLanding() {
         </div>
 
         <div style={s.navAcoes}>
-          <Link to="/login" style={s.navLinkEntrar}>Entrar</Link>
-          <Link to="/login" style={s.navBotaoDestaque}>
+          <Link to="/login" style={s.navLinkEntrar}>
+            Entrar
+          </Link>
+          <Link to="/login?modo=cadastro" style={s.navBotaoDestaque}>
             Experimente Grátis
           </Link>
         </div>
       </header>
 
-      {/* HERO */}
-      <section style={{ ...s.hero, padding: isMobile ? '56px 20px 64px' : '88px 48px 104px' }}>
+      {/* HERO SECTION */}
+      <section style={{ ...s.hero, padding: isMobile ? '52px 20px 60px' : '84px 48px 96px' }}>
         <div style={s.heroGlow} />
         <div style={s.heroConteudo}>
           <div style={s.heroBadge}>
             <span style={s.heroBadgeIcone}>✦</span>
-            <span>Inteligência Financeira em Tempo Real • 7 Dias Grátis</span>
+            <span>7 Dias Grátis • Sem necessidade de cartão no cadastro</span>
           </div>
-          <h1 style={{ ...s.heroTitulo, fontSize: isMobile ? 36 : 60 }}>
-            A Clareza<br /><span style={s.heroTituloDestaque}>começa aqui.</span>
+
+          <h1 style={{ ...s.heroTitulo, fontSize: isMobile ? 32 : 54 }}>
+            Controle total dos seus cartões e gastos, <br />
+            <span style={s.heroTituloDestaque}>guiado por Inteligência Artificial.</span>
           </h1>
-          <p style={{ ...s.heroSub, fontSize: isMobile ? 16 : 19 }}>
-            Chega de descobrir só no fim do mês que gastou mais do que podia.
-            Chega de somar na mão a fatura do cartão para não duplicar no orçamento.
-            O Contas Claras junta despesas, receitas, cartões e metas num só lugar com inteligência artificial —
-            e te avisa antes do aperto, não depois.
+
+          <p style={{ ...s.heroSub, fontSize: isMobile ? 15.5 : 18 }}>
+            Lance despesas em segundos por voz ou texto. Tenha conciliação automática 
+            de faturas sem duplicar valores e saiba exatamente quanto pode gastar antes de fechar o mês.
           </p>
+
+          {/* CTA ÚNICO FOCAL */}
           <div style={s.heroBotoes}>
-            <Link to="/login" style={s.botaoPrimario}>
-              Experimentar 7 dias grátis
-            </Link>
-            <Link to="/login" style={s.botaoSecundario}>
-              Já tenho conta
+            <Link to="/login?modo=cadastro" style={s.botaoPrimario}>
+              Começar 7 dias grátis
+              <span style={s.botaoSeta}> →</span>
             </Link>
           </div>
-          <p style={s.heroGarantia}>
-            ✓ Acesso ilimitado a todas as ferramentas &bull; Sem taxa de adesão &bull; Cancele quando quiser
-          </p>
+
+          {/* MICROCOPY DE CONFIANÇA */}
+          <div style={s.heroGarantiasRow}>
+            <span style={s.garantiaItem}>✓ Cadastro em 30 segundos</span>
+            <span style={s.garantiaDivisor}>•</span>
+            <span style={s.garantiaItem}>✓ Sem fidelidade</span>
+            <span style={s.garantiaDivisor}>•</span>
+            <span style={s.garantiaItem}>✓ Cancele quando quiser</span>
+          </div>
+
+          {/* SHOWCASE DA INTERFACE (MOCKUP INTERATIVO DO PRODUTO) */}
+          <div style={s.mockupWrapper}>
+            <div style={s.mockupBarraJanela}>
+              <div style={s.mockupBolinhas}>
+                <span style={{ ...s.bolinha, background: '#EF4444' }} />
+                <span style={{ ...s.bolinha, background: '#F59E0B' }} />
+                <span style={{ ...s.bolinha, background: '#10B981' }} />
+              </div>
+              <div style={s.mockupUrlBox}>
+                <span style={{ color: '#10B981', marginRight: 6 }}>🔒</span>
+                contasclaras.app/dashboard
+              </div>
+            </div>
+
+            <div style={s.mockupCorpo}>
+              {/* Cards de Métricas do Dashboard Mockup */}
+              <div style={{ ...s.mockupGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
+                <div style={s.mockupCardKpi}>
+                  <span style={s.mockupKpiLabel}>Saldo Disponível em Conta</span>
+                  <div style={s.mockupKpiValorPos}>R$ 5.420,80</div>
+                  <span style={s.mockupKpiSub}>+ R$ 1.850,00 previstos</span>
+                </div>
+
+                <div style={s.mockupCardKpi}>
+                  <span style={s.mockupKpiLabel}>Faturas dos Cartões (Abertas)</span>
+                  <div style={s.mockupKpiValorAlerta}>R$ 1.638,40</div>
+                  <span style={s.mockupKpiSub}>Conciliado automaticamente</span>
+                </div>
+
+                <div style={s.mockupCardKpi}>
+                  <span style={s.mockupKpiLabel}>Reserva / Metas do Mês</span>
+                  <div style={s.mockupKpiValorDestaque}>R$ 1.200,00</div>
+                  <span style={s.mockupKpiSub}>Meta "Reserva de Emergência" 68%</span>
+                </div>
+              </div>
+
+              {/* Mensagem da IA em Tempo Real */}
+              <div style={s.mockupIaBox}>
+                <div style={s.mockupIaIcone}>✦</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={s.mockupIaTitulo}>Assistente Financeiro Contas Claras</div>
+                  <div style={s.mockupIaTexto}>
+                    "Você gastou 18% a menos em alimentação nesta semana. Se mantiver esse ritmo, 
+                    conseguirá antecipar sua meta de economia em 22 dias!"
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* NÚMEROS REAIS */}
-      <section style={{ ...s.secao, padding: isMobile ? '40px 20px' : '64px 48px' }}>
-        <p style={s.eyebrow}>Onde estamos hoje</p>
+      {/* NÚMEROS REAIS / CREDIBILIDADE */}
+      <section style={{ ...s.secao, padding: isMobile ? '48px 20px' : '72px 48px' }}>
+        <p style={s.eyebrow}>Resultados e Segurança</p>
+        <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 32 }}>
+          Projetado para dar clareza e paz ao seu bolso
+        </h2>
         <div style={{ ...s.statsGrid, gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)' }}>
           <div style={s.statCard}>
-            <span style={s.statNumero}>Jul/2026</span>
-            <span style={s.statLabel}>em uso real desde então</span>
+            <span style={s.statNumero}>30 seg</span>
+            <span style={s.statLabel}>para lançar gastos por voz ou texto</span>
           </div>
           <div style={s.statCard}>
             <span style={s.statNumero}>R$ 0</span>
-            <span style={s.statLabel}>em gastos duplicados de cartão</span>
+            <span style={s.statLabel}>em faturas duplicadas no seu orçamento</span>
           </div>
           <div style={s.statCard}>
-            <span style={s.statNumero}>6</span>
-            <span style={s.statLabel}>módulos integrados com IA</span>
+            <span style={s.statNumero}>6 em 1</span>
+            <span style={s.statLabel}>módulos essenciais integrados com IA</span>
           </div>
           <div style={s.statCard}>
             <span style={s.statNumero}>100%</span>
-            <span style={s.statLabel}>dos dados protegidos por criptografia</span>
+            <span style={s.statLabel}>dos seus dados criptografados e isolados</span>
           </div>
         </div>
         <p style={s.statsRodape}>
-          O aplicativo já funciona de verdade com todas as ferramentas liberadas para você avaliar durante 7 dias.
+          Todas as ferramentas liberadas desde o primeiro minuto para você testar gratuitamente por 7 dias.
         </p>
       </section>
 
       {/* FUNCIONALIDADES */}
       <section style={{ ...s.secaoEscura, padding: isMobile ? '56px 20px' : '80px 48px' }}>
         <div style={s.secaoContainer}>
-          <p style={s.eyebrow}>O que já funciona</p>
-          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 26 : 36 }}>
-            Seis módulos, um único ecossistema
+          <p style={s.eyebrow}>Ecossistema Completo</p>
+          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34 }}>
+            Tudo o que você precisa em uma única tela
           </h2>
           <div style={{ ...s.featuresGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)' }}>
             {FUNCIONALIDADES.map(f => (
               <div key={f.titulo} style={s.featureCard}>
-                <div style={s.featureIconeBox}>{f.icone}</div>
+                <div style={s.featureIconeBox}>
+                  {f.iconeSvg}
+                </div>
                 <h3 style={s.featureTitulo}>{f.titulo}</h3>
                 <p style={s.featureTexto}>{f.texto}</p>
               </div>
@@ -115,51 +184,109 @@ export default function PaginaLanding() {
 
       {/* PREÇOS / PLANOS */}
       <section style={{ ...s.secao, padding: isMobile ? '56px 20px' : '80px 48px' }}>
-        <p style={s.eyebrow}>Investimento</p>
-        <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 26 : 36 }}>
-          Acesso completo liberado no cadastro
-        </h2>
-        <div style={{ ...s.precosGrid, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
-          {/* Card Trial 7 Dias */}
-          <div style={s.planoCard}>
-            <span style={s.planoSeloGratis}>Avaliação Gratuita</span>
-            <h3 style={s.planoNome}>7 Dias Grátis</h3>
-            <p style={s.planoPreco}>R$ 0<span style={s.planoPrecoPeriodo}> /primeira semana</span></p>
-            <p style={s.planoDescricao}>Acesso total e irrestrito a todas as funcionalidades do sistema para você testar na prática.</p>
-            <ul style={s.planoLista}>
-              <li><span style={s.checkVerde}>✓</span> <strong>100% dos recursos liberados</strong> desde o primeiro minuto</li>
-              <li><span style={s.checkVerde}>✓</span> Lançamentos inteligentes por voz e texto com IA</li>
-              <li><span style={s.checkVerde}>✓</span> Gestão de cartões de crédito e conciliação bancária</li>
-              <li><span style={s.checkVerde}>✓</span> Metas financeiras com cálculo de prazos no <em>Meus Sonhos</em></li>
-              <li><span style={s.checkVerde}>✓</span> Dashboard completo com saldo real e saldo projetado</li>
-            </ul>
-            <div style={{ marginTop: 24 }}>
-              <Link to="/login" style={s.planoBotaoAcao}>
-                Começar 7 dias grátis
-              </Link>
-            </div>
-            <p style={s.planoAviso}>Crie sua conta em 30 segundos e comece a usar agora mesmo.</p>
-          </div>
+        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 36px' }}>
+          <p style={s.eyebrow}>Investimento Transparente</p>
+          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34, margin: '0 0 12px' }}>
+            Comece grátis, decida depois
+          </h2>
+          <p style={{ fontSize: 15.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+            Sem pegadinhas, sem taxas escondidas e sem necessidade de cartão de crédito no cadastro.
+          </p>
+        </div>
 
-          {/* Card Assinatura Completa */}
-          <div style={{ ...s.planoCard, ...s.planoCardPro }}>
-            <span style={s.planoSelo}>Acesso Ilimitado</span>
-            <h3 style={{ ...s.planoNome, color: 'var(--primary)' }}>Plano Completo</h3>
-            <p style={s.planoPreco}>R$ 24,90<span style={s.planoPrecoPeriodo}>/mês</span></p>
-            <p style={s.planoDescricao}>Após os 7 dias grátis, continue tendo clareza total das suas finanças por menos de R$ 0,85 ao dia.</p>
-            <ul style={s.planoLista}>
-              <li><span style={s.checkVerde}>✓</span> Uso ilimitado do assistente financeiro e IA</li>
-              <li><span style={s.checkVerde}>✓</span> Todas as ferramentas e relatórios avançados</li>
-              <li><span style={s.checkVerde}>✓</span> Gestão ilimitada de cartões, contas e parcelamentos</li>
-              <li><span style={s.checkVerde}>✓</span> Novas funcionalidades e atualizações automáticas</li>
-              <li><span style={s.checkVerde}>✓</span> Suporte prioritário e exportação completa dos seus dados</li>
-            </ul>
-            <div style={{ marginTop: 24 }}>
-              <Link to="/login" style={s.planoBotaoAcaoDestaque}>
-                Criar conta e testar grátis
-              </Link>
+        {/* Card Único de Ancoragem Focal */}
+        <div style={s.planoContainerUnificado}>
+          <div style={{ ...s.planoCardUnificado, padding: isMobile ? '36px 20px 28px' : '44px 38px 34px' }}>
+            <span style={s.planoSeloDestaque}>★ 7 Dias Grátis Inclusos • Sem Cartão</span>
+            
+            <div style={s.planoHeader}>
+              <h3 style={s.planoNome}>Acesso Completo ao Contas Claras</h3>
+              <p style={s.planoDescricao}>
+                Acesso total e irrestrito a todas as funcionalidades de inteligência financeira desde o primeiro segundo.
+              </p>
             </div>
-            <p style={s.planoAviso}>Sem fidelidade. Cancele quando quiser diretamente pelo painel.</p>
+
+            <div style={s.planoPrecoBox}>
+              <div style={s.precoAncoraLinha}>
+                <span style={s.precoTrialDestaque}>R$ 0</span>
+                <span style={s.precoTrialSub}>nos primeiros 7 dias</span>
+              </div>
+              <div style={s.precoPosTrialLinha}>
+                Após o período gratuito, apenas <strong style={{ color: 'var(--text-pure)' }}>R$ 24,90/mês</strong> (menos de R$ 0,85 ao dia). Cancele quando quiser diretamente pelo painel.
+              </div>
+            </div>
+
+            <div style={{ ...s.planoGridRecursos, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
+              <div style={s.recursoItem}>
+                <span style={s.checkVerde}>✓</span>
+                <span><strong>100% dos recursos liberados</strong> no teste</span>
+              </div>
+              <div style={s.recursoItem}>
+                <span style={s.checkVerde}>✓</span>
+                <span>Lançamentos rápidos por <strong>voz e texto</strong> com IA</span>
+              </div>
+              <div style={s.recursoItem}>
+                <span style={s.checkVerde}>✓</span>
+                <span>Gestão de cartões sem faturas duplicadas</span>
+              </div>
+              <div style={s.recursoItem}>
+                <span style={s.checkVerde}>✓</span>
+                <span>Planejamento de metas no <strong>Meus Sonhos</strong></span>
+              </div>
+              <div style={s.recursoItem}>
+                <span style={s.checkVerde}>✓</span>
+                <span>Dashboard dinâmico com saldo projetado</span>
+              </div>
+              <div style={s.recursoItem}>
+                <span style={s.checkVerde}>✓</span>
+                <span>Sem fidelidade, cancele com 1 clique</span>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 32, textAlign: 'center' }}>
+              <Link to="/login?modo=cadastro" style={s.planoBotaoAcaoUnificado}>
+                Começar 7 dias grátis
+                <span style={s.botaoSeta}> →</span>
+              </Link>
+              <p style={s.planoAviso}>
+                🔒 Cadastro em 30 segundos. Não solicitamos cartão de crédito agora.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SEÇÃO DE PERGUNTAS FREQUENTES (FAQ) */}
+      <section style={{ ...s.secaoEscura, padding: isMobile ? '56px 20px' : '80px 48px' }}>
+        <div style={s.secaoContainer}>
+          <p style={s.eyebrow}>Tire suas dúvidas</p>
+          <h2 style={{ ...s.tituloSecao, fontSize: isMobile ? 24 : 34 }}>
+            Perguntas Frequentes
+          </h2>
+          <div style={s.faqContainer}>
+            {FAQ_ITEMS.map((item, index) => {
+              const aberta = faqAberta === index
+              return (
+                <div key={item.pergunta} style={s.faqItem}>
+                  <button
+                    type="button"
+                    onClick={() => toggleFaq(index)}
+                    style={s.faqPerguntaBtn}
+                    aria-expanded={aberta}
+                  >
+                    <span style={s.faqPerguntaTexto}>{item.pergunta}</span>
+                    <span style={{ ...s.faqIconeSeta, transform: aberta ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                      ▼
+                    </span>
+                  </button>
+                  {aberta && (
+                    <div style={s.faqResposta}>
+                      <p style={s.faqRespostaTexto}>{item.resposta}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -172,19 +299,20 @@ export default function PaginaLanding() {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
-          <h2 style={{ ...s.ctaTitulo, fontSize: isMobile ? 28 : 42 }}>
-            Comece agora com 7 dias grátis.<br />Sem compromisso.
+          <h2 style={{ ...s.ctaTitulo, fontSize: isMobile ? 26 : 40 }}>
+            Comece agora com 7 dias grátis.<br />Sem burocracia.
           </h2>
           <p style={s.ctaSub}>
-            Cadastre-se em segundos, acesse todos os recursos inteligentes e tenha clareza absoluta sobre o seu dinheiro.
+            Cadastre-se em segundos, acerte suas contas com a ajuda da IA e tenha clareza absoluta sobre o seu dinheiro.
           </p>
           <div style={s.ctaBotoesWrap}>
-            <Link to="/login" style={s.botaoPrimarioGrande}>
+            <Link to="/login?modo=cadastro" style={s.botaoPrimarioGrande}>
               Criar Minha Conta Grátis
+              <span style={s.botaoSeta}> →</span>
             </Link>
           </div>
           <p style={s.ctaGarantiaTexto}>
-            ✓ 7 dias de avaliação gratuita &bull; Acesso completo a todas as funções &bull; Sem complicações
+            ✓ 7 dias de avaliação gratuita &bull; Sem necessidade de cartão no cadastro &bull; Cancele quando quiser
           </p>
         </div>
       </section>
@@ -207,13 +335,88 @@ export default function PaginaLanding() {
   )
 }
 
+const FAQ_ITEMS = [
+  {
+    pergunta: 'Preciso informar cartão de crédito para iniciar o teste?',
+    resposta: 'Não! Para iniciar seus 7 dias gratuitos, basta informar seu e-mail e criar uma senha. Você não precisa cadastrar nenhum meio de pagamento agora.'
+  },
+  {
+    pergunta: 'Como funciona o lançamento por voz ou texto com IA?',
+    resposta: 'Você pode simplesmente falar ou digitar expressões do seu dia a dia, como "Gastei 65 reais na padaria no débito". A inteligência artificial detecta automaticamente o valor, categoria, conta de saída e data, preenchendo tudo para você sem esforço.'
+  },
+  {
+    pergunta: 'Como o Contas Claras evita duplicar compras de cartão?',
+    resposta: 'Muitos aplicativos somam as compras do cartão no dia em que foram feitas e somam novamente o pagamento da fatura, distorcendo seu saldo. No Contas Claras, os gastos compõem a fatura do cartão e o pagamento dela apenas liquida essa obrigação, garantindo que seu saldo real nunca fique duplicado.'
+  },
+  {
+    pergunta: 'O que acontece após os 7 dias gratuitos?',
+    resposta: 'Após os 7 dias, você poderá assinar o Plano Completo por apenas R$ 24,90/mês para continuar utilizando o assistente e os módulos. Se optar por não assinar, sua conta não sofrerá cobrança automática e seus dados continuarão seguros.'
+  },
+]
+
 const FUNCIONALIDADES = [
-  { icone: '💬', titulo: 'Lançamento por texto ou voz', texto: 'Digite ou fale "gastei 50 no mercado hoje" e a IA categoriza tudo sozinha.' },
-  { icone: '💳', titulo: 'Gestão de Cartões', texto: 'Compras no crédito organizadas com suas faturas sem duplicar no orçamento.' },
-  { icone: '★',  titulo: 'Meus Sonhos', texto: 'Metas com prazo e cálculo automático de quanto guardar a cada mês.' },
-  { icone: '⊡',  titulo: 'Dashboard do Mês', texto: 'Balanço em tempo real de receitas, despesas e comparativos históricos.' },
-  { icone: '✦',  titulo: 'Análise por IA Sob Demanda', texto: 'Insights instantâneos e assistente de perguntas financeiras.' },
-  { icone: '↻',  titulo: 'Parcelamentos e Recorrências', texto: 'Despesas fixas e compras parceladas geradas automaticamente.' },
+  {
+    iconeSvg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" y1="19" x2="12" y2="22" />
+      </svg>
+    ),
+    titulo: 'Lançamento por texto ou voz',
+    texto: 'Fale ou digite "gastei 50 no mercado hoje" e a inteligência artificial categoriza tudo automaticamente.',
+  },
+  {
+    iconeSvg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="14" x="2" y="5" rx="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
+      </svg>
+    ),
+    titulo: 'Gestão de Cartões sem Duplicidade',
+    texto: 'Compras no crédito organizadas com suas faturas sem duplicar valores nem bagunçar o orçamento mensal.',
+  },
+  {
+    iconeSvg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ),
+    titulo: 'Meus Sonhos & Metas',
+    texto: 'Defina metas com prazos e o sistema calcula automaticamente quanto guardar todo mês para conquistá-las.',
+  },
+  {
+    iconeSvg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M9 21V9" />
+      </svg>
+    ),
+    titulo: 'Dashboard em Tempo Real',
+    texto: 'Acompanhe saldo real, saldo projetado para o fim do mês, despesas por categoria e comparativos claros.',
+  },
+  {
+    iconeSvg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" />
+      </svg>
+    ),
+    titulo: 'Assistente e Diagnósticos por IA',
+    texto: 'Receba alertas inteligentes antes de entrar no vermelho e faça perguntas financeiras sob demanda.',
+  },
+  {
+    iconeSvg: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m17 2 4 4-4 4" />
+        <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+        <path d="m7 22-4-4 4-4" />
+        <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+      </svg>
+    ),
+    titulo: 'Parcelamentos e Recorrências',
+    texto: 'Suas contas fixas e parcelas futuras são geradas automaticamente, dando previsibilidade absoluta.',
+  },
 ]
 
 const s = {
@@ -230,7 +433,7 @@ const s = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    background: 'rgba(10, 15, 13, 0.85)',
+    background: 'rgba(10, 15, 13, 0.90)',
     backdropFilter: 'blur(16px)',
     position: 'sticky',
     top: 0,
@@ -275,12 +478,12 @@ const s = {
   navLinkEntrar: {
     background: 'none',
     border: 'none',
-    color: 'var(--text)',
+    color: 'var(--text-pure)',
     textDecoration: 'none',
     fontSize: 14,
     fontWeight: 600,
     cursor: 'pointer',
-    padding: '8px 12px',
+    padding: '8px 14px',
     transition: 'color 0.15s ease',
   },
   navBotaoDestaque: {
@@ -292,6 +495,7 @@ const s = {
     fontSize: 13.5,
     fontWeight: 700,
     fontFamily: 'var(--font-headline)',
+    textDecoration: 'none',
     cursor: 'pointer',
     boxShadow: '0 0 16px rgba(16, 185, 129, 0.25)',
   },
@@ -301,22 +505,22 @@ const s = {
     overflow: 'hidden',
     boxSizing: 'border-box',
     borderBottom: '1px solid var(--border)',
-    background: 'radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.12), transparent 70%), #0A0F0D',
+    background: 'radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.14), transparent 70%), #0A0F0D',
   },
   heroGlow: {
     position: 'absolute',
     top: '-20%',
     right: '10%',
-    width: 400,
-    height: 400,
+    width: 450,
+    height: 450,
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(16, 185, 129, 0.10) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   heroConteudo: {
     position: 'relative',
     zIndex: 1,
-    maxWidth: 720,
+    maxWidth: 820,
     margin: '0 auto',
     textAlign: 'center',
   },
@@ -324,78 +528,202 @@ const s = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 8,
-    padding: '6px 14px',
+    padding: '7px 16px',
     borderRadius: 99,
     background: 'rgba(16, 185, 129, 0.12)',
-    border: '1px solid rgba(16, 185, 129, 0.3)',
+    border: '1px solid rgba(16, 185, 129, 0.35)',
     color: 'var(--primary)',
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: 600,
-    marginBottom: 20,
+    marginBottom: 22,
   },
   heroBadgeIcone: {
-    fontSize: 13,
+    fontSize: 14,
   },
   heroTitulo: {
     margin: '0 0 20px',
     fontFamily: 'var(--font-headline)',
     fontWeight: 800,
     lineHeight: 1.15,
-    letterSpacing: '-0.02em',
+    letterSpacing: '-0.025em',
     color: 'var(--text-pure)',
   },
   heroTituloDestaque: {
-    background: 'linear-gradient(135deg, #10B981, #2DD4BF)',
+    background: 'linear-gradient(135deg, #10B981, #34D399)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
   heroSub: {
-    margin: '0 auto 36px',
+    margin: '0 auto 34px',
     lineHeight: 1.65,
-    color: 'var(--text-muted)',
-    maxWidth: 620,
-    fontSize: 17,
+    color: '#D1D5DB',
+    maxWidth: 680,
   },
   heroBotoes: {
     display: 'flex',
     gap: 14,
     justifyContent: 'center',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   botaoPrimario: {
     background: 'var(--primary)',
     color: '#0A0F0D',
     border: 'none',
-    borderRadius: 10,
-    padding: '14px 28px',
-    fontSize: 15,
-    fontWeight: 700,
+    borderRadius: 12,
+    padding: '16px 36px',
+    fontSize: 16,
+    fontWeight: 800,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
     textDecoration: 'none',
-    display: 'inline-block',
-    boxShadow: '0 0 20px rgba(16, 185, 129, 0.3)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    boxShadow: '0 0 24px rgba(16, 185, 129, 0.35)',
     textAlign: 'center',
+    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
   },
-  botaoSecundario: {
-    background: 'var(--surface)',
-    color: 'var(--text-pure)',
-    border: '1px solid var(--border)',
-    borderRadius: 10,
-    padding: '14px 28px',
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
-    textDecoration: 'none',
-    display: 'inline-block',
-    boxSizing: 'border-box',
-    textAlign: 'center',
+  botaoSeta: {
+    fontWeight: 800,
   },
-  heroGarantia: {
-    margin: '22px 0 0',
+  heroGarantiasRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
     fontSize: 13,
-    color: 'var(--text-dim)',
-    textAlign: 'center',
+    color: '#9CA3AF',
+    marginTop: 8,
+  },
+  garantiaItem: {
+    fontWeight: 500,
+  },
+  garantiaDivisor: {
+    color: '#4B5563',
+  },
+
+  /* MOCKUP DO PRODUTO */
+  mockupWrapper: {
+    marginTop: 48,
+    borderRadius: 16,
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    background: 'rgba(15, 23, 20, 0.92)',
+    boxShadow: '0 24px 60px rgba(0,0,0,0.65), 0 0 32px rgba(16, 185, 129, 0.12)',
+    backdropFilter: 'blur(16px)',
+    overflow: 'hidden',
+    textAlign: 'left',
+  },
+  mockupBarraJanela: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '12px 18px',
+    background: 'rgba(10, 15, 13, 0.95)',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+  },
+  mockupBolinhas: {
+    display: 'flex',
+    gap: 7,
+  },
+  bolinha: {
+    width: 10,
+    height: 10,
+    borderRadius: '50%',
+    display: 'inline-block',
+  },
+  mockupUrlBox: {
+    fontSize: 11.5,
+    color: '#9CA3AF',
+    margin: '0 auto',
+    padding: '4px 16px',
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 6,
+    display: 'flex',
+    alignItems: 'center',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+  },
+  mockupCorpo: {
+    padding: '24px 22px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+  },
+  mockupGrid: {
+    display: 'grid',
+    gap: 14,
+  },
+  mockupCardKpi: {
+    background: 'rgba(255, 255, 255, 0.03)',
+    border: '1px solid rgba(255, 255, 255, 0.07)',
+    borderRadius: 12,
+    padding: '16px 18px',
+  },
+  mockupKpiLabel: {
+    fontSize: 11.5,
+    color: '#9CA3AF',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    display: 'block',
+    marginBottom: 6,
+  },
+  mockupKpiValorPos: {
+    fontSize: 22,
+    fontWeight: 800,
+    color: '#10B981',
+    fontFamily: 'var(--font-headline)',
+  },
+  mockupKpiValorAlerta: {
+    fontSize: 22,
+    fontWeight: 800,
+    color: '#F59E0B',
+    fontFamily: 'var(--font-headline)',
+  },
+  mockupKpiValorDestaque: {
+    fontSize: 22,
+    fontWeight: 800,
+    color: '#60A5FA',
+    fontFamily: 'var(--font-headline)',
+  },
+  mockupKpiSub: {
+    fontSize: 11.5,
+    color: '#6B7280',
+    marginTop: 4,
+    display: 'block',
+  },
+  mockupIaBox: {
+    background: 'rgba(16, 185, 129, 0.08)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    borderRadius: 12,
+    padding: '14px 18px',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 14,
+  },
+  mockupIaIcone: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.2)',
+    color: '#10B981',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    fontSize: 15,
+  },
+  mockupIaTitulo: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: 'var(--primary)',
+    fontFamily: 'var(--font-headline)',
+    marginBottom: 2,
+  },
+  mockupIaTexto: {
+    fontSize: 12.5,
+    color: '#D1D5DB',
+    lineHeight: 1.5,
   },
 
   secao: {
@@ -456,7 +784,7 @@ const s = {
   statsRodape: {
     margin: '20px 0 0',
     fontSize: 13,
-    color: 'var(--text-dim)',
+    color: '#9CA3AF',
     maxWidth: 640,
   },
 
@@ -472,15 +800,14 @@ const s = {
     gap: 8,
   },
   featureIconeBox: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 10,
     background: 'rgba(16, 185, 129, 0.14)',
     border: '1px solid rgba(16, 185, 129, 0.3)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: 20,
     marginBottom: 6,
   },
   featureTitulo: {
@@ -524,95 +851,176 @@ const s = {
     borderRadius: 99,
     fontFamily: 'var(--font-headline)',
   },
-  planoSeloGratis: {
+  /* PLANO UNIFICADO */
+  planoContainerUnificado: {
+    maxWidth: 720,
+    margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  planoCardUnificado: {
+    background: 'radial-gradient(ellipse at top right, rgba(16, 185, 129, 0.12), transparent 70%), var(--surface)',
+    border: '1.5px solid var(--primary)',
+    borderRadius: 20,
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.45), 0 0 32px rgba(16, 185, 129, 0.16)',
+    position: 'relative',
+    boxSizing: 'border-box',
+  },
+  planoSeloDestaque: {
     position: 'absolute',
-    top: -12,
-    right: 24,
-    background: 'rgba(16, 185, 129, 0.18)',
-    border: '1px solid var(--primary)',
-    color: 'var(--primary)',
-    fontSize: 11,
+    top: -14,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: 'var(--primary)',
+    color: '#0A0F0D',
+    fontSize: 12,
     fontWeight: 800,
-    padding: '4px 12px',
+    padding: '6px 18px',
     borderRadius: 99,
     fontFamily: 'var(--font-headline)',
+    whiteSpace: 'nowrap',
+    boxShadow: '0 0 16px rgba(16, 185, 129, 0.4)',
+  },
+  planoHeader: {
+    textAlign: 'center',
+    marginBottom: 8,
   },
   planoNome: {
-    margin: '0 0 6px',
-    fontSize: 20,
-    fontWeight: 700,
-    fontFamily: 'var(--font-headline)',
-    color: 'var(--text-pure)',
-  },
-  planoPreco: {
-    margin: '0 0 14px',
-    fontSize: 34,
+    margin: '0 0 8px',
+    fontSize: 24,
     fontWeight: 800,
     fontFamily: 'var(--font-headline)',
     color: 'var(--text-pure)',
   },
-  planoPrecoPeriodo: {
-    fontSize: 14,
-    fontWeight: 500,
-    color: 'var(--text-muted)',
-  },
   planoDescricao: {
-    margin: '0 0 20px',
-    fontSize: 14,
+    margin: '0 auto',
+    maxWidth: 540,
+    fontSize: 14.5,
     color: 'var(--text-muted)',
     lineHeight: 1.5,
   },
-  planoLista: {
-    margin: 0,
-    padding: 0,
-    listStyle: 'none',
+  planoPrecoBox: {
+    background: 'rgba(255, 255, 255, 0.03)',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: 14,
+    padding: '20px 24px',
+    margin: '24px 0',
+    textAlign: 'center',
+  },
+  precoAncoraLinha: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  precoTrialDestaque: {
+    fontSize: 44,
+    fontWeight: 900,
+    color: 'var(--primary)',
+    fontFamily: 'var(--font-headline)',
+    lineHeight: 1,
+  },
+  precoTrialSub: {
+    fontSize: 16,
+    color: '#E5E7EB',
+    fontWeight: 600,
+  },
+  precoPosTrialLinha: {
+    fontSize: 13.5,
+    color: '#9CA3AF',
+    marginTop: 8,
+    lineHeight: 1.4,
+  },
+  planoGridRecursos: {
+    display: 'grid',
+    gap: 14,
+    margin: '0 0 8px',
+  },
+  recursoItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
     fontSize: 14,
-    color: 'var(--text)',
+    color: '#E5E7EB',
   },
   checkVerde: {
     color: 'var(--primary)',
     fontWeight: 800,
-    marginRight: 8,
+    flexShrink: 0,
   },
-  planoBotaoAcao: {
-    display: 'block',
-    background: 'var(--surface-raised)',
-    border: '1.5px solid var(--primary)',
-    color: 'var(--primary)',
-    padding: '13px 20px',
-    borderRadius: 10,
-    fontSize: 14,
-    fontWeight: 700,
-    fontFamily: 'var(--font-headline)',
-    textAlign: 'center',
-    textDecoration: 'none',
-    transition: 'all 0.15s ease',
-  },
-  planoBotaoAcaoDestaque: {
-    display: 'block',
+  planoBotaoAcaoUnificado: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     background: 'var(--primary)',
     color: '#0A0F0D',
     border: 'none',
-    padding: '13px 20px',
-    borderRadius: 10,
-    fontSize: 14,
-    fontWeight: 700,
+    padding: '16px 36px',
+    borderRadius: 12,
+    fontSize: 16,
+    fontWeight: 800,
     fontFamily: 'var(--font-headline)',
     textAlign: 'center',
     textDecoration: 'none',
-    boxShadow: '0 0 16px rgba(16, 185, 129, 0.3)',
-    transition: 'all 0.15s ease',
+    boxShadow: '0 0 24px rgba(16, 185, 129, 0.35)',
+    transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+    cursor: 'pointer',
   },
   planoAviso: {
-    margin: '22px 0 0',
+    margin: '18px 0 0',
     fontSize: 12.5,
-    color: 'var(--text-dim)',
+    color: '#9CA3AF',
     lineHeight: 1.5,
-    borderTop: '1px solid var(--border-subtle)',
-    paddingTop: 14,
+  },
+
+  /* FAQ STYLES */
+  faqContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    maxWidth: 780,
+    margin: '0 auto',
+  },
+  faqItem: {
+    background: 'var(--surface-raised)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    overflow: 'hidden',
+    transition: 'border-color 0.15s ease',
+  },
+  faqPerguntaBtn: {
+    width: '100%',
+    padding: '18px 22px',
+    background: 'none',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  faqPerguntaTexto: {
+    fontSize: 15,
+    fontWeight: 700,
+    fontFamily: 'var(--font-headline)',
+    color: 'var(--text-pure)',
+  },
+  faqIconeSeta: {
+    fontSize: 12,
+    color: 'var(--primary)',
+    transition: 'transform 0.2s ease',
+  },
+  faqResposta: {
+    padding: '0 22px 18px',
+    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+  },
+  faqRespostaTexto: {
+    margin: '12px 0 0',
+    fontSize: 14,
+    lineHeight: 1.65,
+    color: '#D1D5DB',
   },
 
   ctaFinal: {
@@ -622,7 +1030,7 @@ const s = {
     boxSizing: 'border-box',
   },
   ctaContainer: {
-    maxWidth: 600,
+    maxWidth: 640,
     margin: '0 auto',
   },
   ctaIconeDestaque: {
@@ -646,10 +1054,10 @@ const s = {
   },
   ctaSub: {
     margin: '0 auto 32px',
-    maxWidth: 480,
+    maxWidth: 520,
     fontSize: 16,
     lineHeight: 1.6,
-    color: 'var(--text-muted)',
+    color: '#D1D5DB',
   },
   ctaBotoesWrap: {
     display: 'flex',
@@ -661,20 +1069,22 @@ const s = {
     color: '#0A0F0D',
     border: 'none',
     borderRadius: 12,
-    padding: '16px 36px',
+    padding: '16px 38px',
     fontSize: 16,
     fontWeight: 800,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
     textDecoration: 'none',
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
     boxShadow: '0 0 24px rgba(16, 185, 129, 0.35)',
     textAlign: 'center',
   },
   ctaGarantiaTexto: {
     margin: 0,
-    fontSize: 12.5,
-    color: 'var(--text-dim)',
+    fontSize: 13,
+    color: '#9CA3AF',
   },
 
   rodape: {
@@ -705,6 +1115,6 @@ const s = {
   rodapeAno: {
     marginLeft: 'auto',
     fontSize: 12,
-    color: 'var(--text-dim)',
+    color: '#6B7280',
   },
 }
