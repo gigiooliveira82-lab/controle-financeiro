@@ -1,0 +1,313 @@
+/* ==========================================================================
+   Contas Claras — Landing Page Animations & Microinteractions
+   Construído estritamente com as diretrizes do guia "Animações CSS em Fintechs":
+   - Performance de 60/120 FPS: animação exclusiva de transform e opacity (GPU)
+   - Microtransições entre 150ms e 250ms com cubic-bezier(0.16, 1, 0.3, 1)
+   - Scroll reveals suaves de 400ms a 500ms
+   - Demonstração do produto fluida (gráfico vetorial suave e contador)
+   - Acessibilidade obrigatória: prefers-reduced-motion
+   ========================================================================== */
+
+/* ── 1. ACESSIBILIDADE OBRIGATÓRIA (prefers-reduced-motion) ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── 2. SCROLL REVEAL SUAVE (Hierarquia Visual) ── */
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.landing-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Escalonamento (Stagger) discreto e ordenado */
+.landing-reveal.stagger-1 { transition-delay: 0.06s; }
+.landing-reveal.stagger-2 { transition-delay: 0.12s; }
+.landing-reveal.stagger-3 { transition-delay: 0.18s; }
+.landing-reveal.stagger-4 { transition-delay: 0.24s; }
+.landing-reveal.stagger-5 { transition-delay: 0.30s; }
+.landing-reveal.stagger-6 { transition-delay: 0.36s; }
+
+/* Entrada suave no carregamento do Hero */
+.hero-fade-in {
+  animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.hero-fade-in-delay-1 {
+  animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.08s backwards;
+}
+.hero-fade-in-delay-2 {
+  animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.16s backwards;
+}
+.hero-fade-in-delay-3 {
+  animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.24s backwards;
+}
+
+@keyframes heroEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 3. MICROINTERAÇÕES DE FEEDBACK DE AÇÃO (Botões e Links) ── */
+
+/* Botão Primário Hero & Form */
+.landing-btn-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--primary);
+  color: #0A0F0D;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--font-headline);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.32);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.2s ease;
+  will-change: transform;
+}
+
+.landing-btn-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 30px rgba(16, 185, 129, 0.45);
+  filter: brightness(1.05);
+}
+
+.landing-btn-cta:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+}
+
+.landing-btn-cta .btn-seta {
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-btn-cta:hover .btn-seta {
+  transform: translateX(4px);
+}
+
+/* Botão Topo Nav */
+.landing-nav-btn {
+  background: var(--primary);
+  color: #0A0F0D;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: var(--font-headline);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.18s ease;
+  will-change: transform;
+}
+
+.landing-nav-btn:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 2px 22px rgba(16, 185, 129, 0.4);
+  filter: brightness(1.04);
+}
+
+.landing-nav-btn:active {
+  transform: scale(0.97);
+}
+
+/* Link Entrar Nav */
+.landing-nav-link {
+  background: none;
+  border: none;
+  color: var(--text-pure);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.landing-nav-link:hover {
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── 4. MICROINTERAÇÕES EM CARDS E COMPONENTES ── */
+
+/* Cards de Estatísticas */
+.landing-stat-card {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.24s ease,
+              box-shadow 0.24s ease;
+  will-change: transform;
+}
+
+.landing-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35), 0 0 16px rgba(16, 185, 129, 0.08) !important;
+}
+
+/* Cards de Funcionalidades */
+.landing-feature-card {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.24s ease,
+              box-shadow 0.24s ease;
+  will-change: transform;
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.1) !important;
+}
+
+.landing-feature-card:hover .landing-feature-icon {
+  transform: scale(1.08);
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+}
+
+.landing-feature-icon {
+  transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.24s ease,
+              border-color 0.24s ease;
+  will-change: transform;
+}
+
+/* Card Principal do Plano */
+.landing-plano-card {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.28s ease;
+  will-change: transform;
+}
+
+.landing-plano-card:hover {
+  transform: translateY(-3px);
+  border-color: #34D399 !important;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.55), 0 0 40px rgba(16, 185, 129, 0.24) !important;
+}
+
+/* ── 5. DEMONSTRAÇÃO DO PRODUTO (Mockup Vivo & Confiável) ── */
+
+.landing-mockup {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s ease;
+  will-change: transform;
+}
+
+.landing-mockup:hover {
+  transform: translateY(-3px);
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.75), 0 0 42px rgba(16, 185, 129, 0.18) !important;
+}
+
+/* Mini Gráfico Vetorial de Curva Suave */
+.mockup-sparkline {
+  overflow: visible;
+}
+
+.mockup-sparkline-line {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mockup-sparkline-line.is-drawn {
+  stroke-dashoffset: 0;
+}
+
+.mockup-sparkline-area {
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+}
+
+.mockup-sparkline-area.is-drawn {
+  opacity: 0.25;
+}
+
+.mockup-sparkline-dot {
+  opacity: 0;
+  transform: scale(0);
+  transition: opacity 0.3s ease 0.85s,
+              transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.85s;
+  transform-origin: center;
+}
+
+.mockup-sparkline-dot.is-drawn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Pulso sutil no ícone do Assistente de IA */
+.ia-badge-pulse {
+  animation: iaIconPulse 3s infinite ease-in-out;
+  will-change: transform;
+}
+
+@keyframes iaIconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+  }
+}
+
+/* ── 6. ACCORDION DO FAQ (Abertura Fluida sem Layout Thrashing) ── */
+.faq-pergunta-btn {
+  transition: background-color 0.18s ease;
+}
+
+.faq-pergunta-btn:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.faq-resposta-animada {
+  animation: faqSlideDown 0.26s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transform-origin: top;
+}
+
+@keyframes faqSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ícone Seta FAQ com rotação por transform (GPU) */
+.faq-icone-seta {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
