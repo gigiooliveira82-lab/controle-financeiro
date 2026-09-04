@@ -8,9 +8,49 @@ button, input, select, textarea {
   font-family: var(--font-body);
 }
 
+/* Previne zoom automático do iOS Safari ao focar em inputs (exige font-size >= 16px no mobile) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Estilização do ícone de calendário nativo em navegadores WebKit/Chromium */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+[data-theme="dark"] input[type="date"],
+[data-theme-locked="dark"] input[type="date"],
+.theme-dark-locked input[type="date"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme-locked="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+.theme-dark-locked input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) brightness(1.2);
+  opacity: 0.85;
+}
+
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator:hover,
+[data-theme-locked="dark"] input[type="date"]::-webkit-calendar-picker-indicator:hover,
+.theme-dark-locked input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  filter: invert(0.95) brightness(1.4);
+}
+
+[data-theme="light"]:not([data-theme-locked="dark"]) input[type="date"] {
+  color-scheme: light;
+}
+
 html, body {
   overflow-x: hidden;
   min-height: 100vh;
+  min-height: -webkit-fill-available;
 }
 
 body {

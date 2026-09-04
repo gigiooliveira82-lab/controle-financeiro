@@ -7,7 +7,15 @@ function hojeISO() {
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
 }
 
-export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizouTransacao, cartoes = [], transacoes = [], cartaoFixo = null }) {
+export default function LancamentoTexto({
+  usuarioId,
+  onNovaTransacao,
+  onAtualizouTransacao,
+  cartoes = [],
+  transacoes = [],
+  cartaoFixo = null,
+  semCard = false,
+}) {
   const [texto, setTexto] = useState('')
   const [carregando, setCarregando] = useState(false)
   const [feedback, setFeedback] = useState(null)
@@ -164,7 +172,7 @@ export default function LancamentoTexto({ usuarioId, onNovaTransacao, onAtualizo
   }
 
   return (
-    <div style={s.card}>
+    <div style={semCard ? s.cardTransparente : s.card}>
       <form onSubmit={handleSubmit}>
         <div style={s.inputRow}>
           <input
@@ -279,17 +287,33 @@ const s = {
     background: 'var(--surface)',
     border: '1px solid var(--border)',
     borderRadius: 14,
-    padding: '16px 20px',
+    padding: '14px 16px',
     boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+    boxSizing: 'border-box',
+    width: '100%',
+  },
+  cardTransparente: {
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 0,
+    padding: 0,
+    boxShadow: 'none',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   inputRow: {
     display: 'flex',
-    gap: 10,
+    gap: 8,
     alignItems: 'center',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   input: {
     flex: 1,
-    padding: '12px 16px',
+    minWidth: 0,
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '12px 14px',
     borderRadius: 10,
     border: '1.5px solid var(--border)',
     background: 'var(--surface-raised)',
@@ -300,17 +324,18 @@ const s = {
     transition: 'border-color 0.2s ease',
   },
   micBtn: {
-    padding: '11px 14px',
+    padding: '11px 12px',
     borderRadius: 10,
     border: '1px solid var(--border)',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
     transition: 'all 0.2s ease',
   },
   btnEnviar: {
-    padding: '12px 22px',
+    padding: '12px 18px',
     borderRadius: 10,
     border: 'none',
     background: 'var(--primary)',
@@ -319,6 +344,8 @@ const s = {
     fontSize: 14,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
     transition: 'opacity 0.15s ease',
   },
   ouvindoStatus: {

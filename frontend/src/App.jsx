@@ -319,7 +319,12 @@ function AppAutenticado({
           </header>
         )}
 
-        <main style={{ ...estilos.main, paddingBottom: isMobileNav ? 100 : 40 }}>
+        <main style={{
+          ...estilos.main,
+          padding: isMobileNav
+            ? '14px 14px calc(95px + env(safe-area-inset-bottom, 0px))'
+            : '16px 36px 40px',
+        }}>
           <Routes>
             <Route path="/"              element={<Navigate to="/dashboard" replace />} />
             <Route path="/login"         element={<Navigate to="/dashboard" replace />} />
@@ -382,7 +387,7 @@ const estilos = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '10px 16px',
+    padding: 'calc(10px + env(safe-area-inset-top, 0px)) 16px 10px',
     background: 'var(--surface)',
     borderBottom: '1px solid var(--border)',
     position: 'sticky',

@@ -11,7 +11,7 @@ function Toast({ msg }) {
   if (!msg) return null
   return (
     <div style={{
-      position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+      position: 'fixed', bottom: 'calc(75px + env(safe-area-inset-bottom, 0px))', left: '50%', transform: 'translateX(-50%)',
       background: 'var(--surface-raised)', color: 'var(--primary)',
       border: '1px solid var(--primary)',
       padding: '10px 22px', borderRadius: 10,

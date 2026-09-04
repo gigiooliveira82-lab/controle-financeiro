@@ -115,6 +115,7 @@ export default function PaginaDashboard({
                 onAtualizouTransacao={onAtualizou}
                 cartoes={cartoes}
                 transacoes={transacoes}
+                semCard={true}
               />
             </div>
           ) : (
@@ -208,7 +209,7 @@ const p = {
     background: 'var(--surface)',
     border: '1px solid var(--border)',
     borderRadius: 16,
-    padding: '18px 20px',
+    padding: '16px 16px',
     boxShadow: 'var(--card-shadow)',
   },
   novoLancamentoHeader: {

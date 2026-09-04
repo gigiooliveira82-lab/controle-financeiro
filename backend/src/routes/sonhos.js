@@ -26,7 +26,7 @@ router.get('/:usuario_id', async (req, res) => {
 // POST /sonhos — cria um novo sonho
 router.post('/', async (req, res) => {
   const usuario_id = req.usuarioId
-  const { nome, valor_total, data_alvo, cor } = req.body
+  const { nome, valor_total, valor_guardado, data_alvo, cor } = req.body
 
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: 'Campo obrigatório: nome' })
@@ -41,13 +41,16 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ erro: 'Campo obrigatório: data_alvo' })
   }
 
+  const guardado = Number(valor_guardado)
+  const valorGuardadoValido = Number.isFinite(guardado) && guardado >= 0 ? guardado : 0
+
   const { data, error } = await supabase
     .from('sonhos')
     .insert({
       usuario_id,
       nome: nome.trim(),
       valor_total: total,
-      valor_guardado: 0,
+      valor_guardado: valorGuardadoValido,
       data_alvo,
       cor: cor || null,
     })
@@ -61,11 +64,11 @@ router.post('/', async (req, res) => {
   return res.status(201).json({ sonho: data })
 })
 
-// PUT /sonhos/:id — atualiza um sonho existente (nome, valor_total, data_alvo, cor)
+// PUT /sonhos/:id — atualiza um sonho existente (nome, valor_total, valor_guardado, data_alvo, cor)
 router.put('/:id', async (req, res) => {
   const usuario_id = req.usuarioId
   const { id } = req.params
-  const { nome, valor_total, data_alvo, cor } = req.body
+  const { nome, valor_total, valor_guardado, data_alvo, cor } = req.body
 
   const campos = {}
 
@@ -79,6 +82,13 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ erro: 'Campo valor_total deve ser um número maior que zero' })
     }
     campos.valor_total = total
+  }
+  if (valor_guardado !== undefined) {
+    const guardado = Number(valor_guardado)
+    if (!Number.isFinite(guardado) || guardado < 0) {
+      return res.status(400).json({ erro: 'Campo valor_guardado deve ser um número maior ou igual a zero' })
+    }
+    campos.valor_guardado = guardado
   }
   if (data_alvo !== undefined) {
     if (!data_alvo) return res.status(400).json({ erro: 'Campo data_alvo não pode ser vazio' })

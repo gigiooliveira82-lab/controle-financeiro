@@ -1457,9 +1457,9 @@ const s = {
   // Mobile FAB e Bottom Sheet IA
   fabIaMobile: {
     position: 'fixed',
-    bottom: 74,
+    bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))',
     right: 18,
-    zIndex: 95,
+    zIndex: 101,
     width: 48,
     height: 48,
     borderRadius: '50%',
@@ -1494,7 +1494,7 @@ const s = {
   },
   fabIaSheet: {
     position: 'fixed',
-    bottom: 64,
+    bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
     left: 12,
     right: 12,
     zIndex: 111,

@@ -198,7 +198,11 @@ export default function NavLateral({ qtdVencidas }) {
             aria-expanded={menuMaisAberto}
           >
             <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IconMais size={20} color={(extraAtivo || menuMaisAberto) ? 'var(--primary)' : 'currentColor'} />
+              {extraAtivo ? (
+                <extraAtivo.Icon size={19} color="var(--primary)" />
+              ) : (
+                <IconMais size={20} color={(extraAtivo || menuMaisAberto) ? 'var(--primary)' : 'currentColor'} />
+              )}
             </span>
             <span style={st.bottomLabel}>
               {extraAtivo ? extraAtivo.curto : 'Mais'}
@@ -370,7 +374,12 @@ const st = {
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    padding: '6px 4px 4px',
+    paddingTop: 6,
+    paddingLeft: 4,
+    paddingRight: 4,
+    paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+    minHeight: 'calc(58px + env(safe-area-inset-bottom, 0px))',
+    boxSizing: 'border-box',
     backdropFilter: 'blur(16px)',
     boxShadow: '0 -4px 20px rgba(0,0,0,0.35)',
   },
@@ -411,12 +420,13 @@ const st = {
     fontWeight: 600,
   },
   bottomLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: 500,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    lineHeight: 1.1,
+    lineHeight: 1.15,
+    maxWidth: '100%',
   },
   activeDot: {
     width: 4,
@@ -486,7 +496,7 @@ const st = {
   },
   maisCard: {
     position: 'fixed',
-    bottom: 64,
+    bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))',
     right: 12,
     left: 12,
     maxWidth: 320,

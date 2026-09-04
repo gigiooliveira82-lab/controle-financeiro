@@ -223,7 +223,7 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
 
           <div style={s.valores}>
             <span style={{ color: 'var(--text-pure)' }}>{fmtBRL(guardado)}</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}> de {fmtBRL(total)}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>de {fmtBRL(total)}</span>
           </div>
 
           <div style={s.infoMeta}>
@@ -426,6 +426,9 @@ const s = {
     transition: 'width 0.4s ease',
   },
   valores: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: 6,
     fontSize: 15,
     fontWeight: 700,
     fontFamily: 'var(--font-headline)',
@@ -544,6 +547,7 @@ const s = {
     border: '1px solid var(--border)',
     background: 'var(--surface)',
     color: 'var(--text-pure)',
+    colorScheme: 'inherit',
     fontSize: 13,
     outline: 'none',
   },
