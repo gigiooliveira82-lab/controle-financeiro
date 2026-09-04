@@ -16,6 +16,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 2222
           script: |
             # 1. Configurar diretório seguro e alinhar com o Git
             git config --global --add safe.directory /var/www/contasclaras
