@@ -83,6 +83,8 @@ export default function PaginaLancamentos({
     expandido ? (
       <LancamentoTexto
         usuarioId={usuarioId}
+        titulo="Nova Despesa"
+        onFechar={() => setExpandido(false)}
         onNovaTransacao={handleNovaComColapso}
         onAtualizouTransacao={onAtualizou}
         cartoes={cartoes}

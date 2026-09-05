@@ -104,20 +104,15 @@ export default function PaginaDashboard({
       {mostrarLancamento && (
         <div style={p.novaEntradaSection}>
           {expandido ? (
-            <div style={p.novoLancamentoWrap}>
-              <div style={p.novoLancamentoHeader}>
-                <span style={p.novoLancamentoTitulo}>Nova Entrada Financeira</span>
-                <button onClick={() => setExpandido(false)} style={p.fecharBtn}>✕ Fechar</button>
-              </div>
-              <LancamentoTexto
-                usuarioId={usuarioId}
-                onNovaTransacao={handleNovaComColapso}
-                onAtualizouTransacao={onAtualizou}
-                cartoes={cartoes}
-                transacoes={transacoes}
-                semCard={true}
-              />
-            </div>
+            <LancamentoTexto
+              usuarioId={usuarioId}
+              titulo="Nova Entrada Financeira"
+              onFechar={() => setExpandido(false)}
+              onNovaTransacao={handleNovaComColapso}
+              onAtualizouTransacao={onAtualizou}
+              cartoes={cartoes}
+              transacoes={transacoes}
+            />
           ) : (
             <div style={p.barraAcaoDashboard}>
               <button

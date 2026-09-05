@@ -15,6 +15,8 @@ export default function LancamentoTexto({
   transacoes = [],
   cartaoFixo = null,
   semCard = false,
+  titulo = null,
+  onFechar = null,
 }) {
   const [texto, setTexto] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -173,6 +175,24 @@ export default function LancamentoTexto({
 
   return (
     <div style={semCard ? s.cardTransparente : s.card}>
+      {(titulo || onFechar) && (
+        <div style={s.header}>
+          {titulo && <span style={s.titulo}>{titulo}</span>}
+          {onFechar && (
+            <button
+              type="button"
+              onClick={onFechar}
+              style={s.btnFechar}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--text-pure)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              aria-label="Fechar formulário de lançamento"
+            >
+              ✕ Fechar
+            </button>
+          )}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         <div style={s.inputRow}>
           <input
@@ -286,9 +306,9 @@ const s = {
   card: {
     background: 'var(--surface)',
     border: '1px solid var(--border)',
-    borderRadius: 14,
-    padding: '14px 16px',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+    borderRadius: 16,
+    padding: '16px',
+    boxShadow: 'var(--card-shadow)',
     boxSizing: 'border-box',
     width: '100%',
   },
@@ -300,6 +320,29 @@ const s = {
     boxShadow: 'none',
     boxSizing: 'border-box',
     width: '100%',
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  titulo: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: 'var(--text-pure)',
+    fontFamily: 'var(--font-headline)',
+  },
+  btnFechar: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    padding: '4px 6px',
+    borderRadius: 6,
+    transition: 'color 0.15s ease',
   },
   inputRow: {
     display: 'flex',

@@ -54,6 +54,8 @@ export default function PaginaAplicacoes({
         expandido ? (
           <LancamentoTexto
             usuarioId={usuarioId}
+            titulo="Novo Aporte ou Aplicação"
+            onFechar={() => setExpandido(false)}
             onNovaTransacao={handleNovaComColapso}
             onAtualizouTransacao={onAtualizou}
           />

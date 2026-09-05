@@ -147,18 +147,17 @@ function BlocoCartao({
       ) : (
         <>
           {lancando ? (
-            <div style={c.lancamentoWrap}>
+            <div style={{ marginBottom: 12 }}>
               <LancamentoTexto
                 usuarioId={usuarioId}
+                titulo={`Nova Compra em ${cartao.nome}`}
+                onFechar={() => setLancando(false)}
                 onNovaTransacao={onNovaTransacao}
                 onAtualizouTransacao={onAtualizouTransacao}
                 cartoes={[cartao]}
                 cartaoFixo={cartao}
                 transacoes={transacoes}
               />
-              <button onClick={() => setLancando(false)} style={c.btnFecharLancamento}>
-                Fechar
-              </button>
             </div>
           ) : (
             <button onClick={() => setLancando(true)} style={{ ...c.btnLancarCompra, borderColor: corCartao, color: corCartao }}>

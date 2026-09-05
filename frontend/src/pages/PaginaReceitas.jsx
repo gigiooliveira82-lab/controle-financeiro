@@ -40,6 +40,8 @@ export default function PaginaReceitas({
     expandido ? (
       <LancamentoTexto
         usuarioId={usuarioId}
+        titulo="Nova Receita"
+        onFechar={() => setExpandido(false)}
         onNovaTransacao={handleNovaComColapso}
         onAtualizouTransacao={onAtualizou}
       />
