@@ -7,6 +7,14 @@ function hojeISO() {
   return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
 }
 
+function formatarMesNome(mesISO) {
+  if (!mesISO) return ''
+  const [ano, mes] = mesISO.split('-')
+  const nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+  return `${nomes[parseInt(mes, 10) - 1]} ${ano}`
+}
+
 export default function LancamentoTexto({
   usuarioId,
   onNovaTransacao,
@@ -17,6 +25,7 @@ export default function LancamentoTexto({
   semCard = false,
   titulo = null,
   onFechar = null,
+  mesSelecionado = null,
 }) {
   const [texto, setTexto] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -121,10 +130,15 @@ export default function LancamentoTexto({
     try {
       const cartaoInfo = cartaoId ? { cartao_id: cartaoId, data_compra: dataCompra } : undefined
       const resultado = await lancarTexto(texto.trim(), usuarioId, cartaoInfo)
+      const mesRef = resultado.transacao?.mes_referencia
+      const mesDiferente = Boolean(mesRef && mesSelecionado && mesRef !== mesSelecionado)
+
       setFeedback({
         ...resultado.interpretado,
-        parcelado:    resultado.parcelado    || false,
+        parcelado:     resultado.parcelado    || false,
         total_geradas: resultado.total_geradas || null,
+        mesDiferente,
+        nomeMesFatura: mesDiferente ? formatarMesNome(mesRef) : null,
       })
       setTransacaoCriada(resultado.transacao)
       setTexto('')
@@ -277,9 +291,16 @@ export default function LancamentoTexto({
       {feedback && (
         <div style={s.feedback}>
           <span style={s.check}>✓</span>
-          <span>
-            <strong>{feedback.descricao}</strong> — {fmtBRL(feedback.valor)} ({feedback.tipo.replace('_', ' ')})
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span>
+              <strong>{feedback.descricao}</strong> — {fmtBRL(feedback.valor)} ({feedback.tipo.replace('_', ' ')})
+            </span>
+            {feedback.mesDiferente && (
+              <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>
+                💳 Lançado na fatura de {feedback.nomeMesFatura}
+              </span>
+            )}
+          </div>
         </div>
       )}
 

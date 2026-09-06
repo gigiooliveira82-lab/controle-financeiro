@@ -112,6 +112,7 @@ export default function PaginaDashboard({
               onAtualizouTransacao={onAtualizou}
               cartoes={cartoes}
               transacoes={transacoes}
+              mesSelecionado={mesSelecionado}
             />
           ) : (
             <div style={p.barraAcaoDashboard}>

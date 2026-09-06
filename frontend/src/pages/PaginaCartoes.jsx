@@ -61,6 +61,7 @@ export default function PaginaCartoes({
             compras={transacoes.filter(t => t.cartao_id === cartao.id && t.mes_referencia === mesSelecionado)}
             transacoes={transacoes}
             usuarioId={usuarioId}
+            mesSelecionado={mesSelecionado}
             cartoesById={cartoesById}
             removendo={removendo}
             onRemover={handleRemover}
@@ -79,7 +80,7 @@ export default function PaginaCartoes({
 }
 
 function BlocoCartao({
-  cartao, compras, transacoes, usuarioId, cartoesById, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas,
+  cartao, compras, transacoes, usuarioId, mesSelecionado, cartoesById, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas,
   onAtualizarCartao, onRemoverCartao, onNovaTransacao, onAtualizouTransacao,
 }) {
   const [editando, setEditando]     = useState(false)
@@ -157,6 +158,7 @@ function BlocoCartao({
                 cartoes={[cartao]}
                 cartaoFixo={cartao}
                 transacoes={transacoes}
+                mesSelecionado={mesSelecionado}
               />
             </div>
           ) : (

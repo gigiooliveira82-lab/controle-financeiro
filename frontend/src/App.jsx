@@ -93,15 +93,15 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (usuario) inicializarMes()
-  }, [usuario, mesSelecionado])
+    if (usuario?.id) inicializarMes()
+  }, [usuario?.id, mesSelecionado])
 
   useEffect(() => {
-    if (!usuario) { setCartoes([]); return }
+    if (!usuario?.id) { setCartoes([]); return }
     buscarCartoes(usuario.id)
       .then(setCartoes)
       .catch(err => console.error('Erro ao buscar cartões:', err.message))
-  }, [usuario])
+  }, [usuario?.id])
 
   async function inicializarMes() {
     setCarregandoDados(true)
@@ -119,11 +119,19 @@ export default function App() {
   }
 
   function handleNovaTransacao(nova) {
-    setTransacoes((prev) => [nova, ...prev])
+    if (!nova) return
+    if (!nova.mes_referencia || nova.mes_referencia === mesSelecionado) {
+      setTransacoes((prev) => [nova, ...prev])
+    }
   }
 
   function handleAtualizou(id, dadosAtualizados) {
-    setTransacoes((prev) => prev.map((t) => t.id === id ? { ...t, ...dadosAtualizados } : t))
+    setTransacoes((prev) => {
+      if (dadosAtualizados.mes_referencia && dadosAtualizados.mes_referencia !== mesSelecionado) {
+        return prev.filter((t) => t.id !== id)
+      }
+      return prev.map((t) => t.id === id ? { ...t, ...dadosAtualizados } : t)
+    })
   }
 
   function handleRemoveu(id) {

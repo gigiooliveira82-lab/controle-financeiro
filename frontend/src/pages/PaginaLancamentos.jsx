@@ -89,6 +89,7 @@ export default function PaginaLancamentos({
         onAtualizouTransacao={onAtualizou}
         cartoes={cartoes}
         transacoes={transacoes}
+        mesSelecionado={mesSelecionado}
       />
     ) : (
       <button onClick={() => setExpandido(true)} style={l.botaoNovo}>
