@@ -234,7 +234,7 @@ export default function PaginaTermosPrivacidade() {
                 </p>
                 <ul style={s.lista}>
                   <li>
-                    <strong style={s.destaqueTexto}>Provedores de Nuvem e Servidores:</strong> Infraestrutura com altos padrões de segurança e criptografia de ponta a ponta;
+                    <strong style={s.destaqueTexto}>Provedores de Nuvem e Servidores:</strong> Infraestrutura moderna com altos padrões de segurança, criptografia em trânsito (HTTPS/TLS) e repouso (AES-256);
                   </li>
                   <li>
                     <strong style={s.destaqueTexto}>Parceiros de Conectividade Financeira:</strong> Agregadores de Open Finance autorizados pelo BACEN (somente com consentimento explícito do Usuário);
@@ -273,8 +273,8 @@ export default function PaginaTermosPrivacidade() {
                   <div style={s.cardSeguranca}>
                     <span style={s.iconeSeguranca}>🛡️</span>
                     <div>
-                      <strong style={s.tituloSeguranca}>Acessos Restritos</strong>
-                      <p style={s.descSeguranca}>Controle de acessos com autenticação multifator (MFA) e isolamento por usuário.</p>
+                      <strong style={s.tituloSeguranca}>Isolamento de Dados</strong>
+                      <p style={s.descSeguranca}>Isolamento lógico estrito por usuário (Row Level Security) e controle com MFA.</p>
                     </div>
                   </div>
                 </div>
