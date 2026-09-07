@@ -1,4 +1,5 @@
 import 'dotenv/config'
+process.env.TZ = process.env.TZ || 'America/Sao_Paulo'
 import express from 'express'
 import cors from 'cors'
 import transacoesRouter from './routes/transacoes.js'

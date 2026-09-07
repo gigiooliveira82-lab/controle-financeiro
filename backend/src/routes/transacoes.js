@@ -4,6 +4,7 @@ import { interpretarLancamento } from '../services/ia.js'
 import { gerarAnalise } from '../services/analise.js'
 import { responderPergunta } from '../services/pergunta.js'
 import { calcularVencimentoCartao } from '../utils/cartao.js'
+import { obterDataBrasil } from '../utils/data.js'
 import supabase from '../services/supabase.js'
 import autenticar from '../middleware/autenticar.js'
 import {
@@ -409,7 +410,7 @@ router.post('/gerar-recorrentes', async (req, res) => {
 
 // POST /transacoes/lancar — recebe texto livre, IA categoriza e salva
 router.post('/lancar', rateLimitLancamentosIA, async (req, res) => {
-  const { texto, cartao_id, data_compra } = req.body
+  const { texto, cartao_id, data_compra, data_local } = req.body
   const usuario_id = req.usuarioId
 
   if (!texto) {
@@ -418,7 +419,7 @@ router.post('/lancar', rateLimitLancamentosIA, async (req, res) => {
 
   let dadosIA
   try {
-    dadosIA = await interpretarLancamento(texto, usuario_id)
+    dadosIA = await interpretarLancamento(texto, usuario_id, data_local)
   } catch (err) {
     console.error('Erro na IA:', err.message)
     return res.status(502).json({ erro: 'Falha ao interpretar o lançamento com IA', detalhe: err.message })
@@ -473,15 +474,15 @@ router.post('/lancar', rateLimitLancamentosIA, async (req, res) => {
 
   // ── Parcelamento: gera todas as parcelas em lote ──────────────────────────
   if (dadosIA.total_parcelas && dadosIA.total_parcelas > 1) {
-    const grupoId  = randomUUID()
-    const hoje     = new Date()
+    const grupoId = randomUUID()
+    const { ano: anoHoje, mes: mesHoje, mesISO: mesAtualISO } = obterDataBrasil(data_local)
     const parcelas = []
 
     // Para compras no cartão, o offset de meses de cada parcela parte do
     // vencimento já calculado da parcela inicial (não do mês corrente)
     const [anoBase, mesBase] = cartao_id
       ? dadosIA.mes_referencia.split('-').map(Number)
-      : [hoje.getFullYear(), hoje.getMonth() + 1]
+      : [anoHoje, mesHoje]
     const baseData = new Date(anoBase, mesBase - 1, 1)
 
     for (let i = 1; i <= dadosIA.total_parcelas; i++) {
@@ -528,7 +529,6 @@ router.post('/lancar', rateLimitLancamentosIA, async (req, res) => {
       return res.status(500).json({ erro: 'Falha ao salvar parcelas no banco de dados', detalhe: erroInsert.message })
     }
 
-    const mesAtualISO    = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
     const parcelaVisivel = inseridas.find(p => p.mes_referencia === mesAtualISO)
       || inseridas.find(p => p.parcela_atual === dadosIA.parcela_inicial)
       || inseridas[0]
@@ -667,8 +667,7 @@ router.get('/:usuario_id', async (req, res) => {
   const usuario_id = req.usuarioId
   const { mes } = req.query
 
-  const hoje = new Date()
-  const mesRef = mes || `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
+  const mesRef = mes || obterDataBrasil().mesISO
 
   const { data, error } = await supabase
     .from('transacoes')

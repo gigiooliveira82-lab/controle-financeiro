@@ -66,8 +66,14 @@ export default function LancamentoTexto({
 
     try {
       const rec = new SpeechRecognition()
+      // No iOS Safari / WebKit, continuous: true gera falha imediata com "service-not-allowed"
+      const isIOS = typeof navigator !== 'undefined' && (
+        /iPad|iPhone|iPod/.test(navigator.userAgent || '') ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      )
+
       rec.lang = 'pt-BR'
-      rec.continuous = true
+      rec.continuous = !isIOS
       rec.interimResults = true
       rec.maxAlternatives = 1
 
@@ -89,9 +95,11 @@ export default function LancamentoTexto({
       rec.onerror = (e) => {
         setOuvindo(false)
         if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-          setErro('Acesso ao microfone negado. Clique no ícone de permissões ao lado da URL e permita o microfone.')
+          setErro('Acesso ao microfone negado. Verifique as permissões de microfone do site no navegador.')
+        } else if (e.error === 'service-not-allowed') {
+          setErro('O Ditado da Apple está desativado ou bloqueado no iOS. No iPhone, acesse Ajustes > Geral > Teclado e ligue "Ativar Ditado". Verifique também se a aba não está em Modo Privado.')
         } else if (e.error === 'no-speech') {
-          // Não silencia ou não considera erro fatal se ainda estiver gravando
+          // Usuário não falou nada antes do timeout
         } else if (e.error === 'network') {
           setErro('Erro de conexão com o serviço de voz do navegador.')
         } else if (e.error !== 'aborted') {
@@ -129,7 +137,7 @@ export default function LancamentoTexto({
 
     try {
       const cartaoInfo = cartaoId ? { cartao_id: cartaoId, data_compra: dataCompra } : undefined
-      const resultado = await lancarTexto(texto.trim(), usuarioId, cartaoInfo)
+      const resultado = await lancarTexto(texto.trim(), usuarioId, cartaoInfo, hojeISO())
       const mesRef = resultado.transacao?.mes_referencia
       const mesDiferente = Boolean(mesRef && mesSelecionado && mesRef !== mesSelecionado)
 

@@ -1,12 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { obterDataBrasil } from '../utils/data.js'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-export async function interpretarLancamento(texto, usuarioId) {
-  const hoje = new Date()
-  const diaHoje = hoje.getDate()
-  const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-01`
-  const dataFormatada = hoje.toLocaleDateString('pt-BR')
+export async function interpretarLancamento(texto, usuarioId, dataReferencia = null) {
+  const { dia: diaHoje, mesISO: mesAtual, dataFormatada } = obterDataBrasil(dataReferencia)
 
   const prompt = `Você é um assistente de controle financeiro pessoal brasileiro.
 Analise o texto do usuário e extraia os dados do lançamento financeiro.

@@ -7,11 +7,11 @@ async function headersAuth() {
   return { Authorization: `Bearer ${session?.access_token ?? ''}` }
 }
 
-export async function lancarTexto(texto, usuarioId, cartaoInfo) {
+export async function lancarTexto(texto, usuarioId, cartaoInfo, dataLocal) {
   const res = await fetch(`${BASE_URL}/transacoes/lancar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
-    body: JSON.stringify({ texto, ...cartaoInfo }),
+    body: JSON.stringify({ texto, data_local: dataLocal, ...cartaoInfo }),
   })
   const json = await res.json()
   if (!res.ok) {
