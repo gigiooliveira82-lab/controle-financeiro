@@ -250,71 +250,93 @@ function AppAutenticado({
       <NavLateral qtdVencidas={qtdVencidas} />
 
       <div style={estilos.conteudo}>
-        {/* Header Mobile com Identificação do Sistema (apenas fora do painel administrativo) */}
-        {isMobileNav && !isRotaAdmin && (
-          <div style={estilos.mobileTopBar}>
-            <div style={estilos.mobileBrandLogo}>
-              <div style={estilos.logoAvatar}>
-                <img src={logoImg} alt="Contas Claras" style={estilos.logoImg} />
+        {/* Header Mobile Unificado e Fixo (apenas fora do painel administrativo) */}
+        {isMobileNav && !isRotaAdmin ? (
+          <div style={estilos.mobileHeaderWrapper}>
+            <div style={estilos.mobileTopBar}>
+              <div style={estilos.mobileBrandLogo}>
+                <div style={estilos.logoAvatar}>
+                  <img src={logoImg} alt="Contas Claras" style={estilos.logoImg} />
+                </div>
+                <div style={estilos.logoTextWrap}>
+                  <span style={estilos.logoTitulo}>Contas Claras</span>
+                  <span style={estilos.logoSub}>Inteligência Financeira</span>
+                </div>
               </div>
-              <div style={estilos.logoTextWrap}>
-                <span style={estilos.logoTitulo}>Contas Claras</span>
-                <span style={estilos.logoSub}>Inteligência Financeira</span>
-              </div>
+              <MenuUsuario
+                email={usuario.email}
+                onLogout={handleLogout}
+                usuarioId={usuario.id}
+                onAbrirTour={() => setTourAberto(true)}
+              />
             </div>
-            <MenuUsuario
-              email={usuario.email}
-              onLogout={handleLogout}
-              usuarioId={usuario.id}
-              onAbrirTour={() => setTourAberto(true)}
-            />
-          </div>
-        )}
 
-        {/* Header Superior / Subheader (oculto quando estiver no Painel Admin) */}
-        {!isRotaAdmin && (
-          <header style={{
-            ...estilos.header,
-            padding: isMobileNav ? '14px 16px 6px' : '24px 36px 12px',
-            justifyContent: isMobileNav ? 'center' : 'space-between',
-          }}>
-            <div style={{
-              ...estilos.headerLeft,
-              alignItems: isMobileNav ? 'center' : 'flex-start',
-              textAlign: isMobileNav ? 'center' : 'left',
-            }}>
-              <div style={estilos.mesNavegacao}>
-                <button
-                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
-                  style={estilos.botaoSetaMes}
-                  aria-label="Mês anterior"
-                >
-                  ‹
-                </button>
-                <h1 style={{
-                  ...estilos.tituloMes,
-                  fontSize: isMobileNav ? 22 : 28,
-                }}>
-                  {formatarMesHeader(mesSelecionado)}
-                </h1>
-                <button
-                  onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
-                  style={estilos.botaoSetaMes}
-                  aria-label="Próximo mês"
-                >
-                  ›
-                </button>
-              </div>
-              <span style={{
-                ...estilos.subtituloHeader,
-                fontSize: isMobileNav ? 13.5 : 14.5,
+            <header style={estilos.mobileSubheader}>
+              <div style={{
+                ...estilos.headerLeft,
+                alignItems: 'center',
+                textAlign: 'center',
               }}>
-                Visão geral financeira
-              </span>
-            </div>
+                <div style={estilos.mesNavegacao}>
+                  <button
+                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
+                    style={estilos.botaoSetaMes}
+                    aria-label="Mês anterior"
+                  >
+                    ‹
+                  </button>
+                  <h1 style={{
+                    ...estilos.tituloMes,
+                    fontSize: 21,
+                  }}>
+                    {formatarMesHeader(mesSelecionado)}
+                  </h1>
+                  <button
+                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
+                    style={estilos.botaoSetaMes}
+                    aria-label="Próximo mês"
+                  >
+                    ›
+                  </button>
+                </div>
+                <span style={{
+                  ...estilos.subtituloHeader,
+                  fontSize: 12.5,
+                }}>
+                  Visão geral financeira
+                </span>
+              </div>
+            </header>
+          </div>
+        ) : (
+          /* Header Superior Desktop (oculto quando estiver no Painel Admin) */
+          !isRotaAdmin && (
+            <header style={estilos.header}>
+              <div style={estilos.headerLeft}>
+                <div style={estilos.mesNavegacao}>
+                  <button
+                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, -1))}
+                    style={estilos.botaoSetaMes}
+                    aria-label="Mês anterior"
+                  >
+                    ‹
+                  </button>
+                  <h1 style={estilos.tituloMes}>
+                    {formatarMesHeader(mesSelecionado)}
+                  </h1>
+                  <button
+                    onClick={() => setMesSelecionado(navegarMes(mesSelecionado, 1))}
+                    style={estilos.botaoSetaMes}
+                    aria-label="Próximo mês"
+                  >
+                    ›
+                  </button>
+                </div>
+                <span style={estilos.subtituloHeader}>
+                  Visão geral financeira
+                </span>
+              </div>
 
-            {/* Menu suspenso: visível no header superior no desktop */}
-            {!isMobileNav && (
               <div style={estilos.headerRight}>
                 <MenuUsuario
                   email={usuario.email}
@@ -323,8 +345,8 @@ function AppAutenticado({
                   onAbrirTour={() => setTourAberto(true)}
                 />
               </div>
-            )}
-          </header>
+            </header>
+          )
         )}
 
         <main style={{
@@ -391,17 +413,27 @@ const estilos = {
     fontFamily: 'var(--font-headline)',
     fontSize: 16,
   },
+  mobileHeaderWrapper: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 90,
+    background: 'var(--surface)',
+    borderBottom: '1px solid var(--border)',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
+  },
   mobileTopBar: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 'calc(10px + env(safe-area-inset-top, 0px)) 16px 10px',
-    background: 'var(--surface)',
-    borderBottom: '1px solid var(--border)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 30,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    padding: 'calc(10px + env(safe-area-inset-top, 0px)) 16px 4px',
+  },
+  mobileSubheader: {
+    padding: '2px 16px 10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mobileBrandLogo: {
     display: 'flex',

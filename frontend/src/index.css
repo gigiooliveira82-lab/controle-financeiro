@@ -48,7 +48,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
   min-height: 100vh;
   min-height: -webkit-fill-available;
 }
