@@ -310,6 +310,17 @@ export async function buscarUsuariosAdmin(pagina = 1, porPagina = 10, busca = ''
   return json
 }
 
+export async function criarUsuarioAdmin(dados) {
+  const res = await fetch(`${BASE_URL}/admin/usuarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(await headersAuth()) },
+    body: JSON.stringify(dados),
+  })
+  const json = await res.json()
+  if (!res.ok) throw new Error(json.erro || 'Erro ao cadastrar usuário')
+  return json
+}
+
 export async function atualizarUsuarioAdmin(id, dados) {
   const res = await fetch(`${BASE_URL}/admin/usuarios/${id}`, {
     method: 'PUT',

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom'
 import { isUsuarioAdmin, gerarHashAdmin } from '../utils/hashAdmin'
 import {
   buscarUsuariosAdmin,
+  criarUsuarioAdmin,
   atualizarUsuarioAdmin,
   excluirUsuarioAdmin,
   alternarAdminUsuario,
@@ -17,6 +18,8 @@ import {
   IconCheck,
   IconOlho,
   IconOlhoFechado,
+  IconNovoUsuario,
+  IconPlus,
 } from '../components/Icones'
 import { useConfirm } from '../components/ModalConfirmacao'
 import { useIsNavMobile } from '../hooks/useIsNavMobile'
@@ -38,6 +41,17 @@ export default function PaginaAdminUsuarios({ usuario }) {
   const [total, setTotal] = useState(0)
   const [busca, setBusca] = useState('')
   const [buscaDebounced, setBuscaDebounced] = useState('')
+
+  // Modal de criação de novo usuário
+  const [modalCriarAberto, setModalCriarAberto] = useState(false)
+  const [novoNome, setNovoNome] = useState('')
+  const [novoEmail, setNovoEmail] = useState('')
+  const [novoTelefone, setNovoTelefone] = useState('')
+  const [novaSenha, setNovaSenha] = useState('')
+  const [novoIsAdmin, setNovoIsAdmin] = useState(false)
+  const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false)
+  const [criandoUsuario, setCriandoUsuario] = useState(false)
+  const [erroModalCriar, setErroModalCriar] = useState(null)
 
   // Modal de edição do usuário
   const [usuarioEditando, setUsuarioEditando] = useState(null)
@@ -121,6 +135,76 @@ export default function PaginaAdminUsuarios({ usuario }) {
       )
     } catch (err) {
       setErro(err.message || 'Erro ao alterar privilégios do usuário.')
+    }
+  }
+
+  function abrirModalCriar() {
+    setNovoNome('')
+    setNovoEmail('')
+    setNovoTelefone('')
+    setNovaSenha('')
+    setNovoIsAdmin(false)
+    setMostrarNovaSenha(false)
+    setErroModalCriar(null)
+    setModalCriarAberto(true)
+  }
+
+  function fecharModalCriar() {
+    if (criandoUsuario) return
+    setModalCriarAberto(false)
+    setNovoNome('')
+    setNovoEmail('')
+    setNovoTelefone('')
+    setNovaSenha('')
+    setNovoIsAdmin(false)
+    setMostrarNovaSenha(false)
+    setErroModalCriar(null)
+  }
+
+  async function handleCriarUsuario(e) {
+    e.preventDefault()
+    setErroModalCriar(null)
+
+    const emailLimpo = novoEmail.trim().toLowerCase()
+    if (!emailLimpo) {
+      setErroModalCriar('Por favor, informe o e-mail do usuário.')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(emailLimpo)) {
+      setErroModalCriar('Por favor, informe um endereço de e-mail válido.')
+      return
+    }
+
+    if (!novaSenha || novaSenha.trim().length < 6) {
+      setErroModalCriar('A senha deve conter no mínimo 6 caracteres.')
+      return
+    }
+
+    setCriandoUsuario(true)
+    try {
+      const payload = {
+        email: emailLimpo,
+        senha: novaSenha.trim(),
+        nome: novoNome.trim(),
+        telefone: novoTelefone.trim(),
+        isAdmin: novoIsAdmin,
+      }
+
+      const resp = await criarUsuarioAdmin(payload)
+
+      if (resp.usuario) {
+        setUsuarios(prev => [resp.usuario, ...prev])
+        setTotal(t => t + 1)
+      }
+
+      exibirSucesso(`Usuário "${emailLimpo}" cadastrado e liberado para acesso com sucesso!`)
+      fecharModalCriar()
+    } catch (err) {
+      setErroModalCriar(err.message || 'Erro ao cadastrar novo usuário.')
+    } finally {
+      setCriandoUsuario(false)
     }
   }
 
@@ -212,6 +296,16 @@ export default function PaginaAdminUsuarios({ usuario }) {
         </div>
 
         <div style={estilos.acoesHeader}>
+          <button
+            type="button"
+            onClick={abrirModalCriar}
+            style={estilos.botaoCriarUsuario}
+            title="Cadastrar novo usuário"
+          >
+            <IconPlus size={16} color="#0A0F0D" />
+            <span>Novo Usuário</span>
+          </button>
+
           <button
             type="button"
             onClick={carregarUsuarios}
@@ -603,6 +697,168 @@ export default function PaginaAdminUsuarios({ usuario }) {
         </div>
       )}
 
+      {/* Modal de Cadastro de Novo Usuário */}
+      {modalCriarAberto && (
+        <div style={estilos.modalOverlay} onClick={fecharModalCriar}>
+          <div style={estilos.modalBox} onClick={e => e.stopPropagation()}>
+            <div style={estilos.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={estilos.iconeModalCriar}>
+                  <IconNovoUsuario size={20} color="var(--primary)" />
+                </div>
+                <h3 style={estilos.modalTitulo}>Cadastrar Novo Usuário</h3>
+              </div>
+              <button
+                type="button"
+                onClick={fecharModalCriar}
+                style={estilos.btnFecharModal}
+                disabled={criandoUsuario}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Banner Informativo de Confirmação Automática */}
+            <div style={estilos.alertaInfoCriar}>
+              <span style={{ fontSize: 16 }}>⚡</span>
+              <div>
+                <strong style={{ color: 'var(--text-pure)' }}>Conta ativada imediatamente:</strong>
+                <span style={{ marginLeft: 4 }}>
+                  O usuário é cadastrado com e-mail confirmado automaticamente, permitindo login e testes imediatos na plataforma.
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleCriarUsuario} style={estilos.modalForm}>
+              {/* E-mail */}
+              <div style={estilos.modalField}>
+                <label style={estilos.modalLabel}>
+                  E-mail: <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={novoEmail}
+                  onChange={e => setNovoEmail(e.target.value)}
+                  style={estilos.modalInput}
+                  placeholder="exemplo@email.com"
+                  autoComplete="email"
+                  disabled={criandoUsuario}
+                />
+              </div>
+
+              {/* Nome Completo */}
+              <div style={estilos.modalField}>
+                <label style={estilos.modalLabel}>Nome Completo:</label>
+                <input
+                  type="text"
+                  value={novoNome}
+                  onChange={e => setNovoNome(e.target.value)}
+                  style={estilos.modalInput}
+                  placeholder="Ex: Carlos Silva"
+                  autoComplete="name"
+                  disabled={criandoUsuario}
+                />
+              </div>
+
+              {/* Telefone */}
+              <div style={estilos.modalField}>
+                <label style={estilos.modalLabel}>Telefone / WhatsApp:</label>
+                <input
+                  type="tel"
+                  value={novoTelefone}
+                  onChange={e => setNovoTelefone(e.target.value)}
+                  style={estilos.modalInput}
+                  placeholder="(11) 98765-4321"
+                  autoComplete="tel"
+                  disabled={criandoUsuario}
+                />
+              </div>
+
+              {/* Senha */}
+              <div style={estilos.modalField}>
+                <label style={estilos.modalLabel}>
+                  Senha de Acesso: <span style={{ color: '#EF4444' }}>*</span>
+                </label>
+                <div style={estilos.inputSenhaWrap}>
+                  <input
+                    type={mostrarNovaSenha ? 'text' : 'password'}
+                    required
+                    value={novaSenha}
+                    onChange={e => setNovaSenha(e.target.value)}
+                    style={estilos.modalInputSenha}
+                    placeholder="Mínimo de 6 caracteres"
+                    autoComplete="new-password"
+                    disabled={criandoUsuario}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarNovaSenha(v => !v)}
+                    style={estilos.btnMostrarSenha}
+                    title={mostrarNovaSenha ? 'Ocultar senha' : 'Ver senha'}
+                    disabled={criandoUsuario}
+                  >
+                    {mostrarNovaSenha ? (
+                      <IconOlhoFechado size={16} color="var(--text-muted)" />
+                    ) : (
+                      <IconOlho size={16} color="var(--text-muted)" />
+                    )}
+                  </button>
+                </div>
+                <span style={estilos.dicaCampo}>
+                  A senha que o usuário utilizará para acessar o aplicativo.
+                </span>
+              </div>
+
+              {/* Opção Administrador */}
+              <label style={estilos.checkboxAdminContainer}>
+                <input
+                  type="checkbox"
+                  checked={novoIsAdmin}
+                  onChange={e => setNovoIsAdmin(e.target.checked)}
+                  style={estilos.checkboxInput}
+                  disabled={criandoUsuario}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-pure)' }}>
+                    Conceder privilégios de Administrador
+                  </span>
+                  <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                    Permite acesso ao painel de controle, gestão de usuários e logs de acesso.
+                  </span>
+                </div>
+              </label>
+
+              {erroModalCriar && (
+                <div style={estilos.erroModal}>⚠️ {erroModalCriar}</div>
+              )}
+
+              <div style={estilos.modalBotoes}>
+                <button
+                  type="button"
+                  onClick={fecharModalCriar}
+                  disabled={criandoUsuario}
+                  style={estilos.btnCancelarModal}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={criandoUsuario}
+                  style={{
+                    ...estilos.btnSalvarModal,
+                    opacity: criandoUsuario ? 0.7 : 1,
+                    cursor: criandoUsuario ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {criandoUsuario ? 'Cadastrando...' : 'Cadastrar Usuário'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Edição de Usuário */}
       {usuarioEditando && (
         <div style={estilos.modalOverlay} onClick={fecharModalEditar}>
@@ -827,6 +1083,21 @@ const estilos = {
     alignItems: 'center',
     gap: 10,
     flexWrap: 'wrap',
+  },
+  botaoCriarUsuario: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    background: 'var(--primary)',
+    border: 'none',
+    color: '#0A0F0D',
+    padding: '8px 16px',
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
   },
   botaoAtualizar: {
     display: 'inline-flex',
@@ -1399,6 +1670,38 @@ const estilos = {
     fontWeight: 600,
     cursor: 'pointer',
   },
+  iconeModalCriar: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    background: 'rgba(16, 185, 129, 0.12)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  alertaInfoCriar: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+    background: 'rgba(16, 185, 129, 0.08)',
+    border: '1px solid rgba(16, 185, 129, 0.22)',
+    borderRadius: 10,
+    padding: '10px 12px',
+    fontSize: 12.5,
+    color: 'var(--text)',
+    lineHeight: 1.4,
+  },
+  checkboxAdminContainer: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+    background: 'var(--surface-hover)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: 10,
+    padding: '10px 12px',
+    cursor: 'pointer',
+    userSelect: 'none',
+  },
   cardVazioMobile: {
     display: 'flex',
     alignItems: 'center',
@@ -1413,3 +1716,5 @@ const estilos = {
     textAlign: 'center',
   },
 }
+
+

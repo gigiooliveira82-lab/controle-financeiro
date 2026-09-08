@@ -171,6 +171,76 @@ router.get('/usuarios', autenticar, verificarPermissaoAdmin, async (req, res) =>
   }
 })
 
+// POST /admin/usuarios - Cadastro de novo usuário pelo administrador
+router.post('/usuarios', autenticar, verificarPermissaoAdmin, async (req, res) => {
+  try {
+    const { email, senha, nome, telefone, isAdmin } = req.body
+
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ erro: 'O e-mail é obrigatório.' })
+    }
+
+    const emailLimpo = email.trim().toLowerCase()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(emailLimpo)) {
+      return res.status(400).json({ erro: 'Formato de e-mail inválido.' })
+    }
+
+    if (!senha || typeof senha !== 'string' || senha.trim().length < 6) {
+      return res.status(400).json({ erro: 'A senha é obrigatória e deve conter pelo menos 6 caracteres.' })
+    }
+
+    const nomeFormatado = nome ? String(nome).trim() : ''
+    const telefoneFormatado = telefone ? String(telefone).trim() : ''
+    const ehAdmin = Boolean(isAdmin)
+
+    const paramsCriacao = {
+      email: emailLimpo,
+      password: senha.trim(),
+      email_confirm: true,
+      user_metadata: {
+        nome: nomeFormatado,
+        telefone: telefoneFormatado,
+        is_admin: ehAdmin,
+      },
+    }
+
+    if (ehAdmin) {
+      paramsCriacao.app_metadata = { role: 'admin' }
+    }
+
+    const { data, error } = await supabase.auth.admin.createUser(paramsCriacao)
+
+    if (error) {
+      console.error('Erro ao cadastrar usuário via admin:', error)
+      let mensagemErro = error.message || 'Não foi possível cadastrar o usuário.'
+      if (mensagemErro.toLowerCase().includes('already registered') || mensagemErro.toLowerCase().includes('already exists')) {
+        mensagemErro = 'Este e-mail já está cadastrado no sistema.'
+      }
+      return res.status(400).json({ erro: mensagemErro })
+    }
+
+    const u = data.user
+    return res.status(201).json({
+      sucesso: true,
+      mensagem: 'Usuário cadastrado com sucesso!',
+      usuario: {
+        id: u.id,
+        email: u.email,
+        nome: u.user_metadata?.nome || '',
+        telefone: u.phone || u.user_metadata?.telefone || '',
+        criado_em: u.created_at,
+        ultimo_acesso: u.last_sign_in_at,
+        confirmado: Boolean(u.confirmed_at || u.email_confirmed_at),
+        is_admin: isUsuarioAdmin(u),
+      },
+    })
+  } catch (err) {
+    console.error('Erro interno no cadastro de usuário admin:', err)
+    return res.status(500).json({ erro: 'Erro interno ao cadastrar usuário.' })
+  }
+})
+
 // PUT /admin/usuarios/:id - Edição dos dados do usuário (Nome, Telefone e Senha opcional). E-mail NUNCA é alterado.
 router.put('/usuarios/:id', autenticar, verificarPermissaoAdmin, async (req, res) => {
   try {
