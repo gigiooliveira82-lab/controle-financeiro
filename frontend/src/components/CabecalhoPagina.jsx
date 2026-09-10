@@ -19,7 +19,7 @@ const s = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
-    marginBottom: 8,
+    marginBottom: 0,
     flexWrap: 'wrap',
   },
   esquerda: {

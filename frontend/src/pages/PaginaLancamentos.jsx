@@ -125,27 +125,31 @@ export default function PaginaLancamentos({
   )
 
   return (
-    <div style={l.root}>
+    <div style={{ ...l.root, gap: isMobile ? 12 : 18 }}>
       <Toast msg={toast} />
       <CabecalhoPagina icone={<IconDespesas size={20} />} titulo="Despesas" subtitulo="Fixas, variáveis e parceladas — tudo num só lugar." />
       
-      {expandido && mostrarLancamento && (
-        <LancamentoTexto
-          usuarioId={usuarioId}
-          titulo="Nova Despesa"
-          onFechar={() => setExpandido(false)}
-          onNovaTransacao={handleNovaComColapso}
-          onAtualizouTransacao={onAtualizou}
-          cartoes={cartoes}
-          transacoes={transacoes}
-          mesSelecionado={mesSelecionado}
-        />
+      {isMobile ? (
+        lancamento
+      ) : (
+        expandido && mostrarLancamento && (
+          <LancamentoTexto
+            usuarioId={usuarioId}
+            titulo="Nova Despesa"
+            onFechar={() => setExpandido(false)}
+            onNovaTransacao={handleNovaComColapso}
+            onAtualizouTransacao={onAtualizou}
+            cartoes={cartoes}
+            transacoes={transacoes}
+            mesSelecionado={mesSelecionado}
+          />
+        )
       )}
 
-      {/* Toolbar Unificada: Busca + Alternador de Visualização + CTA */}
+      {/* Toolbar Unificada: Busca + Alternador de Visualização (+ CTA no Desktop) */}
       <div style={{ ...l.toolbar, ...(isMobile ? l.toolbarMobile : {}) }}>
         {!semDados && (
-          <div style={l.buscaWrap}>
+          <div style={{ ...l.buscaWrap, ...(isMobile ? { width: '100%', flex: '1 1 auto' } : {}) }}>
             <span style={l.buscaIcone} aria-hidden="true">
               <IconBusca size={15} />
             </span>
@@ -165,14 +169,15 @@ export default function PaginaLancamentos({
           </div>
         )}
 
-        <div style={{ ...l.toolbarAcoes, ...(isMobile ? { width: '100%', justifyContent: 'space-between' } : {}) }}>
+        <div style={{ ...l.toolbarAcoes, ...(isMobile ? l.toolbarAcoesMobile : {}) }}>
           {/* Segmented Control de Visualização */}
-          <div style={l.segmentedGroup} role="group" aria-label="Modo de visualização">
+          <div style={{ ...l.segmentedGroup, ...(isMobile ? l.segmentedGroupMobile : {}) }} role="group" aria-label="Modo de visualização">
             <button
               type="button"
               onClick={() => setModoConsolidado(false)}
               style={{
                 ...l.segmentBtn,
+                ...(isMobile ? { flex: 1, justifyContent: 'center' } : {}),
                 ...(!modoConsolidado ? l.segmentBtnAtivo : {}),
               }}
               title="Visualizar em duas colunas (Fixas e Variáveis)"
@@ -185,6 +190,7 @@ export default function PaginaLancamentos({
               onClick={() => setModoConsolidado(true)}
               style={{
                 ...l.segmentBtn,
+                ...(isMobile ? { flex: 1, justifyContent: 'center' } : {}),
                 ...(modoConsolidado ? l.segmentBtnAtivo : {}),
               }}
               title="Visualizar todas as despesas consolidadas em lista única"
@@ -194,8 +200,8 @@ export default function PaginaLancamentos({
             </button>
           </div>
 
-          {/* Botão Primário CTA */}
-          {!expandido && mostrarLancamento && (
+          {/* Botão Primário CTA (Apenas Desktop quando não expandido) */}
+          {!isMobile && !expandido && mostrarLancamento && (
             <button
               type="button"
               onClick={() => setExpandido(true)}
@@ -266,7 +272,7 @@ export default function PaginaLancamentos({
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))', gap: 20, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))', gap: isMobile ? 12 : 20, alignItems: 'start' }}>
           {TIPOS.map(tipo => (
             <BlocoTipo
               key={tipo}
@@ -290,6 +296,21 @@ export default function PaginaLancamentos({
 
 const l = {
   root: { display: 'flex', flexDirection: 'column', gap: 18 },
+  botaoNovo: {
+    display: 'block',
+    width: '100%',
+    padding: '16px',
+    borderRadius: 12,
+    border: '1.5px dashed var(--border)',
+    background: 'var(--surface)',
+    color: 'var(--primary)',
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
+    textAlign: 'center',
+    boxSizing: 'border-box',
+    fontFamily: 'var(--font-headline)',
+  },
   toolbar: {
     display: 'flex',
     alignItems: 'center',
@@ -300,12 +321,17 @@ const l = {
   toolbarMobile: {
     flexDirection: 'column',
     alignItems: 'stretch',
+    gap: 8,
   },
   toolbarAcoes: {
     display: 'flex',
     alignItems: 'center',
     gap: 10,
     flexShrink: 0,
+  },
+  toolbarAcoesMobile: {
+    width: '100%',
+    justifyContent: 'stretch',
   },
   segmentedGroup: {
     display: 'inline-flex',
@@ -315,6 +341,11 @@ const l = {
     borderRadius: 10,
     padding: 3,
     gap: 2,
+  },
+  segmentedGroupMobile: {
+    width: '100%',
+    display: 'flex',
+    boxSizing: 'border-box',
   },
   segmentBtn: {
     display: 'inline-flex',
