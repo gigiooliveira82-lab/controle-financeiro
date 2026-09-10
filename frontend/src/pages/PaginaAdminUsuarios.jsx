@@ -302,7 +302,7 @@ export default function PaginaAdminUsuarios({ usuario }) {
             style={estilos.botaoCriarUsuario}
             title="Cadastrar novo usuário"
           >
-            <IconPlus size={16} color="#0A0F0D" />
+            <IconPlus size={16} color="#FFFFFF" />
             <span>Novo Usuário</span>
           </button>
 
@@ -1090,7 +1090,7 @@ const estilos = {
     gap: 6,
     background: 'var(--primary)',
     border: 'none',
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     padding: '8px 16px',
     borderRadius: 8,
     fontSize: 13,
@@ -1568,7 +1568,7 @@ const estilos = {
   btnSalvarModal: {
     background: 'var(--primary)',
     border: 'none',
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     padding: '8px 18px',
     borderRadius: 8,
     fontSize: 13,

@@ -64,7 +64,7 @@ export default function PaginaAdmin({ usuario }) {
             <div style={estilos.brandTitleRow}>
               <span style={estilos.brandName}>Contas Claras</span>
               <span style={estilos.adminBadge}>
-                <IconPainelAdm size={12} color="#0A0F0D" />
+                <IconPainelAdm size={12} color="#FFFFFF" />
                 Painel Adm
               </span>
             </div>
@@ -370,7 +370,7 @@ const estilos = {
     gap: 5,
     fontSize: 11,
     fontWeight: 700,
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     background: 'var(--primary)',
     padding: '3px 8px',
     borderRadius: 6,

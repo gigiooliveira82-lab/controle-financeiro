@@ -23,10 +23,10 @@ router.get('/:usuario_id', async (req, res) => {
   return res.json({ contas: data })
 })
 
-// POST /contas — cria uma nova conta corrente
+// POST /contas — cria uma nova conta (corrente ou poupança)
 router.post('/', async (req, res) => {
   const usuario_id = req.usuarioId
-  const { nome, saldo_atual, cor } = req.body
+  const { nome, tipo, saldo_atual, cor } = req.body
 
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: 'Campo obrigatório: nome' })
@@ -37,11 +37,14 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ erro: 'Campo saldo_atual deve ser um número' })
   }
 
+  const tipoConta = (tipo && String(tipo).trim().toLowerCase() === 'poupanca') ? 'poupanca' : 'corrente'
+
   const { data, error } = await supabase
     .from('contas_correntes')
     .insert({
       usuario_id,
       nome: nome.trim(),
+      tipo: tipoConta,
       saldo_atual: saldo,
       cor: cor || null,
     })
@@ -49,23 +52,27 @@ router.post('/', async (req, res) => {
     .single()
 
   if (error) {
+    console.error('Erro ao criar conta:', error)
     return res.status(500).json({ erro: 'Falha ao criar conta', detalhe: error.message })
   }
 
   return res.status(201).json({ conta: data })
 })
 
-// PUT /contas/:id — atualiza nome, saldo e/ou cor de uma conta
+// PUT /contas/:id — atualiza nome, tipo, saldo e/ou cor de uma conta
 router.put('/:id', async (req, res) => {
   const usuario_id = req.usuarioId
   const { id } = req.params
-  const { nome, saldo_atual, cor } = req.body
+  const { nome, tipo, saldo_atual, cor } = req.body
 
   const campos = {}
 
   if (nome !== undefined) {
     if (!nome.trim()) return res.status(400).json({ erro: 'Campo nome não pode ser vazio' })
     campos.nome = nome.trim()
+  }
+  if (tipo !== undefined) {
+    campos.tipo = String(tipo).trim().toLowerCase() === 'poupanca' ? 'poupanca' : 'corrente'
   }
   if (saldo_atual !== undefined) {
     const saldo = Number(saldo_atual)
@@ -90,11 +97,13 @@ router.put('/:id', async (req, res) => {
     .single()
 
   if (error) {
+    console.error('Erro ao atualizar conta:', error)
     return res.status(500).json({ erro: 'Falha ao atualizar conta', detalhe: error.message })
   }
 
   return res.json({ conta: data })
 })
+
 
 // DELETE /contas/:id — remove a conta
 router.delete('/:id', async (req, res) => {

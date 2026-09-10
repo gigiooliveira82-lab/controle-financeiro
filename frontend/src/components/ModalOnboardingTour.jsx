@@ -754,7 +754,7 @@ const s = {
   },
   btnProximo: {
     background: 'var(--primary)',
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     border: 'none',
     borderRadius: 8,
     padding: '8px 18px',
@@ -766,7 +766,7 @@ const s = {
   },
   btnConcluir: {
     background: 'linear-gradient(135deg, #10B981, #2DD4BF)',
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     border: 'none',
     borderRadius: 8,
     padding: '8px 18px',

@@ -83,13 +83,13 @@
   --surface-overlay:#F8FAFC;
   --surface-line:   #E2E8F0;
   --border:         #E2E8F0;
-  --border-focus:   #10B981;
+  --border-focus:   #0F766E;
   --border-subtle:  rgba(0, 0, 0, 0.06);
 
   /* Paleta (Light) */
-  --primary:         #10B981;
-  --primary-hover:   #059669;
-  --primary-glow:    rgba(16, 185, 129, 0.18);
+  --primary:         #0F766E;
+  --primary-hover:   #115E59;
+  --primary-glow:    rgba(15, 118, 110, 0.22);
   --primary-contrast:#FFFFFF;
   --secondary:       #0F766E;
   --secondary-hover: #0D9488;

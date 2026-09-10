@@ -291,7 +291,7 @@ const g = {
   },
   btnAcao: {
     background: 'var(--primary)',
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     border: 'none',
     padding: '8px 14px',
     borderRadius: 8,

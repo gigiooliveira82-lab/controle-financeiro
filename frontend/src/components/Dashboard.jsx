@@ -3,6 +3,19 @@ import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { fmtBRL, fmtNum } from '../utils/fmt'
 import { gerarAnaliseMes, perguntarSobreFinancas, buscarContas } from '../services/api'
+import {
+  IconTrocarTipo,
+  IconRecorrencia,
+  IconDuplicar,
+  IconCancelar,
+  IconLixeira,
+  IconCartoes,
+  IconSetaCima,
+  IconSetaBaixo,
+  IconHistorico,
+  IconContas,
+  IconFechar,
+} from './Icones'
 
 export const TIPO = {
   despesa_fixa:     { label: 'Despesas Fixas',     cor: '#A78BFA' },
@@ -69,10 +82,7 @@ export function CardBalancoMes({ saldo, totalReceitas, totalDespesas }) {
       <div style={s.cardBalancoTopo}>
         <span style={s.cardLabel}>BALANÇO DO MÊS</span>
         <div style={s.cardIconeBadge}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="20" height="14" x="2" y="5" rx="2" />
-            <line x1="2" x2="22" y1="10" stroke="#10B981" strokeWidth="2" />
-          </svg>
+          <IconContas size={18} color="#10B981" />
         </div>
       </div>
 
@@ -82,12 +92,12 @@ export function CardBalancoMes({ saldo, totalReceitas, totalDespesas }) {
 
       <div style={s.cardBalancoLinhas}>
         <div style={s.balancoSubItem}>
-          <span style={s.setaVerde}>↑</span>
+          <span style={s.setaVerde}><IconSetaCima size={13} strokeWidth={2.5} /></span>
           <span style={s.balancoSubLabel}>Receitas</span>
           <span style={s.balancoSubValorVerde}>{fmtSaldo(totalReceitas)}</span>
         </div>
         <div style={s.balancoSubItem}>
-          <span style={s.setaVermelha}>↓</span>
+          <span style={s.setaVermelha}><IconSetaBaixo size={13} strokeWidth={2.5} /></span>
           <span style={s.balancoSubLabel}>Despesas</span>
           <span style={s.balancoSubValorVermelho}>{fmtSaldo(totalDespesas)}</span>
         </div>
@@ -103,11 +113,7 @@ export function CardHistoricoMes({ comparativo, parcial, mesSelecionado }) {
   return (
     <div style={s.cardHistorico}>
       <div style={s.cardHistoricoIcone}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8FA69B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-          <path d="M3 3v5h5" />
-          <path d="M12 7v5l4 2" />
-        </svg>
+        <IconHistorico size={26} color="#8FA69B" />
       </div>
 
       {semHistorico ? (
@@ -593,7 +599,7 @@ function CampoEditavel({ onAtivar, style, title, children }) {
   )
 }
 
-export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
+export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente, mostrarBadgeTipo, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
   const [editandoValor, setEditandoValor] = useState(false)
   const [novoValor, setNovoValor]         = useState(String(t.valor))
   const [editandoDesc, setEditandoDesc]   = useState(false)
@@ -682,7 +688,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
           </CampoEditavel>
         )}
         <div style={s.itemLinhaTextos}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             {editandoDesc ? (
               <input
                 autoFocus
@@ -704,20 +710,62 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
             {t.recorrente && (
               <span
                 style={{
-                  fontSize: 13,
+                  fontSize: 10,
                   color: '#A78BFA',
-                  fontWeight: 800,
-                  marginLeft: 1,
+                  fontWeight: 700,
+                  background: 'rgba(167, 139, 250, 0.12)',
+                  border: '1px solid rgba(167, 139, 250, 0.3)',
+                  padding: '1px 6px',
+                  borderRadius: 4,
                   display: 'inline-flex',
                   alignItems: 'center',
+                  gap: 3,
                 }}
                 title="Despesa recorrente mensal"
               >
-                ↺
+                <IconRecorrencia size={11} strokeWidth={2.5} />
+                Mensal
               </span>
             )}
             {t.total_parcelas && (
               <span style={s.parcelaBadge}>{t.parcela_atual}/{t.total_parcelas}</span>
+            )}
+            {mostrarBadgeTipo && (t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && (
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  if (salvando) return
+                  const proximoTipo = t.tipo === 'despesa_fixa' ? 'despesa_variavel' : 'despesa_fixa'
+                  setSalvando(true)
+                  try {
+                    await onAtualizar({ tipo: proximoTipo })
+                    if (onMoverTipo) onMoverTipo(`Alterado para ${proximoTipo === 'despesa_fixa' ? 'Despesa Fixa' : 'Despesa Variável'}`)
+                  } finally {
+                    setSalvando(false)
+                  }
+                }}
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  padding: '2px 7px',
+                  borderRadius: 6,
+                  border: `1px solid ${t.tipo === 'despesa_fixa' ? 'rgba(167, 139, 250, 0.4)' : 'rgba(252, 124, 120, 0.4)'}`,
+                  background: t.tipo === 'despesa_fixa' ? 'rgba(167, 139, 250, 0.12)' : 'rgba(252, 124, 120, 0.12)',
+                  color: t.tipo === 'despesa_fixa' ? '#A78BFA' : '#FC7C78',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease',
+                }}
+                title={`Tipo: ${t.tipo === 'despesa_fixa' ? 'Fixa' : 'Variável'} (Clique para alternar para ${t.tipo === 'despesa_fixa' ? 'Variável' : 'Fixa'})`}
+              >
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: t.tipo === 'despesa_fixa' ? '#A78BFA' : '#FC7C78' }} />
+                {t.tipo === 'despesa_fixa' ? 'Fixa' : 'Variável'}
+              </button>
             )}
           </div>
           <div style={s.itemCatRow}>
@@ -749,7 +797,8 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
               <>
                 <span style={s.itemSep}>·</span>
                 <span style={s.cartaoBadge}>
-                  💳 {cartoesById[t.cartao_id].nome}
+                  <IconCartoes size={12} strokeWidth={2} />
+                  {cartoesById[t.cartao_id].nome}
                 </span>
               </>
             )}
@@ -804,63 +853,119 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
           </button>
         )}
 
-        {/* Botão de Recorrência — Clique para alternar */}
-        {mostrarRecorrente && (
-          <button
-            onClick={async () => {
-              if (salvando) return
-              setSalvando(true)
-              try {
-                await onAtualizar({ recorrente: !t.recorrente })
-              } finally {
-                setSalvando(false)
-              }
-            }}
-            style={{
-              ...s.actionBtn,
-              color: t.recorrente ? '#A78BFA' : 'var(--text-dim)',
-              fontSize: 14,
-              fontWeight: t.recorrente ? 800 : 500,
-            }}
-            title={t.recorrente ? 'Despesa recorrente ativada (clique para desativar)' : 'Clique para marcar como despesa recorrente mensal'}
-          >
-            ↺
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {/* Botão de Recorrência — Clique para alternar */}
+          {mostrarRecorrente && (
+            <button
+              onClick={async () => {
+                if (salvando) return
+                setSalvando(true)
+                try {
+                  await onAtualizar({ recorrente: !t.recorrente })
+                } finally {
+                  setSalvando(false)
+                }
+              }}
+              style={{
+                ...s.actionBtn,
+                color: t.recorrente ? '#A78BFA' : 'var(--text-dim)',
+                background: t.recorrente ? 'rgba(167, 139, 250, 0.12)' : 'transparent',
+              }}
+              onMouseEnter={e => { if (!t.recorrente) e.currentTarget.style.background = 'var(--surface-hover)' }}
+              onMouseLeave={e => { if (!t.recorrente) e.currentTarget.style.background = 'transparent' }}
+              title={t.recorrente ? 'Despesa recorrente mensal (clique para desativar)' : 'Marcar como despesa recorrente mensal'}
+            >
+              <IconRecorrencia size={13} strokeWidth={t.recorrente ? 2.5 : 2} />
+            </button>
+          )}
 
-        {/* Botão Duplicar */}
-        {onDuplicar && (
+          {/* Botão Trocar Tipo de Despesa (Fixa <-> Variável) */}
+          {(t.tipo === 'despesa_fixa' || t.tipo === 'despesa_variavel') && (
+            <button
+              onClick={async () => {
+                if (salvando) return
+                const proximoTipo = t.tipo === 'despesa_fixa' ? 'despesa_variavel' : 'despesa_fixa'
+                setSalvando(true)
+                try {
+                  await onAtualizar({ tipo: proximoTipo })
+                  if (onMoverTipo) onMoverTipo(`Alterado para ${proximoTipo === 'despesa_fixa' ? 'Despesa Fixa' : 'Despesa Variável'}`)
+                } finally {
+                  setSalvando(false)
+                }
+              }}
+              style={s.actionBtn}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--primary)'
+                e.currentTarget.style.background = 'rgba(16, 185, 129, 0.12)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-dim)'
+                e.currentTarget.style.background = 'transparent'
+              }}
+              title={`Alterar tipo para ${t.tipo === 'despesa_fixa' ? 'Despesa Variável' : 'Despesa Fixa'}`}
+            >
+              <IconTrocarTipo size={13} />
+            </button>
+          )}
+
+          {/* Botão Duplicar */}
+          {onDuplicar && (
+            <button
+              onClick={onDuplicar}
+              style={s.actionBtn}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--text-pure)'
+                e.currentTarget.style.background = 'var(--surface-hover)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-dim)'
+                e.currentTarget.style.background = 'transparent'
+              }}
+              title="Duplicar este lançamento"
+            >
+              <IconDuplicar size={13} />
+            </button>
+          )}
+
+          {/* Botão Cancelar Parcelas Futuras */}
+          {t.grupo_parcela_id && onCancelarParcelas && (
+            <button
+              onClick={() => onCancelarParcelas(t.grupo_parcela_id)}
+              style={{ ...s.actionBtn, color: 'var(--tertiary)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(252, 124, 120, 0.12)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              title="Cancelar parcelas futuras deste parcelamento"
+            >
+              <IconCancelar size={13} />
+            </button>
+          )}
+
+          {/* Botão Remover */}
           <button
-            onClick={onDuplicar}
+            onClick={onRemover}
+            disabled={removendo}
             style={s.actionBtn}
-            title="Duplicar este lançamento"
+            onMouseEnter={e => {
+              e.currentTarget.style.color = '#FC7C78'
+              e.currentTarget.style.background = 'rgba(252, 124, 120, 0.14)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = 'var(--text-dim)'
+              e.currentTarget.style.background = 'transparent'
+            }}
+            title="Remover lançamento"
           >
-            ⧉
+            <IconLixeira size={13} />
           </button>
-        )}
-
-        {/* Botão Cancelar Parcelas Futuras */}
-        {t.grupo_parcela_id && onCancelarParcelas && (
-          <button
-            onClick={() => onCancelarParcelas(t.grupo_parcela_id)}
-            style={{ ...s.actionBtn, color: 'var(--tertiary)' }}
-            title="Cancelar parcelas futuras deste parcelamento"
-          >
-            ⊘
-          </button>
-        )}
-
-        {/* Botão Remover */}
-        <button onClick={onRemover} disabled={removendo} style={s.actionBtn} title="Remover lançamento">
-          ✕
-        </button>
+        </div>
       </div>
     </div>
   )
 }
 
+
 // ── Bloco Tipo Genérico (Despesas / Receitas / Aplicações) ───────────────────
-export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, cartoesById }) {
+export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
   const cfg = TIPO[tipo]
   const total = soma(transacoes)
   const isAplicacao = tipo === 'aplicacao'
@@ -918,11 +1023,13 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
               onAtualizar={campos => onAtualizar(t.id, campos)}
               onDuplicar={() => onDuplicar(t.id)}
               onCancelarParcelas={onCancelarParcelas}
+              onMoverTipo={onMoverTipo}
               cartoesById={cartoesById}
             />
           ))
         )}
       </div>
+
 
       {/* Seção de Patrimônio Acumulado para Aplicações */}
       {isAplicacao && itensAcumulados.length > 0 && (
@@ -1660,6 +1767,9 @@ const s = {
     color: 'var(--text-muted)',
   },
   cartaoBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
     fontWeight: 500,
     color: 'var(--text-muted)',
   },

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { buscarSonhos, criarSonho, atualizarSonho, guardarValorSonho, removerSonho } from '../services/api'
 import { fmtBRL } from '../utils/fmt'
 import CabecalhoPagina from '../components/CabecalhoPagina'
-import { IconSonhos } from '../components/Icones'
+import { IconSonhos, IconEditar, IconLixeira } from '../components/Icones'
 import { useConfirm } from '../components/ModalConfirmacao'
 
 function calcularTempoRestante(dataAlvoISO) {
@@ -194,8 +194,12 @@ function CardSonho({ sonho, onAtualizou, onRemoveu }) {
           {realizado && <span style={s.seloRealizado}>★ Conquistado!</span>}
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={() => setEditando(!editando)} style={s.iconBtn} title="Editar">✎</button>
-          <button onClick={handleExcluir} disabled={excluindo} style={{ ...s.iconBtn, color: 'var(--text-dim)' }} title="Excluir">✕</button>
+          <button onClick={() => setEditando(!editando)} style={s.iconBtn} title="Editar">
+            <IconEditar size={14} />
+          </button>
+          <button onClick={handleExcluir} disabled={excluindo} style={{ ...s.iconBtn, color: 'var(--text-dim)' }} title="Excluir">
+            <IconLixeira size={14} />
+          </button>
         </div>
       </div>
 

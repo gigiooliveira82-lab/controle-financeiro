@@ -228,7 +228,7 @@ export default function NavLateral({ qtdVencidas }) {
           </div>
           {isRotaAdmin ? (
             <span style={st.badgeAdminLateral}>
-              <IconPainelAdm size={10} color="#0A0F0D" />
+              <IconPainelAdm size={10} color="#FFFFFF" />
               Painel Adm
             </span>
           ) : (
@@ -451,7 +451,7 @@ const st = {
     gap: 4,
     fontSize: 9.5,
     fontWeight: 700,
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     background: 'var(--primary)',
     padding: '2px 6px',
     borderRadius: 4,

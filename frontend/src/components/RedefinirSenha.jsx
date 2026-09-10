@@ -109,7 +109,7 @@ const e = {
     borderRadius: 8,
     border: 'none',
     background: '#10B981',
-    color: '#0A0F0D',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: 700,
     fontFamily: 'var(--font-headline)',

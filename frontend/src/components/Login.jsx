@@ -422,7 +422,7 @@ const m = {
     marginTop: 6,
     padding: '13px',
     borderRadius: 10, border: 'none',
-    background: 'var(--primary)', color: '#0A0F0D',
+    background: 'var(--primary)', color: '#FFFFFF',
     fontSize: 15, fontWeight: 700,
     fontFamily: 'var(--font-headline)',
     cursor: 'pointer',
