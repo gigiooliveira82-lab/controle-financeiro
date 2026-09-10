@@ -410,7 +410,7 @@ const m = {
     padding: '2.5px 7px',
     borderRadius: 5,
     background: 'var(--primary)',
-    color: '#FFFFFF',
+    color: 'var(--primary-contrast)',
     fontFamily: "'Inter', sans-serif",
   },
   item: {

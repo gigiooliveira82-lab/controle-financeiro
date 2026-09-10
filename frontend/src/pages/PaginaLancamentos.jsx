@@ -377,7 +377,7 @@ const l = {
     borderRadius: 10,
     border: 'none',
     background: 'var(--primary)',
-    color: '#FFFFFF',
+    color: 'var(--primary-contrast)',
     fontSize: 13,
     fontWeight: 700,
     cursor: 'pointer',
