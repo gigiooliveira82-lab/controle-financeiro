@@ -15,6 +15,8 @@ import {
   IconHistorico,
   IconContas,
   IconFechar,
+  IconCheck,
+  IconChevronBaixo,
 } from './Icones'
 
 export const TIPO = {
@@ -609,6 +611,60 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
   const [editandoDia, setEditandoDia]     = useState(false)
   const [novoDia, setNovoDia]             = useState(String(t.dia_pagamento))
   const [salvando, setSalvando]           = useState(false)
+  const [menuFreqAberto, setMenuFreqAberto] = useState(false)
+  const menuFreqRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuFreqAberto) return
+    function handleClickOutside(event) {
+      if (menuFreqRef.current && !menuFreqRef.current.contains(event.target)) {
+        setMenuFreqAberto(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [menuFreqAberto])
+
+  const OPCOES_FREQUENCIA = [
+    { valor: 'mensal', label: 'Mensal', desc: 'Todo mês' },
+    { valor: 'trimestral', label: 'Trimestral', desc: 'A cada 3 meses' },
+    { valor: 'semestral', label: 'Semestral', desc: 'A cada 6 meses' },
+    { valor: 'anual', label: 'Anual', desc: 'A cada 1 ano' },
+  ]
+
+  const freqAtual = t.frequencia_recorrencia || 'mensal'
+  const labelFreq = {
+    mensal: 'Mensal',
+    trimestral: 'Trimestral',
+    semestral: 'Semestral',
+    anual: 'Anual',
+  }[freqAtual] || 'Mensal'
+
+  async function selecionarFrequencia(novaFreq) {
+    if (salvando) return
+    setMenuFreqAberto(false)
+    setSalvando(true)
+    try {
+      await onAtualizar({ recorrente: true, frequencia_recorrencia: novaFreq })
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function desativarRecorrencia() {
+    if (salvando) return
+    setMenuFreqAberto(false)
+    setSalvando(true)
+    try {
+      await onAtualizar({ recorrente: false })
+    } finally {
+      setSalvando(false)
+    }
+  }
 
   const isMobile    = useIsMobile()
   const hoje        = new Date()
@@ -708,24 +764,138 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
               </CampoEditavel>
             )}
             {t.recorrente && (
-              <span
-                style={{
-                  fontSize: 10,
-                  color: '#A78BFA',
-                  fontWeight: 700,
-                  background: 'rgba(167, 139, 250, 0.12)',
-                  border: '1px solid rgba(167, 139, 250, 0.3)',
-                  padding: '1px 6px',
-                  borderRadius: 4,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                }}
-                title="Despesa recorrente mensal"
-              >
-                <IconRecorrencia size={11} strokeWidth={2.5} />
-                Mensal
-              </span>
+              <div ref={menuFreqRef} style={{ position: 'relative', display: 'inline-flex' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuFreqAberto(prev => !prev)
+                  }}
+                  style={{
+                    fontSize: 10,
+                    color: '#A78BFA',
+                    fontWeight: 700,
+                    background: menuFreqAberto ? 'rgba(167, 139, 250, 0.22)' : 'rgba(167, 139, 250, 0.12)',
+                    border: '1px solid rgba(167, 139, 250, 0.35)',
+                    padding: '1px 6px',
+                    borderRadius: 4,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(167, 139, 250, 0.22)'
+                    e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.6)'
+                  }}
+                  onMouseLeave={e => {
+                    if (!menuFreqAberto) {
+                      e.currentTarget.style.background = 'rgba(167, 139, 250, 0.12)'
+                      e.currentTarget.style.borderColor = 'rgba(167, 139, 250, 0.35)'
+                    }
+                  }}
+                  title={`Recorrência ${labelFreq} — clique para alterar a frequência`}
+                >
+                  <IconRecorrencia size={11} strokeWidth={2.5} />
+                  <span>{labelFreq}</span>
+                  <IconChevronBaixo size={9} strokeWidth={2.5} />
+                </button>
+
+                {menuFreqAberto && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 5px)',
+                      left: 0,
+                      zIndex: 60,
+                      minWidth: 175,
+                      background: 'var(--surface-raised, #18231E)',
+                      border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+                      borderRadius: 8,
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+                      padding: '4px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                      backdropFilter: 'blur(12px)',
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div style={{ padding: '4px 8px 3px', fontSize: 10, fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Frequência de Recorrência
+                    </div>
+                    {OPCOES_FREQUENCIA.map((op) => {
+                      const ativa = freqAtual === op.valor
+                      return (
+                        <button
+                          key={op.valor}
+                          type="button"
+                          onClick={() => selecionarFrequencia(op.valor)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            padding: '6px 8px',
+                            borderRadius: 5,
+                            background: ativa ? 'rgba(167, 139, 250, 0.16)' : 'transparent',
+                            border: 'none',
+                            color: ativa ? '#A78BFA' : 'var(--text)',
+                            fontSize: 12,
+                            fontWeight: ativa ? 600 : 500,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'background 0.12s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!ativa) e.currentTarget.style.background = 'var(--surface-hover, rgba(255, 255, 255, 0.06))'
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!ativa) e.currentTarget.style.background = 'transparent'
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <span>{op.label}</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{op.desc}</span>
+                          </div>
+                          {ativa && <IconCheck size={13} color="#A78BFA" />}
+                        </button>
+                      )
+                    })}
+                    <div style={{ height: 1, background: 'var(--border-subtle, rgba(255, 255, 255, 0.08))', margin: '3px 0' }} />
+                    <button
+                      type="button"
+                      onClick={desativarRecorrencia}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        width: '100%',
+                        padding: '5px 8px',
+                        borderRadius: 5,
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-dim)',
+                        fontSize: 11,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.12s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#FC7C78'
+                        e.currentTarget.style.background = 'rgba(252, 124, 120, 0.1)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--text-dim)'
+                        e.currentTarget.style.background = 'transparent'
+                      }}
+                    >
+                      <span>Desativar recorrência</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
             {t.total_parcelas && (
               <span style={s.parcelaBadge}>{t.parcela_atual}/{t.total_parcelas}</span>
@@ -873,7 +1043,7 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
               }}
               onMouseEnter={e => { if (!t.recorrente) e.currentTarget.style.background = 'var(--surface-hover)' }}
               onMouseLeave={e => { if (!t.recorrente) e.currentTarget.style.background = 'transparent' }}
-              title={t.recorrente ? 'Despesa recorrente mensal (clique para desativar)' : 'Marcar como despesa recorrente mensal'}
+              title={t.recorrente ? `Despesa recorrente (${labelFreq}) — clique para desativar` : 'Marcar como despesa recorrente mensal'}
             >
               <IconRecorrencia size={13} strokeWidth={t.recorrente ? 2.5 : 2} />
             </button>

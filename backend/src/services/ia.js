@@ -25,6 +25,7 @@ Retorne um JSON com EXATAMENTE estes campos:
   "mes_referencia": "YYYY-MM-01",
   "status": "pago" | "pendente",
   "recorrente": true | false,
+  "frequencia_recorrencia": "mensal" | "trimestral" | "semestral" | "anual" — somente se recorrente for true. Padrão "mensal" a menos que mencione trimestral (a cada 3 meses), semestral (a cada 6 meses) ou anual (todo ano/anual/a cada 12 meses),
   "total_parcelas": número inteiro — SOMENTE se o texto mencionar parcelamento explícito (ex: "12x", "36 vezes", "parcela 3/36", "5ª de 24"). Para lançamentos normais, retorne null,
   "parcela_inicial": número da parcela atual do mês de hoje — SOMENTE se total_parcelas definido. Padrão: 1 se não informado no texto
 }
@@ -62,8 +63,9 @@ Regras de status:
 - "pendente" se mencionar: vai vencer, preciso pagar, vence dia X, ainda não paguei, vou receber
 - Padrão: "pago" para despesas sem indicação, "pendente" para créditos futuros
 
-Regras de recorrente:
-- true somente se mencionar: todo mês, mensalmente, assinatura, mensalidade, fixo, recorrente
+Regras de recorrente e frequencia:
+- true somente se mencionar: todo mês, mensalmente, assinatura, mensalidade, fixo, recorrente, todo ano, anual, trimestral, semestral
+- frequencia_recorrencia: "mensal" (padrão), "trimestral" (se mencionar a cada 3 meses ou trimestral), "semestral" (se mencionar a cada 6 meses ou semestral), "anual" (se mencionar anual, todo ano ou a cada 12 meses)
 
 Regras de dia_pagamento:
 - Se mencionar "dia X" ou "vence X", use esse dia
@@ -98,7 +100,17 @@ Retorne APENAS o JSON puro, sem texto adicional, sem markdown.`
   dados.parcela_inicial = dados.total_parcelas
     ? (dados.parcela_inicial ? Number(dados.parcela_inicial) : 1)
     : null
-  if (dados.total_parcelas) dados.recorrente = false  // parcelamento nunca é recorrente
+  if (dados.total_parcelas) {
+    dados.recorrente = false  // parcelamento nunca é recorrente
+    dados.frequencia_recorrencia = null
+  } else if (dados.recorrente) {
+    const FREQUENCIAS = ['mensal', 'trimestral', 'semestral', 'anual']
+    dados.frequencia_recorrencia = FREQUENCIAS.includes(dados.frequencia_recorrencia)
+      ? dados.frequencia_recorrencia
+      : 'mensal'
+  } else {
+    dados.frequencia_recorrencia = null
+  }
 
   return dados
 }

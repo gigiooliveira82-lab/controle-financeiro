@@ -348,7 +348,7 @@ router.get('/acumulados-aplicacao/:usuario_id', async (req, res) => {
   return res.json({ acumulados: grupos })
 })
 
-// POST /transacoes/gerar-recorrentes — copia recorrentes do mês anterior para o mês atual
+// POST /transacoes/gerar-recorrentes — copia recorrentes com base em sua periodicidade (mensal, trimestral, semestral, anual)
 router.post('/gerar-recorrentes', async (req, res) => {
   const { mes_referencia } = req.body
   const usuario_id = req.usuarioId
@@ -358,21 +358,40 @@ router.post('/gerar-recorrentes', async (req, res) => {
   }
 
   const [ano, mes] = mes_referencia.split('-').map(Number)
-  const dataMesAnterior = new Date(ano, mes - 2, 1)
-  const mesAnterior = `${dataMesAnterior.getFullYear()}-${String(dataMesAnterior.getMonth() + 1).padStart(2, '0')}-01`
+
+  const formatarMesISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+
+  const mes1ISO  = formatarMesISO(new Date(ano, mes - 2, 1))   // 1 mês atrás (mensal)
+  const mes3ISO  = formatarMesISO(new Date(ano, mes - 4, 1))   // 3 meses atrás (trimestral)
+  const mes6ISO  = formatarMesISO(new Date(ano, mes - 7, 1))   // 6 meses atrás (semestral)
+  const mes12ISO = formatarMesISO(new Date(ano, mes - 13, 1))  // 12 meses atrás (anual)
+
+  const mesesConsulta = Array.from(new Set([mes1ISO, mes3ISO, mes6ISO, mes12ISO]))
 
   const { data: recorrentes, error: erroBusca } = await supabase
     .from('transacoes')
     .select('*')
     .eq('usuario_id', usuario_id)
-    .eq('mes_referencia', mesAnterior)
     .eq('recorrente', true)
+    .in('mes_referencia', mesesConsulta)
 
   if (erroBusca) {
     return res.status(500).json({ erro: 'Falha ao buscar recorrentes', detalhe: erroBusca.message })
   }
 
-  if (!recorrentes.length) return res.json({ geradas: [] })
+  if (!recorrentes || !recorrentes.length) return res.json({ geradas: [] })
+
+  // Filtra de acordo com a periodicidade correspondente
+  const recorrentesValidas = recorrentes.filter((t) => {
+    const freq = t.frequencia_recorrencia || 'mensal'
+    if (freq === 'mensal' && t.mes_referencia === mes1ISO) return true
+    if (freq === 'trimestral' && t.mes_referencia === mes3ISO) return true
+    if (freq === 'semestral' && t.mes_referencia === mes6ISO) return true
+    if (freq === 'anual' && t.mes_referencia === mes12ISO) return true
+    return false
+  })
+
+  if (!recorrentesValidas.length) return res.json({ geradas: [] })
 
   const { data: jaExistem, error: erroJaExistem } = await supabase
     .from('transacoes')
@@ -386,12 +405,13 @@ router.post('/gerar-recorrentes', async (req, res) => {
 
   const descricoesExistentes = new Set((jaExistem || []).map((t) => t.descricao))
 
-  const novas = recorrentes
+  const novas = recorrentesValidas
     .filter((t) => !descricoesExistentes.has(t.descricao))
     .map(({ id: _id, criado_em: _c, ...resto }) => ({
       ...resto,
       mes_referencia,
       status: 'pendente',
+      frequencia_recorrencia: resto.frequencia_recorrencia || 'mensal',
     }))
 
   if (!novas.length) return res.json({ geradas: [] })
@@ -687,14 +707,26 @@ router.get('/:usuario_id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params
   const usuario_id = req.usuarioId
-  const { valor, status, recorrente, descricao, categoria, dia_pagamento, subcategoria, tipo, data_compra } = req.body
+  const { valor, status, recorrente, frequencia_recorrencia, descricao, categoria, dia_pagamento, subcategoria, tipo, data_compra } = req.body
 
   const TIPOS_VALIDOS = ['despesa_fixa', 'despesa_variavel', 'credito', 'aplicacao']
+  const FREQUENCIAS_VALIDAS = ['mensal', 'trimestral', 'semestral', 'anual']
 
   const campos = {}
   if (valor         !== undefined) campos.valor         = Number(valor)
   if (status        !== undefined) campos.status        = status
-  if (recorrente    !== undefined) campos.recorrente    = recorrente
+  if (recorrente    !== undefined) {
+    campos.recorrente = recorrente
+    if (!recorrente) {
+      campos.frequencia_recorrencia = 'mensal'
+    }
+  }
+  if (frequencia_recorrencia !== undefined) {
+    if (frequencia_recorrencia && !FREQUENCIAS_VALIDAS.includes(frequencia_recorrencia)) {
+      return res.status(400).json({ erro: 'Frequência de recorrência inválida' })
+    }
+    campos.frequencia_recorrencia = frequencia_recorrencia || 'mensal'
+  }
   if (descricao     !== undefined) campos.descricao     = descricao.trim()
   if (categoria     !== undefined) campos.categoria     = categoria.trim().toLowerCase()
   if (dia_pagamento !== undefined) campos.dia_pagamento = Number(dia_pagamento)

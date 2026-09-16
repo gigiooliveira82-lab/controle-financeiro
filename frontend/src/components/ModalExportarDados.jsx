@@ -126,7 +126,7 @@ export default function ModalExportarDados({ aberto, onFechar, usuarioId, email 
             escaparCSV(valorFormatado),
             escaparCSV(t.status === 'pago' ? 'Pago' : 'Pendente'),
             escaparCSV(t.cartao_id ? (cartoesMap.get(t.cartao_id) || 'Cartão de Crédito') : 'Conta / À Vista'),
-            escaparCSV(t.recorrente ? 'Sim' : 'Não'),
+            escaparCSV(t.recorrente ? `Sim (${(t.frequencia_recorrencia || 'mensal').charAt(0).toUpperCase() + (t.frequencia_recorrencia || 'mensal').slice(1)})` : 'Não'),
             escaparCSV(t.total_parcelas || ''),
             escaparCSV(t.parcela_atual || ''),
             escaparCSV(t.observacao || ''),
