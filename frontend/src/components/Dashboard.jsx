@@ -17,6 +17,7 @@ import {
   IconFechar,
   IconCheck,
   IconChevronBaixo,
+  IconEditar,
 } from './Icones'
 
 export const TIPO = {
@@ -1134,8 +1135,235 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
 }
 
 
+// ── Item de Patrimônio Acumulado (Edição, Exclusão e Histórico) ────────────
+export function ItemPatrimonio({ item, onRemoverTransacao, onAtualizarTransacao, onRemoverAcumulado, onAtualizarAcumulado }) {
+  const [editando, setEditando]   = useState(false)
+  const [novoNome, setNovoNome]   = useState(item.label)
+  const [novoValor, setNovoValor] = useState(String(item.total))
+  const [expandido, setExpandido] = useState(false)
+  const [salvando, setSalvando]   = useState(false)
+
+  const transacoes = item.transacoes || []
+  const temHistorico = transacoes.length > 0
+
+  async function salvarEdicao() {
+    const nomeLimpo = novoNome.trim()
+    const v = parseFloat(novoValor.replace(',', '.'))
+    if (!nomeLimpo) {
+      setNovoNome(item.label)
+      setEditando(false)
+      return
+    }
+
+    setSalvando(true)
+    try {
+      if (onAtualizarAcumulado) {
+        await onAtualizarAcumulado(item, {
+          descricao: nomeLimpo,
+          valor: isNaN(v) ? item.total : v,
+        })
+      } else if (onAtualizarTransacao && transacoes.length > 0) {
+        if (transacoes.length === 1 && !isNaN(v) && v !== item.total) {
+          await onAtualizarTransacao(transacoes[0].id, { descricao: nomeLimpo, valor: v })
+        } else {
+          await Promise.all(transacoes.map(t => onAtualizarTransacao(t.id, { descricao: nomeLimpo })))
+        }
+      }
+      setEditando(false)
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function excluirAtivo() {
+    if (salvando) return
+    if (onRemoverAcumulado) {
+      setSalvando(true)
+      try {
+        await onRemoverAcumulado(item)
+      } finally {
+        setSalvando(false)
+      }
+    } else if (onRemoverTransacao && transacoes.length > 0) {
+      const confirmou = window.confirm(`Deseja realmente excluir "${item.label}" e todos os seus lançamentos vinculados?`)
+      if (!confirmou) return
+      setSalvando(true)
+      try {
+        for (const t of transacoes) {
+          await onRemoverTransacao(t.id)
+        }
+      } finally {
+        setSalvando(false)
+      }
+    }
+  }
+
+  return (
+    <div style={{
+      ...s.itemPatrimonioWrapper,
+      opacity: salvando ? 0.5 : 1,
+    }}>
+      <div style={s.itemPatrimonio}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+          {editando ? (
+            <input
+              autoFocus
+              value={novoNome}
+              onChange={e => setNovoNome(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') salvarEdicao()
+                if (e.key === 'Escape') { setNovoNome(item.label); setEditando(false) }
+              }}
+              style={s.inputInline}
+              placeholder="Nome da aplicação"
+            />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexWrap: 'wrap' }}>
+              <span style={s.itemPatrimonioNome} title={item.label}>
+                {item.label}
+              </span>
+              {temHistorico && (
+                <span style={s.tagAportesCount}>
+                  {transacoes.length} {transacoes.length === 1 ? 'registro' : 'registros'}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {editando ? (
+            <input
+              value={novoValor}
+              onChange={e => setNovoValor(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') salvarEdicao()
+                if (e.key === 'Escape') { setNovoValor(String(item.total)); setEditando(false) }
+              }}
+              style={s.inputInlineValor}
+              placeholder="Valor"
+            />
+          ) : (
+            <span style={s.itemPatrimonioValor}>{fmtSaldo(item.total)}</span>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {editando ? (
+              <button
+                type="button"
+                onClick={salvarEdicao}
+                style={{ ...s.actionBtn, color: 'var(--primary)' }}
+                title="Salvar alterações"
+              >
+                <IconCheck size={14} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditando(true)}
+                style={s.actionBtn}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = 'var(--primary)'
+                  e.currentTarget.style.background = 'var(--surface-hover)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = 'var(--text-dim)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
+                title="Editar aplicação"
+              >
+                <IconEditar size={13} />
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={excluirAtivo}
+              disabled={salvando}
+              style={s.actionBtn}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = '#FC7C78'
+                e.currentTarget.style.background = 'rgba(252, 124, 120, 0.14)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-dim)'
+                e.currentTarget.style.background = 'transparent'
+              }}
+              title="Excluir aplicação"
+            >
+              <IconLixeira size={13} />
+            </button>
+
+            {temHistorico && (
+              <button
+                type="button"
+                onClick={() => setExpandido(prev => !prev)}
+                style={{
+                  ...s.actionBtn,
+                  transform: expandido ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.15s ease',
+                }}
+                title={expandido ? 'Ocultar lançamentos' : 'Ver lançamentos históricos'}
+              >
+                <IconChevronBaixo size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Histórico expandido de lançamentos deste ativo */}
+      {expandido && temHistorico && (
+        <div style={s.historicoPatrimonioLista}>
+          <div style={s.historicoPatrimonioHeader}>
+            <span>Histórico de Lançamentos ({item.label})</span>
+          </div>
+          {transacoes.map((t) => {
+            const dataFmt = t.mes_referencia
+              ? `${String(t.dia_pagamento || 1).padStart(2, '0')}/${t.mes_referencia.slice(5, 7)}/${t.mes_referencia.slice(0, 4)}`
+              : 'Sem data'
+            return (
+              <div key={t.id} style={s.itemHistoricoPatrimonio}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={s.dataHistoricoTag}>{dataFmt}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text)' }}>{t.descricao}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: Number(t.valor) >= 0 ? '#10B981' : '#FC7C78' }}>
+                    {fmtSaldo(Number(t.valor))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (onRemoverTransacao) {
+                        await onRemoverTransacao(t.id)
+                      }
+                    }}
+                    style={s.actionBtn}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = '#FC7C78'
+                      e.currentTarget.style.background = 'rgba(252, 124, 120, 0.14)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = 'var(--text-dim)'
+                      e.currentTarget.style.background = 'transparent'
+                    }}
+                    title="Remover este lançamento"
+                  >
+                    <IconLixeira size={12} />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Bloco Tipo Genérico (Despesas / Receitas / Aplicações) ───────────────────
-export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
+export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById, onRemoverAcumulado, onAtualizarAcumulado }) {
   const [limite, setLimite] = useState(10)
 
   useEffect(() => {
@@ -1153,7 +1381,8 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
     ? Object.entries(acumulados).map(([chave, val]) => {
         const valorNum = (typeof val === 'object' && val !== null) ? Number(val.total || 0) : Number(val || 0)
         const label = (typeof val === 'object' && val !== null && val.label) ? val.label : chave
-        return { chave, label, total: valorNum }
+        const transacoesItem = (typeof val === 'object' && val !== null && Array.isArray(val.transacoes)) ? val.transacoes : []
+        return { chave, label, total: valorNum, transacoes: transacoesItem }
       })
     : []
 
@@ -1246,10 +1475,14 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
           </div>
           <div style={s.listaPatrimonioAcumulado}>
             {itensAcumulados.map((item) => (
-              <div key={item.chave} style={s.itemPatrimonio}>
-                <span style={s.itemPatrimonioNome}>{item.label}</span>
-                <span style={s.itemPatrimonioValor}>{fmtSaldo(item.total)}</span>
-              </div>
+              <ItemPatrimonio
+                key={item.chave}
+                item={item}
+                onRemoverTransacao={onRemover}
+                onAtualizarTransacao={onAtualizar}
+                onRemoverAcumulado={onRemoverAcumulado}
+                onAtualizarAcumulado={onAtualizarAcumulado}
+              />
             ))}
           </div>
         </div>
@@ -2137,12 +2370,21 @@ const s = {
     gap: 10,
     paddingTop: 6,
   },
+  itemPatrimonioWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '8px 10px',
+    borderRadius: 8,
+    border: '1px solid var(--border-subtle)',
+    background: 'rgba(255, 255, 255, 0.02)',
+    transition: 'background 0.15s ease',
+  },
   itemPatrimonio: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '8px 0',
-    borderBottom: '1px solid var(--border-subtle)',
+    gap: 12,
+    flexWrap: 'wrap',
   },
   itemPatrimonioNome: {
     fontSize: 14,
@@ -2154,5 +2396,47 @@ const s = {
     fontWeight: 700,
     color: 'var(--text-pure)',
     fontVariantNumeric: 'tabular-nums',
+  },
+  tagAportesCount: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: '#0F766E',
+    background: 'rgba(15, 118, 110, 0.18)',
+    border: '1px solid rgba(15, 118, 110, 0.35)',
+    padding: '1px 5px',
+    borderRadius: 4,
+  },
+  historicoPatrimonioLista: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTop: '1px dashed var(--border-subtle)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  historicoPatrimonioHeader: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: 'var(--text-dim)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    marginBottom: 2,
+  },
+  itemHistoricoPatrimonio: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '5px 8px',
+    borderRadius: 6,
+    background: 'rgba(0, 0, 0, 0.15)',
+    gap: 8,
+  },
+  dataHistoricoTag: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    background: 'var(--surface-hover)',
+    padding: '1px 5px',
+    borderRadius: 4,
   },
 }

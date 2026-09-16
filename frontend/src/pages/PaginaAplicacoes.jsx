@@ -22,10 +22,48 @@ export default function PaginaAplicacoes({
     .sort()
     .join(',')
 
+  async function recarregarAcumulados() {
+    if (!usuarioId) return
+    try {
+      const ac = await buscarAcumuladosAplicacao(usuarioId)
+      setAcumulados(ac || {})
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   useEffect(() => {
     if (!usuarioId) return
-    buscarAcumuladosAplicacao(usuarioId).then(setAcumulados).catch(console.error)
+    recarregarAcumulados()
   }, [usuarioId, aplicacaoKey])
+
+  async function handleRemoverAcumulado(item) {
+    const confirmou = window.confirm(`Deseja realmente excluir a aplicação "${item.label}" e todos os seus lançamentos?`)
+    if (!confirmou) return
+    const transacoesItem = item.transacoes || []
+    try {
+      for (const t of transacoesItem) {
+        await handleRemover(t.id)
+      }
+      await recarregarAcumulados()
+    } catch (err) {
+      alert('Erro ao excluir aplicação: ' + err.message)
+    }
+  }
+
+  async function handleAtualizarAcumulado(item, { descricao, valor }) {
+    const transacoesItem = item.transacoes || []
+    try {
+      if (transacoesItem.length === 1) {
+        await handleAtualizar(transacoesItem[0].id, { descricao, valor })
+      } else {
+        await Promise.all(transacoesItem.map(t => handleAtualizar(t.id, { descricao })))
+      }
+      await recarregarAcumulados()
+    } catch (err) {
+      alert('Erro ao atualizar aplicação: ' + err.message)
+    }
+  }
 
   if (carregando) {
     return (
@@ -74,6 +112,8 @@ export default function PaginaAplicacoes({
         onAtualizar={handleAtualizar}
         onDuplicar={handleDuplicar}
         onCancelarParcelas={handleCancelarGrupoParcelas}
+        onRemoverAcumulado={handleRemoverAcumulado}
+        onAtualizarAcumulado={handleAtualizarAcumulado}
       />
     </div>
   )

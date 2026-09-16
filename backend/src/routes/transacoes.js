@@ -323,7 +323,7 @@ router.get('/acumulados-aplicacao/:usuario_id', async (req, res) => {
 
   const { data, error } = await supabase
     .from('transacoes')
-    .select('descricao, valor, criado_em')
+    .select('id, descricao, valor, mes_referencia, dia_pagamento, categoria, subcategoria, status, criado_em')
     .eq('usuario_id', usuario_id)
     .eq('tipo', 'aplicacao')
     .lte('mes_referencia', mesAtual)
@@ -340,9 +340,10 @@ router.get('/acumulados-aplicacao/:usuario_id', async (req, res) => {
   data.forEach((t) => {
     const chave = normalizar(t.descricao)
     if (!grupos[chave]) {
-      grupos[chave] = { total: 0, label: t.descricao }
+      grupos[chave] = { total: 0, label: t.descricao, transacoes: [] }
     }
     grupos[chave].total += Number(t.valor)
+    grupos[chave].transacoes.push(t)
   })
 
   return res.json({ acumulados: grupos })
