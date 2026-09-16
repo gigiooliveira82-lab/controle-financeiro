@@ -1136,9 +1136,18 @@ export function ItemLinha({ transacao: t, cor, mostrarStatus, mostrarRecorrente,
 
 // ── Bloco Tipo Genérico (Despesas / Receitas / Aplicações) ───────────────────
 export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, onAtualizar, onDuplicar, onCancelarParcelas, onMoverTipo, cartoesById }) {
+  const [limite, setLimite] = useState(10)
+
+  useEffect(() => {
+    setLimite(10)
+  }, [transacoes])
+
   const cfg = TIPO[tipo]
   const total = soma(transacoes)
   const isAplicacao = tipo === 'aplicacao'
+
+  const transacoesExibidas = transacoes.slice(0, limite)
+  const temMais = transacoes.length > limite
 
   const itensAcumulados = (isAplicacao && acumulados)
     ? Object.entries(acumulados).map(([chave, val]) => {
@@ -1181,7 +1190,7 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
         {transacoes.length === 0 ? (
           <p style={s.textoVazio}>Nenhum registro para este mês.</p>
         ) : (
-          transacoes.map(t => (
+          transacoesExibidas.map(t => (
             <ItemLinha
               key={t.id}
               transacao={t}
@@ -1199,6 +1208,34 @@ export function BlocoTipo({ tipo, transacoes, acumulados, removendo, onRemover, 
           ))
         )}
       </div>
+
+      {transacoes.length > 10 && (
+        <div style={s.paginacaoRodape}>
+          <span style={s.paginacaoInfo}>
+            Exibindo {Math.min(limite, transacoes.length)} de {transacoes.length}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {temMais && (
+              <button
+                type="button"
+                onClick={() => setLimite(prev => prev + 10)}
+                style={s.btnCarregarMais}
+              >
+                Carregar mais (+10)
+              </button>
+            )}
+            {limite > 10 && (
+              <button
+                type="button"
+                onClick={() => setLimite(10)}
+                style={s.btnRecolher}
+              >
+                Recolher
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
 
       {/* Seção de Patrimônio Acumulado para Aplicações */}
@@ -1849,6 +1886,48 @@ const s = {
   blocoCardLista: {
     display: 'flex',
     flexDirection: 'column',
+  },
+  paginacaoRodape: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '10px 4px 2px',
+    borderTop: '1px solid var(--border-subtle)',
+    marginTop: 4,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  paginacaoInfo: {
+    fontSize: 11,
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+  },
+  btnCarregarMais: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '5px 12px',
+    borderRadius: 6,
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid var(--border-subtle)',
+    color: 'var(--text)',
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  btnRecolher: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '5px 10px',
+    borderRadius: 6,
+    background: 'transparent',
+    border: '1px solid transparent',
+    color: 'var(--text-dim)',
+    fontSize: 11,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
   },
   itemLinha: {
     display: 'flex',

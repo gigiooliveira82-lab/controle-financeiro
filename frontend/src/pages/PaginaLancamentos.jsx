@@ -39,9 +39,14 @@ export default function PaginaLancamentos({
   const [expandido, setExpandido]             = useState(false)
   const [modoConsolidado, setModoConsolidado] = useState(false)
   const [busca, setBusca]                     = useState('')
+  const [limiteConsolidado, setLimiteConsolidado] = useState(10)
   const [toast, setToast]                     = useState(null)
   const toastTimer                            = useRef(null)
   const isMobile = useIsMobile()
+
+  useEffect(() => {
+    setLimiteConsolidado(10)
+  }, [mesSelecionado, busca])
 
   const { removendo, handleRemover, handleAtualizar, handleDuplicar, handleCancelarGrupoParcelas } =
     useTransacaoHandlers({ usuarioId, mesSelecionado, transacoes, onRemoveu, onAtualizou, onNova: onNovaTransacao })
@@ -251,7 +256,7 @@ export default function PaginaLancamentos({
             {despesasConsolidadas.length === 0 ? (
               <p style={l.placeholderTexto}>Nenhum registro para este mês.</p>
             ) : (
-              despesasConsolidadas.map(t => (
+              despesasConsolidadas.slice(0, limiteConsolidado).map(t => (
                 <ItemLinha
                   key={t.id}
                   transacao={t}
@@ -270,6 +275,34 @@ export default function PaginaLancamentos({
               ))
             )}
           </div>
+
+          {despesasConsolidadas.length > 10 && (
+            <div style={l.paginacaoRodape}>
+              <span style={l.paginacaoInfo}>
+                Exibindo {Math.min(limiteConsolidado, despesasConsolidadas.length)} de {despesasConsolidadas.length}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {despesasConsolidadas.length > limiteConsolidado && (
+                  <button
+                    type="button"
+                    onClick={() => setLimiteConsolidado(prev => prev + 10)}
+                    style={l.btnCarregarMais}
+                  >
+                    Carregar mais (+10)
+                  </button>
+                )}
+                {limiteConsolidado > 10 && (
+                  <button
+                    type="button"
+                    onClick={() => setLimiteConsolidado(10)}
+                    style={l.btnRecolher}
+                  >
+                    Recolher
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))', gap: isMobile ? 12 : 20, alignItems: 'start' }}>
@@ -481,6 +514,48 @@ const l = {
   consolidadoLista: {
     display: 'flex',
     flexDirection: 'column',
+  },
+  paginacaoRodape: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 4px 2px',
+    borderTop: '1px solid var(--border-subtle)',
+    marginTop: 4,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  paginacaoInfo: {
+    fontSize: 11,
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+  },
+  btnCarregarMais: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '5px 12px',
+    borderRadius: 6,
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid var(--border-subtle)',
+    color: 'var(--text)',
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  btnRecolher: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '5px 10px',
+    borderRadius: 6,
+    background: 'transparent',
+    border: '1px solid transparent',
+    color: 'var(--text-dim)',
+    fontSize: 11,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
   },
   linkBtn: {
     background: 'none',
