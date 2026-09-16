@@ -715,12 +715,7 @@ router.put('/:id', async (req, res) => {
   const campos = {}
   if (valor         !== undefined) campos.valor         = Number(valor)
   if (status        !== undefined) campos.status        = status
-  if (recorrente    !== undefined) {
-    campos.recorrente = recorrente
-    if (!recorrente) {
-      campos.frequencia_recorrencia = 'mensal'
-    }
-  }
+  if (recorrente    !== undefined) campos.recorrente    = recorrente
   if (frequencia_recorrencia !== undefined) {
     if (frequencia_recorrencia && !FREQUENCIAS_VALIDAS.includes(frequencia_recorrencia)) {
       return res.status(400).json({ erro: 'Frequência de recorrência inválida' })
@@ -776,13 +771,30 @@ router.put('/:id', async (req, res) => {
     return res.status(400).json({ erro: 'Nenhum campo para atualizar' })
   }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('transacoes')
     .update(campos)
     .eq('id', id)
     .eq('usuario_id', usuario_id)
     .select()
     .single()
+
+  // Fallback caso a migração da coluna frequencia_recorrencia ainda não tenha sido executada no Supabase
+  if (error && campos.frequencia_recorrencia !== undefined && (error.message?.includes('frequencia_recorrencia') || error.code === 'PGRST204' || String(error.message).includes('schema cache'))) {
+    console.warn('Coluna frequencia_recorrencia ausente no Supabase, tentando update sem ela.')
+    const { frequencia_recorrencia: _f, ...camposSemFreq } = campos
+    if (Object.keys(camposSemFreq).length > 0) {
+      const retry = await supabase
+        .from('transacoes')
+        .update(camposSemFreq)
+        .eq('id', id)
+        .eq('usuario_id', usuario_id)
+        .select()
+        .single()
+      data = retry.data
+      error = retry.error
+    }
+  }
 
   if (error) {
     return res.status(500).json({ erro: 'Falha ao atualizar transação', detalhe: error.message })
